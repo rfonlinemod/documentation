@@ -36,6 +36,10 @@
     <a class="sub" href="#cl-what">What it does</a>
     <a class="sub" href="#cl-activate">Activate it</a>
     <a class="sub" href="#cl-format">The log file</a>
+    <a href="#box-stack">Box Stack</a>
+    <a class="sub" href="#bs-what">What it does</a>
+    <a class="sub" href="#bs-activate">Activate it</a>
+    <a class="sub" href="#bs-rules">What gets merged</a>
   </nav>
 
   <main class="content">
@@ -62,6 +66,7 @@
     <tr><td><a href="#welcome-window">Welcome Window</a></td><td><code>WelcomeWindow.ini</code></td><td><span class="badge client">Client</span></td><td>Announcement window shown once when a player enters the game</td></tr>
     <tr><td><a href="#quest-monster">Quest Monster Marks</a></td><td><code>QuestMonster.ini</code></td><td><span class="badge client">Client</span></td><td>Yellow markers above the monsters a player still needs to kill for a quest</td></tr>
     <tr><td><a href="#chat-log">Chat Log</a></td><td><code>ChatLog.ini</code></td><td><span class="badge server">Server</span></td><td>Writes every in-game chat line to a log file for moderation and audit</td></tr>
+    <tr><td><a href="#box-stack">Box Stack</a></td><td><code>BoxStack.ini</code></td><td><span class="badge server">Server</span></td><td>Lets box-open rewards merge into an existing inventory stack instead of using a new slot each time</td></tr>
   </table>
   <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
 </section>
@@ -330,6 +335,59 @@ Enable = 1</code></pre>
     <li>The file is <strong>appended to and never truncated</strong>, so it grows for as long as logging is on. Archive or move old copies yourself during a quiet period; switch logging off first (<code>Enable = 0</code>) if you want a clean cut.</li>
     <li>Writing is best-effort: if the disk is full or the file is locked, a line is skipped rather than chat being blocked or corrupted. Players never notice a logging failure.</li>
   </ul>
+</section>
+
+<section id="box-stack">
+  <div class="doc-head">
+    <h2>Box Stack</h2>
+    <div class="badges">
+      <span class="badge server">Server-only</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="bs-what">What it does &mdash; and why you would use it</h3>
+  <p>Box Stack changes what happens when a player <strong>opens a box item</strong> &mdash; treasure boxes, golden boxes, crates and anything else driven by the item-exchange table. By default every open drops its reward into a <strong>brand-new inventory slot</strong>, even when the reward is something stackable you already carry. With this module on, a stackable reward instead <strong>merges into the stack you already have</strong> when that stack has room.</p>
+  <p>Use it to:</p>
+  <ul>
+    <li>Stop crate-opening from chewing up inventory slots &mdash; opening a crate of potions, ore or refinement stones fills the stack you already hold.</li>
+    <li>Keep inventories tidy for players who mass-open boxes during events.</li>
+    <li>Reduce the &ldquo;inventory full&rdquo; interruptions when a box reward is something you already stack.</li>
+  </ul>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Server switch</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\BoxStack.ini</span></td><td>Turns the merge behaviour on or off. One <code>Enable</code> key.</td></tr>
+    <tr><td>Client half</td><td colspan="2">Already built into the game client and inert while the module is off &mdash; there is <strong>no client file to edit and no client switch</strong>.</td></tr>
+  </table>
+  <div class="box info"><b>Server-only switch, client already ready</b>Like Chat Log this is a server-only feature: it takes no slot in the client feature-state packet and players see no toggle. The difference is that the client already contains the matching half &mdash; it refreshes the absorbing stack instead of drawing a phantom duplicate &mdash; and that half stays inert while the module is off. Any client built from this tree already supports it, so turning it on is safe.</div>
+
+  <h3 id="bs-activate">How to activate it</h3>
+  <ol class="steps">
+    <li>
+      <strong>Turn the feature on (server).</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\BoxStack.ini</span> in Notepad and change the <code>Enable</code> line under <code>[General]</code>:
+      <pre><code>[General]
+Enable = 1</code></pre>
+      Save the file. A running Zone server reloads it immediately and the next box a player opens merges; if the server is not running yet it simply starts with the feature on.
+    </li>
+    <li>
+      <strong>Nothing to do on the client.</strong> The matching client half is already built in &mdash; no file, no setting and no rebuild.
+    </li>
+    <li>
+      <strong>Test it.</strong> Start the servers, log in, make sure you already hold a partial stack of a stackable box reward, then open a box that rolls that item &mdash; the reward tops up your existing stack instead of taking a new slot.
+    </li>
+  </ol>
+  <div class="box warn"><b>Do not delete the .ini</b>Like every module file, <code>BoxStack.ini</code> is required when the Zone server starts &mdash; deleting it stops the server from booting. To go back to stock behaviour, set <code>Enable = 0</code> instead.</div>
+
+  <h3 id="bs-rules">What gets merged &mdash; and what does not</h3>
+  <ul>
+    <li><strong>Only box opens.</strong> This affects opening a box item through the item-exchange table. It does <em>not</em> change picking loot up off the ground &mdash; ground pickup already stacks in stock and is left exactly as it was.</li>
+    <li><strong>Only stackable rewards.</strong> A non-stackable item always takes a new slot, as before.</li>
+    <li><strong>Only a matching stack with room.</strong> The reward merges into an existing stack only when that stack is the same item, is not locked, is a normal (not lend or timed) item in the same timed-item bucket, and would not overflow the stack cap of 99.</li>
+    <li><strong>Lend and timed rewards never merge.</strong> They carry their own expiry, so they always take a new slot exactly like stock.</li>
+    <li><strong>No match, no room &rarr; stock behaviour.</strong> If nothing qualifies, the reward simply goes into a new slot, so enabling the module can never lose or misplace an item.</li>
+  </ul>
+  <p class="muted">With the module off, behaviour is identical to stock: every box open grants its reward to a new slot.</p>
 </section>
 
   </main>
