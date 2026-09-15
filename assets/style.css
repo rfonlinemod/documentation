@@ -244,6 +244,23 @@ td code { white-space: nowrap; }
 .badge.off { background: #2a2320; border-color: #8a6a3f; color: #e6c79a; }
 .badge.on { background: #10281b; border-color: #2f9160; color: #8fe0b4; }
 
+/* ---------- screenshot figure ---------- */
+.shot { margin: 18px 0; }
+.shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--code-bg);
+}
+.shot figcaption {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13.5px;
+  text-align: center;
+}
+
 /* ---------- feature doc head ---------- */
 .doc-head { border-left: 4px solid var(--accent); padding-left: 16px; margin-bottom: 6px; }
 .doc-head h2 { font-size: 24px; margin-bottom: 8px; }

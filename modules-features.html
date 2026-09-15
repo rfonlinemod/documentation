@@ -28,10 +28,6 @@
     <a class="sub" href="#ww-activate">Activate it</a>
     <a class="sub" href="#ww-content">Write the content</a>
     <a class="sub" href="#ww-artwork">Optional artwork</a>
-    <a href="#others">Other modules</a>
-    <a class="sub" href="#quest-monster">Quest Monster Marks</a>
-    <a class="sub" href="#box-stack">Box Stack</a>
-    <a class="sub" href="#chat-log">Chat Log</a>
   </nav>
 
   <main class="content">
@@ -56,10 +52,8 @@
   <table>
     <tr><th>Module</th><th>Config file (in <code>Modules\</code>)</th><th>Type</th><th>What it does</th></tr>
     <tr><td><a href="#welcome-window">Welcome Window</a></td><td><code>WelcomeWindow.ini</code></td><td><span class="badge client">Client</span></td><td>Announcement window shown once when a player enters the game</td></tr>
-    <tr><td><a href="#quest-monster">Quest Monster Marks</a></td><td><code>QuestMonster.ini</code></td><td><span class="badge client">Client</span></td><td>Quest markers above the monsters you still need to kill</td></tr>
-    <tr><td><a href="#box-stack">Box Stack</a></td><td><code>BoxStack.ini</code></td><td><span class="badge server">Server</span></td><td>Merges box contents into an existing inventory stack instead of using a new slot</td></tr>
-    <tr><td><a href="#chat-log">Chat Log</a></td><td><code>ChatLog.ini</code></td><td><span class="badge server">Server</span></td><td>Writes every in-game chat line to a log file for moderation</td></tr>
   </table>
+  <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
 </section>
 
 <section id="welcome-window">
@@ -71,6 +65,11 @@
       <span class="badge on">Hot-reload</span>
     </div>
   </div>
+
+  <figure class="shot">
+    <img src="assets/img/welcome-window.png" alt="The Welcome Window announcement panel shown in game over the RF Online interface">
+    <figcaption>The Welcome Window as players see it in game: the header, welcome intro, three paged announcement rows, the artwork panel on the right, the footer message and the website button.</figcaption>
+  </figure>
 
   <h3 id="ww-what">What it does &mdash; and why you would use it</h3>
   <p>The Welcome Window is an announcement panel that pops up <strong>once, when a player first enters the game world</strong>. Think of it as the "news board" every MMO shows on login: patch notes, event dates, server rules, a welcome message, and a button to your website.</p>
@@ -201,20 +200,6 @@ Text = Welcome to RF Online.\n\nPatch notes and event announcements go here.</co
   </ul>
 
   <div class="box info"><b>Note for server owners (deploy)</b>The template ships from <span class="path">deploy\Client\DataTable\en-ph\WelcomeWindow.ini</span> and is copied into a fresh client by <code>assemble_deploy.bat</code> &mdash; but only if the client does not already have one. This is deliberate: re-deploying never overwrites a live host's own patch notes. Delete the file from the client's <code>DataTable</code> folder to re-copy the template.</div>
-</section>
-
-<section id="others">
-  <h2><span class="num">&#8250;</span>Other modules</h2>
-  <p class="muted">These are activated exactly the same way &mdash; open the file in <span class="path">.Server\Zoneserver\RF_Bin\Modules\</span> and set <code>Enable = 1</code>. Full write-ups for each are coming soon.</p>
-
-  <h3 id="quest-monster">Quest Monster Marks &mdash; <code>QuestMonster.ini</code> <span class="badge client">Client</span></h3>
-  <p>Draws a marker above every live monster that is an unfinished kill target of one of the player's accepted quests, so players can spot quest targets in a crowd. The client works out which monsters to mark from the player's own quest journal, so no extra server traffic is involved and the marks always agree with the quest text. Set <code>Enable = 1</code> to turn it on.</p>
-
-  <h3 id="box-stack">Box Stack &mdash; <code>BoxStack.ini</code> <span class="badge server">Server</span></h3>
-  <p>When a player opens a box item (treasure box, crate, golden box and similar), a stackable result merges into an existing inventory stack of the same item if there is room, instead of always taking a brand-new slot. Opening a crate of potions or ore then fills the stack you already hold. It only merges into a matching, unlocked, non-timed stack that would not overflow the stack limit; picking items up off the ground is unchanged. Set <code>Enable = 1</code> to turn it on.</p>
-
-  <h3 id="chat-log">Chat Log &mdash; <code>ChatLog.ini</code> <span class="badge server">Server</span></h3>
-  <p>Appends every in-game player chat line to <span class="path">NetLog\ChatLog.log</span> beside the server. Each line is timestamped and tagged with its channel and the sender's character name; whispers also record the recipient. The file is appended to and never truncated, so you rotate or archive it yourself. Useful for moderation and dispute checks. Set <code>Enable = 1</code> to turn it on.</p>
 </section>
 
   </main>
