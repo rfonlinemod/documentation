@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Server &amp; Client &mdash; RF Online Setup</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="index.html">Home</a>
+    <a href="server-client.html" class="active">Server &amp; Client</a>
+    <a href="modules-features.html">Modules / Features</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Jump to section">
+    <b class="side-title">On this page</b>
+    <a href="#overview">What you are building</a>
+    <a href="#checklist">Checklist</a>
+    <a href="#step1">1. Folders</a>
+    <a href="#step2">2. Databases</a>
+    <a href="#step3">3. ODBC links</a>
+    <a href="#step4">4. Settings files</a>
+    <a href="#step5">5. License file</a>
+    <a href="#step6">6. Start servers</a>
+    <a href="#step7">7. First account</a>
+    <a href="#step8">8. Game client</a>
+    <a href="#trouble">Troubleshooting</a>
+    <a href="#glossary">Glossary</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Server &amp; Client</h1>
+    <p class="page-sub">A complete, no-programming setup tutorial: put the files in place, create the three databases, start the servers in order, and connect the game.</p>
+
+<section id="overview">
+  <h2><span class="num">&#9733;</span>What you are building</h2>
+  <p>An RF Online private server is <strong>three programs</strong> working together, plus a <strong>database</strong> (the filing cabinet where accounts, characters and cash shop data are stored), plus the <strong>game client</strong> (the game itself on the player's PC).</p>
+  <table>
+    <tr><th>Program</th><th>File you double-click</th><th>Job</th></tr>
+    <tr><td>Account Server</td><td><code>AccountServerSD.exe</code></td><td>Logins, accounts, passwords</td></tr>
+    <tr><td>Login Server</td><td><code>LoginServerSD.exe</code></td><td>Server list, billing / premium status</td></tr>
+    <tr><td>Zone (Game) Server</td><td><code>ZoneServer_Regular_1_0_x64.exe</code> (use <code>run.bat</code>)</td><td>The game world: maps, monsters, characters</td></tr>
+  </table>
+  <p>They must be started <strong>in that order</strong>, and all three talk to SQL Server databases named exactly:</p>
+  <pre><code>RF_User      &lt;- accounts and passwords
+RF_World     &lt;- characters, guilds, items, maps
+Billing      &lt;- cash shop and premium time</code></pre>
+  <p>This tutorial walks you through: putting the files in the right places &rarr; creating those three databases &rarr; starting the servers &rarr; connecting the game.</p>
+</section>
+
+<section id="checklist">
+  <h2><span class="num">&#10003;</span>Before you start &mdash; checklist</h2>
+  <ul class="checklist">
+    <li>A PC running <strong>Windows 10 or Windows 11, 64-bit</strong>. Everything below happens on this PC (players can connect from other PCs later).</li>
+    <li><strong>Microsoft SQL Server 2014 or newer</strong> installed. The free <em>Express</em> edition works fine. During its setup, choose <em>Mixed Mode</em> and remember the <code>sa</code> password you type.</li>
+    <li><strong>Microsoft Command Line Utilities for SQL Server</strong> (the <code>sqlcmd</code> tool). Free download from Microsoft &mdash; search "Microsoft Command Line Utilities for SQL Server". Install it with Next &rarr; Next &rarr; Finish.</li>
+    <li><strong>.NET Desktop Runtime 10 (x64)</strong> &mdash; free from Microsoft. Needed by the Account and Login servers.</li>
+    <li><strong>Visual C++ 2015&ndash;2022 Redistributable</strong>, both the <strong>x64</strong> and <strong>x86</strong> versions &mdash; free from Microsoft. Needed by the Zone server and the game client.</li>
+    <li>The <strong>server folder</strong> you received (it contains the <code>.AccountLogin</code>, <code>.Server</code> and <code>DB</code> folders described below).</li>
+    <li>The <strong>license file</strong> <code>ZoneServerSD.bin</code> from your server owner. Without it the Zone server refuses to start.</li>
+    <li>An <strong>internet connection</strong> while starting the Zone server (the license is checked against online time).</li>
+    <li>About <strong>30&ndash;45 minutes</strong> of quiet time.</li>
+  </ul>
+  <div class="box warn"><b>Installing something above?</b>Every installer listed is a normal Windows program: double-click the downloaded file, click <em>Next</em> until it finishes, click <em>Finish</em>. You never need to type commands for them.</div>
+</section>
+
+<section id="step1">
+  <h2><span class="num">1</span>Know your folders</h2>
+  <p>Your server folder looks like this. <strong>Do not rename or move anything</strong> &mdash; the programs find their settings by folder name.</p>
+  <div class="tree">YourServerFolder\
+&#9500;&#9472; .AccountLogin\RF_Bin\          &lt;- Account + Login servers live here
+&#9474;     &#9500;&#9472; AccountServerSD.exe        double-click #1
+&#9474;     &#9500;&#9472; LoginServerSD.exe          double-click #2
+&#9474;     &#9500;&#9472; AccountToolSD.exe          makes player accounts
+&#9474;     &#9500;&#9472; (many .dll files)          leave them alone
+&#9474;     &#9500;&#9472; Initialize\                its settings (AccountSystem.ini, LoginSystem.ini)
+&#9474;     &#9492;&#9472; Settings\                    legacy JSON - migrated into the .ini files once, then deleted (ignore it)
+&#9500;&#9472; DB\                              database tools (this tutorial uses them)
+&#9474;     &#9500;&#9472; install_server_databases.bat   &lt;- creates RF_User / RF_World / Billing
+&#9474;     &#9500;&#9472; setup_odbc.bat             &lt;- connects Zone server to the databases
+&#9474;     &#9500;&#9472; schema\                    the database blueprints (do not open)
+&#9474;     &#9492;&#9472; setup_panel_databases.bat  optional web-panel databases, skip for now
+&#9500;&#9472; .Server\Zoneserver\RF_Bin\       &lt;- Zone (game) server lives here
+&#9474;     &#9500;&#9472; ZoneServer_Regular_1_0_x64.exe   the game world program
+&#9474;     &#9500;&#9472; ZoneServerSD.bin           YOUR LICENSE FILE - must stay in this folder
+&#9474;     &#9500;&#9472; run.bat                    double-click #3 (starts the Zone server)
+&#9474;     &#9500;&#9472; Initialize\                its settings (.ini files)
+&#9474;     &#9492;&#9472; Modules\                   game rules (.ini files)
+&#9500;&#9472; .Server\Zoneserver\WorldInfo\    server name + listen ports
+&#9474;     &#9492;&#9472; WorldInfo.ini              Notepad file (explained in step 4.3)
+&#9492;&#9472; .Client\                         the game client (give this folder to players)</div>
+  <p class="muted">In an assembled ready-to-run tree the same <code>DB</code> folder also appears as <code>.AccountLogin\DB\</code> &mdash; identical contents, use whichever exists.</p>
+  <div class="box stop"><b>The license rule</b><code>ZoneServerSD.bin</code> must sit in the <strong>same folder</strong> as <code>ZoneServer_Regular_1_0_x64.exe</code>. If you move or delete it, the server shows a rejection popup and stops.</div>
+</section>
+
+<section id="step2">
+  <h2><span class="num">2</span>Create the three databases</h2>
+  <p>The databases <code>RF_User</code>, <code>RF_World</code> and <code>Billing</code> do not exist yet &mdash; you create them once with a ready-made script. No typing of database commands needed.</p>
+  <h3>Option A &mdash; the installer script (recommended)</h3>
+  <ol>
+    <li>Open the <code>DB</code> folder.</li>
+    <li><strong>Double-click</strong> <code>install_server_databases.bat</code>. A black window opens.</li>
+    <li>It asks <em>SQL Server name</em>. If SQL Server is on this same PC, just press <strong>Enter</strong>. (Otherwise type the other PC's name.)</li>
+    <li>It asks <em>1 or 2</em>. Type <code>1</code> and Enter to use Windows Authentication (no password). Type <code>2</code> and Enter if you prefer the <code>sa</code> login, then type the sa password you chose when installing SQL Server.</li>
+    <li>Wait. <code>RF_World</code> is large &mdash; a few minutes is normal. You will see one line per database: <code>OK: RF_User created.</code> etc.</li>
+    <li>When it says <em>Finished</em>, press any key to close the window.</li>
+  </ol>
+  <div class="box ok"><b>Safe to re-run</b>If a database already exists the script prints <code>already exists - skipped</code> and leaves your data untouched. A full report is always saved next to the script as <code>install_server_databases_log.txt</code>.</div>
+  <div class="box warn"><b>If it says "sqlcmd was not found"</b>You skipped the "Command Line Utilities" item in the checklist. Install it, then run the script again.</div>
+  <h3>Option B &mdash; the built-in wizard (if Option A is not available)</h3>
+  <ol>
+    <li>Double-click <code>AccountServerSD.exe</code>, open its <em>Setup</em> menu.</li>
+    <li>Page 1: choose <em>SQL Server</em>, point it at your SQL Server, press <em>Install New DB</em> &rarr; creates <code>RF_User</code>.</li>
+    <li>Page 2: register your first world and install its database &rarr; creates <code>RF_World</code>. Keep the world database name exactly <code>RF_World</code>.</li>
+    <li>Page 3: the <em>Security Seed</em>. Press the generate button and <strong>never change it again</strong> &mdash; accounts are locked to it.</li>
+    <li>Then open <code>LoginServerSD.exe</code> &rarr; its Setup installs the <code>Billing</code> database.</li>
+  </ol>
+</section>
+
+<section id="step3">
+  <h2><span class="num">3</span>Connect the Zone server to the databases (ODBC)</h2>
+  <p>The Zone server reaches the databases through "ODBC shortcuts" called <strong>DSNs</strong>. Think of a DSN as a saved bookmark: a name the server knows (&ldquo;BILLING&rdquo;, &ldquo;RF_WORLD_AoP&rdquo;) pointing at the real database (<code>Billing</code>, <code>RF_World</code>).</p>
+  <ol>
+    <li>Open the <code>DB</code> folder.</li>
+    <li><strong>Right-click</strong> <code>setup_odbc.bat</code> &rarr; <em>Run as administrator</em> &rarr; click <em>Yes</em> in the Windows popup.</li>
+    <li>It prints the three bookmarks it created and says <em>Done</em>. Press any key.</li>
+  </ol>
+  <div class="box warn"><b>Must be administrator</b>A normal double-click is not enough for this one file &mdash; Windows only lets administrators create system DSNs.</div>
+</section>
+
+<section id="step4">
+  <h2><span class="num">4</span>Check the settings files (Notepad only)</h2>
+  <p>You will open a few files in Notepad: <strong>right-click the file &rarr; Open with &rarr; Notepad</strong>. Change only what is listed, then <em>File &rarr; Save</em>. Files 4.1 and 4.2 are the only ones you <strong>must</strong> check; 4.3&ndash;4.5 matter only when a server or the database lives on another PC.</p>
+  <h3>4.1 <span class="path">.Server\Zoneserver\RF_Bin\Initialize\settings.ini</span></h3>
+  <pre><code>[System]
+installed=1
+autostart=1
+
+[WorldDB]
+trusted_connection=1
+ID=sa
+PWD=
+
+[Billing]
+IP=(local)
+trusted_connection=1
+DB=Billing
+ID=sa
+PWD=</code></pre>
+  <ul>
+    <li><code>trusted_connection=1</code> means "use Windows login, no password". Keep it <code>1</code> if SQL Server is on this PC and you installed it with your Windows account.</li>
+    <li>If you prefer the <code>sa</code> login instead: set <code>trusted_connection=0</code> and fill <code>ID=sa</code> and <code>PWD=yourSaPassword</code> in <strong>both</strong> blocks. In the <code>[Billing]</code> block also keep <code>IP=(local)</code> (or the SQL Server PC's name) and <code>DB=Billing</code>.</li>
+  </ul>
+  <h3>4.2 <span class="path">.Server\Zoneserver\RF_Bin\Initialize\WorldSystem.ini</span></h3>
+  <ul>
+    <li>Find the line <code>AccountAddress</code> under <code>[System]</code>.</li>
+    <li>If the Account server runs on this same PC: <code>AccountAddress = 127.0.0.1</code>.</li>
+    <li>If the Account server runs on another PC: type that PC's IP address, e.g. <code>AccountAddress = 192.168.1.50</code>.</li>
+  </ul>
+  <h3>4.3 <span class="path">.Server\Zoneserver\WorldInfo\WorldInfo.ini</span></h3>
+  <ul>
+    <li><code>WorldName</code> under <code>[System]</code> is the name players see in their world list. Change it only if you want a different server name &mdash; it must never be empty or the Zone server refuses to start.</li>
+    <li>The port lines (<code>AccountPort</code>, <code>GatePort</code>, <code>WebPort</code>, <code>BillingPort</code>) are correct as shipped. <strong>Do not edit them</strong> unless you truly need to move a port: a wrong number stops the server at startup with a popup naming the bad line.</li>
+    <li><code>NationCode = PH</code> picks the English item-name column. Leave it <code>PH</code>; it does not change billing or region.</li>
+  </ul>
+  <h3>4.4 <span class="path">.AccountLogin\RF_Bin\Initialize\AccountSystem.ini</span></h3>
+  <pre><code>[Database]
+TrustedConnection=true
+AccountDB_Machine=(local)
+AccountDB_Name=RF_User
+
+[World]
+WorldSet_Num=1
+Name0=RF ONLINE
+DBName0=RF_World
+
+[Listener]
+LoginPort=27000
+WorldPort=29000
+ControlPort=28000</code></pre>
+  <ul>
+    <li>If SQL Server is on this PC with Windows login: keep <code>TrustedConnection=true</code>. For the <code>sa</code> login instead: set <code>TrustedConnection=false</code> and fill <code>AccountDB_User</code> / <code>AccountDB_Password</code>.</li>
+    <li>If SQL Server is on another PC: set <code>AccountDB_Machine=thatPCname</code> (and do the same in 4.5).</li>
+    <li><code>Argon2Salt</code> under <code>[System]</code> is the password lock. <strong>Never change it once players exist</strong>, and keep it identical to the one in LoginSystem.ini (4.5).</li>
+    <li>The <code>[Listener]</code> ports (27000 / 29000 / 28000) are correct &mdash; leave them.</li>
+  </ul>
+  <h3>4.5 <span class="path">.AccountLogin\RF_Bin\Initialize\LoginSystem.ini</span></h3>
+  <pre><code>[Account]
+AccountAddress=127.0.0.1
+AccountPort=27000
+
+[Network]
+ClientPort=10001
+
+[BILLING]
+TrustedConnection=true
+Database=Billing</code></pre>
+  <ul>
+    <li><code>AccountAddress</code> is where the <em>Account</em> server lives: <code>127.0.0.1</code> when both run on this PC, otherwise that PC's IP. <code>AccountPort</code> must match 4.4's <code>LoginPort</code> (27000).</li>
+    <li><code>ClientPort=10001</code> is the port players connect to &mdash; leave it.</li>
+    <li>The billing database lines follow the same trusted/sa rule as 4.4.</li>
+    <li><code>Argon2Salt</code> under <code>[System]</code> must be the same value as in AccountSystem.ini.</li>
+  </ul>
+  <p class="muted">Everything else in these files (rates, events, nation = PH) is already pre-set for you. The Account/Login servers create the two .ini files above with correct defaults on first run &mdash; you only open them when the database or a server lives on another PC. Old <code>Settings\appsettings.*.json</code> files, if you ever see them, are a retired format: the servers copy them into the .ini once and delete them.</p>
+</section>
+
+<section id="step5">
+  <h2><span class="num">5</span>The license file (why the server may refuse to start)</h2>
+  <p>The Zone server only runs with a valid license file, <code>ZoneServerSD.bin</code>, sitting next to its .exe (see the red rule in step 1). When you press <em>Start</em>:</p>
+  <ol>
+    <li>The loading screen shows <strong>&ldquo;License is loading.. 15 s&rdquo;</strong> with a countdown &mdash; it is really checking the file against online Singapore time.</li>
+    <li>Then <strong>&ldquo;License is accepted.. 15 s&rdquo;</strong> with a countdown.</li>
+    <li>Only after both finish does the game world begin loading.</li>
+  </ol>
+  <p>Two places show your license length, read straight from the file (for example a 1-year license shows <code>365 days</code>):</p>
+  <ul>
+    <li>The loading screen's top bar: <code>... | License: 365 days | ...</code></li>
+    <li>The main window's bottom-right corner: <code>License: 365 days</code></li>
+  </ul>
+  <div class="box stop"><b>If a popup appears instead</b>It means the license was rejected: the file is missing, expired, edited, or the PC had no internet during the check. Fix = get a fresh <code>ZoneServerSD.bin</code> from your server owner, put it next to the .exe, make sure the internet works, try again.</div>
+</section>
+
+<section id="step6">
+  <h2><span class="num">6</span>Start the servers (always in this order)</h2>
+  <ol>
+    <li><strong>Double-click</strong> <code>.AccountLogin\RF_Bin\AccountServerSD.exe</code>. A window opens; leave it open.</li>
+    <li><strong>Double-click</strong> <code>.AccountLogin\RF_Bin\LoginServerSD.exe</code>. Leave it open.</li>
+    <li><strong>Double-click</strong> <code>.Server\Zoneserver\RF_Bin\run.bat</code>. The Zone server window opens with a <em>Start</em> button.</li>
+    <li>Click <em>Start</em>. Watch the loading screen: license loading 15 s &rarr; license accepted 15 s &rarr; the world loads. When the button disappears and the status bar at the bottom fills with numbers, the server is up.</li>
+  </ol>
+  <div class="box ok"><b>Healthy signs</b>Bottom bar shows <code>M:</code> a number around 20000+, <code>OPN: 1 - 1</code>, and your license at the far right. The window title ends with <code>[Started]</code>.</div>
+  <div class="box warn"><b>Stopping the server</b>Use the <em>Server Close</em> button in the Zone server window, then close the other two windows. Never just pull the plug on a running server &mdash; characters are saved on close.</div>
+</section>
+
+<section id="step7">
+  <h2><span class="num">7</span>Create your first player account</h2>
+  <ol>
+    <li>Double-click <code>.AccountLogin\RF_Bin\AccountToolSD.exe</code>.</li>
+    <li>Use its register/create form: type a login ID and password, confirm, save.</li>
+    <li>That account can now log in from the game client.</li>
+  </ol>
+  <p class="muted">Make player accounts here (or in the Account server's own tools), not by editing the database by hand.</p>
+</section>
+
+<section id="step8">
+  <h2><span class="num">8</span>Connect the game client</h2>
+  <ul>
+    <li><strong>Playing on the server PC itself:</strong> open the <code>.Client</code> folder and double-click <code>Launcher.exe</code>, then press Play/Start in the launcher. It launches the game and connects to 127.0.0.1 automatically.</li>
+    <li><strong>Playing from another PC:</strong> copy the whole <code>.Client</code> folder to that PC, install the <strong>x86</strong> Visual C++ 2015&ndash;2022 Redistributable there, and set the server's IP inside the launcher settings file (<code>System\XRFL\RFLSettings.bin</code> is produced from <code>RFLSettings.ini</code> by <code>RFLConfigConverter.exe</code> &mdash; ask your server owner for the prepared client if you are not the owner).</li>
+    <li>Log in with the account from step 7, create a character, enter the world.</li>
+  </ul>
+</section>
+
+<section id="trouble">
+  <h2><span class="num">!</span>Troubleshooting</h2>
+  <table>
+    <tr><th>What you see</th><th>What it means</th><th>Fix</th></tr>
+    <tr><td>Installer window: "sqlcmd was not found"</td><td>Command Line Utilities not installed</td><td>Install them (checklist), run the installer again</td></tr>
+    <tr><td>Installer: "FAILED: RF_World"</td><td>SQL Server not reachable or wrong login</td><td>Check SQL Server service is running; re-run with choice 2 and the correct sa password; read <code>install_server_databases_log.txt</code></td></tr>
+    <tr><td>Zone server popup: license rejected</td><td>Missing / expired / edited <code>ZoneServerSD.bin</code>, or no internet</td><td>Fresh license file next to the .exe; connect the internet; retry</td></tr>
+    <tr><td>Zone server: database connection error after Start</td><td>ODBC bookmarks missing or databases not created</td><td>Run step 3 (as administrator) and step 2 again</td></tr>
+    <tr><td>Window closes the instant you double-click an .exe</td><td>Missing .NET Desktop Runtime 10 or VC++ Redistributable</td><td>Install both from the checklist, retry</td></tr>
+    <tr><td>Client: cannot reach server / login fails</td><td>Servers not started in order, or wrong IP in client</td><td>Restart in the order of step 6; check <code>AccountAddress</code> and the client's server IP</td></tr>
+    <tr><td>"The program can't start because msvcp140.dll / vcruntime140.dll is missing"</td><td>VC++ Redistributable missing (x64 for server, x86 for client)</td><td>Install the redistributables from the checklist</td></tr>
+    <tr><td>Forgot what happened during install</td><td>&mdash;</td><td>Open <code>DB\install_server_databases_log.txt</code></td></tr>
+  </table>
+</section>
+
+<section id="glossary">
+  <h2><span class="num">?</span>Tiny glossary</h2>
+  <table>
+    <tr><th>Word</th><th>Plain meaning</th></tr>
+    <tr><td>Database</td><td>A filing cabinet of tables where the server stores accounts, characters, items</td></tr>
+    <tr><td>SQL Server</td><td>Microsoft's program that holds those filing cabinets</td></tr>
+    <tr><td><code>sa</code></td><td>The master login of SQL Server, chosen during its installation</td></tr>
+    <tr><td>DSN / ODBC</td><td>A saved bookmark name that lets a program find a database</td></tr>
+    <tr><td><code>127.0.0.1</code></td><td>"This same computer"</td></tr>
+    <tr><td>Port (10001, 27000)</td><td>Door numbers the login/account servers listen on; defaults are already correct</td></tr>
+    <tr><td><code>ZoneServerSD.bin</code></td><td>The signed license file that allows the Zone server to run</td></tr>
+  </table>
+</section>
+
+    <div class="box info"><b>Looking for the optional in-game features?</b>The Welcome Window, quest markers and other toggles are documented on the <a href="modules-features.html">Modules / Features</a> page.</div>
+  </main>
+</div>
+
+<footer>
+  RF Online private server &mdash; Server &amp; Client setup. Companion files: <code>DB\install_server_databases.bat</code>, <code>DB\setup_odbc.bat</code>, <code>DB\README_DATABASES.md</code> (advanced reference).
+</footer>
+</body>
+</html>

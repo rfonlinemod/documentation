@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modules / Features &mdash; RF Online</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="index.html">Home</a>
+    <a href="server-client.html">Server &amp; Client</a>
+    <a href="modules-features.html" class="active">Modules / Features</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Modules">
+    <b class="side-title">Modules</b>
+    <a href="#overview">How modules work</a>
+    <a href="#welcome-window">Welcome Window</a>
+    <a class="sub" href="#ww-what">What it does</a>
+    <a class="sub" href="#ww-activate">Activate it</a>
+    <a class="sub" href="#ww-content">Write the content</a>
+    <a class="sub" href="#ww-artwork">Optional artwork</a>
+    <a href="#others">Other modules</a>
+    <a class="sub" href="#quest-monster">Quest Monster Marks</a>
+    <a class="sub" href="#box-stack">Box Stack</a>
+    <a class="sub" href="#chat-log">Chat Log</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Modules / Features</h1>
+    <p class="page-sub">Optional gameplay and interface features that ship switched <strong>off</strong>. Each one is turned on by editing a single line in a small text file &mdash; no programming, no recompiling.</p>
+
+<section id="overview">
+  <h2><span class="num">&#9881;</span>How modules work</h2>
+  <p>Every module is a small <code>.ini</code> file in the Zone server's <span class="path">.Server\Zoneserver\RF_Bin\Modules\</span> folder. They all behave the same way:</p>
+  <ul>
+    <li><strong>One switch.</strong> Each file has a <code>[General]</code> section with an <code>Enable</code> key. <code>Enable = 0</code> is off, <code>Enable = 1</code> is on.</li>
+    <li><strong>Off by default.</strong> They all ship at <code>Enable = 0</code>, so nothing changes until you deliberately turn one on.</li>
+    <li><strong>Required at boot.</strong> Do not delete these files &mdash; a missing module file stops the Zone server from starting.</li>
+    <li><strong>Hot-reloaded.</strong> Edit and save the file while the server is running and it picks up the change live. No restart needed.</li>
+    <li><strong>Edit with Notepad.</strong> Right-click the file &rarr; <em>Open with</em> &rarr; <em>Notepad</em>, change the number, <em>File &rarr; Save</em>.</li>
+  </ul>
+  <p>There are two kinds of module:</p>
+  <ul>
+    <li><span class="badge server">Server</span> &mdash; changes something the server does. The player's game client is not told about it.</li>
+    <li><span class="badge client">Client</span> &mdash; changes something the player <em>sees</em>. The server pushes the on/off state to every client when a player enters the world (and after each live reload), so the game client turns its matching half on or off automatically.</li>
+  </ul>
+  <table>
+    <tr><th>Module</th><th>Config file (in <code>Modules\</code>)</th><th>Type</th><th>What it does</th></tr>
+    <tr><td><a href="#welcome-window">Welcome Window</a></td><td><code>WelcomeWindow.ini</code></td><td><span class="badge client">Client</span></td><td>Announcement window shown once when a player enters the game</td></tr>
+    <tr><td><a href="#quest-monster">Quest Monster Marks</a></td><td><code>QuestMonster.ini</code></td><td><span class="badge client">Client</span></td><td>Quest markers above the monsters you still need to kill</td></tr>
+    <tr><td><a href="#box-stack">Box Stack</a></td><td><code>BoxStack.ini</code></td><td><span class="badge server">Server</span></td><td>Merges box contents into an existing inventory stack instead of using a new slot</td></tr>
+    <tr><td><a href="#chat-log">Chat Log</a></td><td><code>ChatLog.ini</code></td><td><span class="badge server">Server</span></td><td>Writes every in-game chat line to a log file for moderation</td></tr>
+  </table>
+</section>
+
+<section id="welcome-window">
+  <div class="doc-head">
+    <h2>Welcome Window</h2>
+    <div class="badges">
+      <span class="badge client">Client-visible</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="ww-what">What it does &mdash; and why you would use it</h3>
+  <p>The Welcome Window is an announcement panel that pops up <strong>once, when a player first enters the game world</strong>. Think of it as the "news board" every MMO shows on login: patch notes, event dates, server rules, a welcome message, and a button to your website.</p>
+  <p>Use it to:</p>
+  <ul>
+    <li>Greet players and set the tone for your server.</li>
+    <li>Announce the latest patch, event, or maintenance window without posting somewhere players will not look.</li>
+    <li>Point players at your website, Discord, or donation page with one click.</li>
+  </ul>
+  <p>The feature has <strong>two halves</strong> that work together:</p>
+  <table>
+    <tr><th>Half</th><th>File</th><th>Its job</th></tr>
+    <tr><td>Server switch</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\WelcomeWindow.ini</span></td><td>Decides <strong>whether</strong> the window opens at all. One <code>Enable</code> key.</td></tr>
+    <tr><td>Client content</td><td><span class="path">.Client\DataTable\&lt;language&gt;\WelcomeWindow.ini</span></td><td>Decides <strong>what is inside</strong> the window: the text, announcements, footer and website button.</td></tr>
+  </table>
+  <div class="box info"><b>The server holds no text</b>The Zone server only tells the client <em>whether</em> to open the window. All of the wording lives in the client file, so you can rewrite your announcements any time without touching the server.</div>
+  <p>The window appears <strong>once per play session</strong>. If you later flip the switch on the server, players already in the world are not interrupted with a second popup &mdash; they see it on their next entry.</p>
+
+  <h3 id="ww-activate">How to activate it</h3>
+  <ol class="steps">
+    <li>
+      <strong>Turn the feature on (server).</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\WelcomeWindow.ini</span> in Notepad and change the <code>Enable</code> line under <code>[General]</code>:
+      <pre><code>[General]
+Enable = 1</code></pre>
+      Save the file. A running Zone server reloads it immediately and pushes the new state to clients; if the server is not running yet it simply starts with the feature on.
+    </li>
+    <li>
+      <strong>Write the message players will see (client).</strong> Open <span class="path">.Client\DataTable\en-ph\WelcomeWindow.ini</span> (the <code>en-ph</code> folder is the English language table) and edit the sections described below. Save it. See <a href="#ww-content">Write the content</a>.
+    </li>
+    <li>
+      <strong>(Optional) Add artwork.</strong> Drop a <code>welcome.spr</code> image into the client to show a banner beside the announcements. See <a href="#ww-artwork">Optional artwork</a>.
+    </li>
+    <li>
+      <strong>Test it.</strong> Start the servers, launch the client, log in and enter the world &mdash; the window appears. To see edits you made to the text, close and reopen the game client (it reads the file on entry).
+    </li>
+  </ol>
+  <div class="box warn"><b>Both halves are required</b>With <code>Enable = 0</code> the window never opens, no matter what the client file says. With <code>Enable = 1</code> but an untouched client file, the window opens showing the shipped sample text. Set the server switch <em>and</em> author the client file.</div>
+
+  <h3 id="ww-content">How to write the content (client file)</h3>
+  <p>Open <span class="path">.Client\DataTable\en-ph\WelcomeWindow.ini</span>. The client auto-detects <strong>two formats</strong> &mdash; use whichever suits you. You never need to touch the game's code.</p>
+
+  <h4>Format 1 &mdash; the redesigned announcement panel (recommended)</h4>
+  <p>This is used as soon as the file contains any of the modern keys below. It opens a purpose-built panel with a header, a welcome intro, up to <strong>8 announcements</strong> (3 visible at a time, with paging arrows), a footer line and an optional website button.</p>
+  <pre><code>[Header]
+Title = WELCOME TO RF ONLINE
+
+[Welcome]
+Title = WELCOME, WARRIOR.
+Description = Stay informed about the latest updates, patches, and events.
+
+[Announcement1]
+Title = Server Grand Opening
+Description = Join us this weekend for double EXP and boss spawns.
+Date = 2026-09-15
+Enabled = 1
+URL = https://example.com/news/1
+
+[Announcement2]
+Title = Patch 1.2 Notes
+Description = New dungeon, bug fixes and balance changes.
+Date = 2026-09-10
+Enabled = 1
+
+[Footer]
+Message = Thanks for playing on our server!
+
+[Website]
+Enabled = 1
+URL = https://example.com
+Label = VISIT WEBSITE</code></pre>
+  <p>Every key is optional and falls back to a safe default. Here is what each one controls:</p>
+  <table>
+    <tr><th>Section &amp; key</th><th>What it does</th></tr>
+    <tr><td><code>[Header] Title</code></td><td>The large heading across the top of the panel.</td></tr>
+    <tr><td><code>[Welcome] Title</code></td><td>The intro headline under the header.</td></tr>
+    <tr><td><code>[Welcome] Description</code></td><td>A one- or two-line intro sentence.</td></tr>
+    <tr><td><code>[Announcement1..8] Title</code></td><td>Announcement headline. An empty title skips that row.</td></tr>
+    <tr><td><code>[AnnouncementN] Description</code></td><td>The announcement body (first two lines are shown per row).</td></tr>
+    <tr><td><code>[AnnouncementN] Date</code></td><td>A short date/label shown on the row. Free text &mdash; type whatever you like.</td></tr>
+    <tr><td><code>[AnnouncementN] Enabled</code></td><td><code>1</code> shows the row, <code>0</code> hides it. Hidden rows are skipped and the rest renumber automatically.</td></tr>
+    <tr><td><code>[AnnouncementN] URL</code></td><td>Optional. Clicking the row opens this web address (<code>http://</code> or <code>https://</code> only). If omitted, the row uses the <code>[Website] URL</code> when that is enabled.</td></tr>
+    <tr><td><code>[Footer] Message</code></td><td>A small line along the bottom of the panel.</td></tr>
+    <tr><td><code>[Website] Enabled</code></td><td><code>1</code> shows the website button, <code>0</code> hides it.</td></tr>
+    <tr><td><code>[Website] URL</code></td><td>Where the button goes (<code>http://</code> or <code>https://</code> only; it opens in the player's normal browser).</td></tr>
+    <tr><td><code>[Website] Label</code></td><td>The text on the button, e.g. <code>VISIT WEBSITE</code>.</td></tr>
+  </table>
+
+  <h4>Format 2 &mdash; the legacy message box</h4>
+  <p>If none of the modern keys are present, the client falls back to the classic scrollable message box driven by a single <code>[General] Text</code> line. Handy for a quick one-paragraph notice.</p>
+  <pre><code>[General]
+Text = Welcome to RF Online.\n\nPatch notes and event announcements go here.</code></pre>
+
+  <h4>Authoring rules (both formats)</h4>
+  <ul>
+    <li><strong>One line per value.</strong> A real line break ends the value. To break a line <em>inside</em> the window, type the two characters <code>\n</code> (backslash-n); the window turns it into a line break.</li>
+    <li><strong>No <code>;</code> inside a value.</strong> A semicolon starts a comment in these files and will cut your text short.</li>
+    <li><strong>Keep it short.</strong> Titles are capped at 128 characters, descriptions and the footer at 256; longer text is truncated, and text wider than its panel is clipped with <code>...</code>.</li>
+    <li><strong>Web addresses</strong> must start with <code>http://</code> or <code>https://</code>. Anything else is ignored.</li>
+    <li>Lines starting with <code>;</code> are comments &mdash; the shipped file is full of helpful notes you can leave in place.</li>
+  </ul>
+  <div class="box ok"><b>Editing live content</b>The client reads this file when a player enters the world, so you can update your announcements at any time &mdash; players see the new text the next time they log in. No server change and no rebuild required.</div>
+
+  <h3 id="ww-artwork">Optional artwork</h3>
+  <p>You can show a banner image in a panel to the right of the announcements. It is completely optional &mdash; without it the announcement rows simply use the full width.</p>
+  <ul>
+    <li>The image is a sprite file named <code>welcome.spr</code>. The client looks for it first in <span class="path">.Client\SpriteImage\&lt;language&gt;\</span> (for example <code>en-ph</code>), then in <span class="path">.Client\SpriteImage\common\</span>.</li>
+    <li>It is packed from a normal PNG using the helper script <code>_tools\spr_pack.py</code>:</li>
+  </ul>
+  <pre><code>python _tools\spr_pack.py YourImage.png .Client\SpriteImage\common\welcome.spr --width 256 --height 256</code></pre>
+  <ul>
+    <li>Use a power-of-two size (128, 256 or 512) for best results. Non-square art also works &mdash; the window scales it to fit.</li>
+    <li>No rebuild is needed: the image is loaded when the client starts, so just restart the game client after replacing it.</li>
+    <li>To remove the artwork, delete or rename <code>welcome.spr</code>; the window falls back to full-width rows.</li>
+  </ul>
+
+  <div class="box info"><b>Note for server owners (deploy)</b>The template ships from <span class="path">deploy\Client\DataTable\en-ph\WelcomeWindow.ini</span> and is copied into a fresh client by <code>assemble_deploy.bat</code> &mdash; but only if the client does not already have one. This is deliberate: re-deploying never overwrites a live host's own patch notes. Delete the file from the client's <code>DataTable</code> folder to re-copy the template.</div>
+</section>
+
+<section id="others">
+  <h2><span class="num">&#8250;</span>Other modules</h2>
+  <p class="muted">These are activated exactly the same way &mdash; open the file in <span class="path">.Server\Zoneserver\RF_Bin\Modules\</span> and set <code>Enable = 1</code>. Full write-ups for each are coming soon.</p>
+
+  <h3 id="quest-monster">Quest Monster Marks &mdash; <code>QuestMonster.ini</code> <span class="badge client">Client</span></h3>
+  <p>Draws a marker above every live monster that is an unfinished kill target of one of the player's accepted quests, so players can spot quest targets in a crowd. The client works out which monsters to mark from the player's own quest journal, so no extra server traffic is involved and the marks always agree with the quest text. Set <code>Enable = 1</code> to turn it on.</p>
+
+  <h3 id="box-stack">Box Stack &mdash; <code>BoxStack.ini</code> <span class="badge server">Server</span></h3>
+  <p>When a player opens a box item (treasure box, crate, golden box and similar), a stackable result merges into an existing inventory stack of the same item if there is room, instead of always taking a brand-new slot. Opening a crate of potions or ore then fills the stack you already hold. It only merges into a matching, unlocked, non-timed stack that would not overflow the stack limit; picking items up off the ground is unchanged. Set <code>Enable = 1</code> to turn it on.</p>
+
+  <h3 id="chat-log">Chat Log &mdash; <code>ChatLog.ini</code> <span class="badge server">Server</span></h3>
+  <p>Appends every in-game player chat line to <span class="path">NetLog\ChatLog.log</span> beside the server. Each line is timestamped and tagged with its channel and the sender's character name; whispers also record the recipient. The file is appended to and never truncated, so you rotate or archive it yourself. Useful for moderation and dispute checks. Set <code>Enable = 1</code> to turn it on.</p>
+</section>
+
+  </main>
+</div>
+
+<footer>
+  RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
+</footer>
+</body>
+</html>
