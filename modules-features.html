@@ -177,11 +177,25 @@ Text = Welcome to RF Online.\n\nPatch notes and event announcements go here.</co
   <p>You can show a banner image in a panel to the right of the announcements. It is completely optional &mdash; without it the announcement rows simply use the full width.</p>
   <ul>
     <li>The image is a sprite file named <code>welcome.spr</code>. The client looks for it first in <span class="path">.Client\SpriteImage\&lt;language&gt;\</span> (for example <code>en-ph</code>), then in <span class="path">.Client\SpriteImage\common\</span>.</li>
-    <li>It is packed from a normal PNG using the helper script <code>_tools\spr_pack.py</code>:</li>
+    <li>You make it with <code>spr2png.exe</code> (in the <code>_tools\</code> folder), a tiny drag-and-drop converter that turns a normal PNG into a <code>.spr</code> &mdash; and back again. No commands, no Python, nothing to install.</li>
   </ul>
-  <pre><code>python _tools\spr_pack.py YourImage.png .Client\SpriteImage\common\welcome.spr --width 256 --height 256</code></pre>
+  <h4>Make new artwork</h4>
+  <ol class="steps">
+    <li>Save your banner as a PNG named <code>welcome.png</code>. A power-of-two size such as 256&times;256 works best.</li>
+    <li><strong>Drag <code>welcome.png</code> onto <code>spr2png.exe</code>.</strong> A black window flashes and writes <code>welcome.spr</code> in the same folder as your PNG.</li>
+    <li>Copy that <code>welcome.spr</code> into <span class="path">.Client\SpriteImage\common\</span> (or your <code>&lt;language&gt;</code> folder), then restart the game client to see it.</li>
+  </ol>
+  <h4>Edit artwork you already have</h4>
+  <ol class="steps">
+    <li>Drag the existing <code>welcome.spr</code> onto <code>spr2png.exe</code>. It writes an editable <code>welcome.png</code> beside it.</li>
+    <li>Open that PNG in any image editor, change it, save it.</li>
+    <li>Drag the edited PNG back onto <code>spr2png.exe</code>. It rewrites <code>welcome.spr</code> and keeps your old one as <code>welcome.spr.bak</code> in case you want to undo.</li>
+  </ol>
+  <pre><code>spr2png.exe &lt;file.spr|file.png&gt; ...
+  drop a .spr -&gt; &lt;name&gt;.png   (multi-frame: &lt;name&gt;_a#_f#.png per frame)
+  drop a .png -&gt; &lt;name&gt;.spr   (previous .spr kept as .spr.bak)</code></pre>
   <ul>
-    <li>Use a power-of-two size (128, 256 or 512) for best results. Non-square art also works &mdash; the window scales it to fit.</li>
+    <li>Use a power-of-two size (128, 256 or 512) for best results &mdash; the tool only prints a warning otherwise. Non-square art also works; the window scales it to fit.</li>
     <li>No rebuild is needed: the image is loaded when the client starts, so just restart the game client after replacing it.</li>
     <li>To remove the artwork, delete or rename <code>welcome.spr</code>; the window falls back to full-width rows.</li>
   </ul>
