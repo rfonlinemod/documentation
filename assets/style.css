@@ -7,6 +7,10 @@
   --card-2: #18202f;
   --accent: #5b9dff;
   --accent-soft: #1b2a44;
+  --module: #ffd479;
+  --module-bg: #2a2313;
+  --module-line: #6b5a2e;
+  --module-ink: #20180a;
   --warn-bg: #2d2210;
   --warn-line: #c08a33;
   --ok-bg: #10281b;
@@ -286,6 +290,31 @@ td code { white-space: nowrap; }
   align-items: center;
   justify-content: center;
 }
+
+/* ---------- module names (highlighted, bold, distinct colour) ---------- */
+.sidebar a:not(.sub) {
+  font-weight: 700;
+  color: var(--module);
+  background: var(--module-bg);
+  border-color: var(--module-line);
+}
+.sidebar a:not(.sub):hover {
+  background: var(--module);
+  border-color: var(--module);
+  color: var(--module-ink);
+}
+.doc-head { border-left-color: var(--module); }
+.doc-head h2 { color: var(--module); font-weight: 800; }
+table td a {
+  color: var(--module);
+  font-weight: 700;
+  text-decoration: none;
+  background: var(--module-bg);
+  border: 1px solid var(--module-line);
+  border-radius: 5px;
+  padding: 1px 7px;
+}
+table td a:hover { background: var(--module); border-color: var(--module); color: var(--module-ink); }
 
 /* ---------- home hero + cards ---------- */
 .hero {

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Modules / Features &mdash; RF Online</title>
-<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/style.css?v=2">
 </head>
 <body>
 <header class="site-header">
@@ -32,6 +32,10 @@
     <a class="sub" href="#qm-what">What it does</a>
     <a class="sub" href="#qm-activate">Activate it</a>
     <a class="sub" href="#qm-rules">What gets marked</a>
+    <a href="#chat-log">Chat Log</a>
+    <a class="sub" href="#cl-what">What it does</a>
+    <a class="sub" href="#cl-activate">Activate it</a>
+    <a class="sub" href="#cl-format">The log file</a>
   </nav>
 
   <main class="content">
@@ -57,6 +61,7 @@
     <tr><th>Module</th><th>Config file (in <code>Modules\</code>)</th><th>Type</th><th>What it does</th></tr>
     <tr><td><a href="#welcome-window">Welcome Window</a></td><td><code>WelcomeWindow.ini</code></td><td><span class="badge client">Client</span></td><td>Announcement window shown once when a player enters the game</td></tr>
     <tr><td><a href="#quest-monster">Quest Monster Marks</a></td><td><code>QuestMonster.ini</code></td><td><span class="badge client">Client</span></td><td>Yellow markers above the monsters a player still needs to kill for a quest</td></tr>
+    <tr><td><a href="#chat-log">Chat Log</a></td><td><code>ChatLog.ini</code></td><td><span class="badge server">Server</span></td><td>Writes every in-game chat line to a log file for moderation and audit</td></tr>
   </table>
   <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
 </section>
@@ -263,6 +268,68 @@ Enable = 1</code></pre>
     <li><strong>Updates by itself.</strong> The target list is refreshed about twice a second, so accepting, finishing or abandoning a quest changes the marks within half a second &mdash; no relog needed.</li>
   </ul>
   <p class="muted">The mark is a plain yellow <code>!</code> drawn one text line above where the monster's nameplate would sit, so it stays readable without covering the monster.</p>
+</section>
+
+<section id="chat-log">
+  <div class="doc-head">
+    <h2>Chat Log</h2>
+    <div class="badges">
+      <span class="badge server">Server-only</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="cl-what">What it does &mdash; and why you would use it</h3>
+  <p>Chat Log writes <strong>every in-game player chat line</strong> to a plain text file on the server, timestamped and tagged with its channel and the sender's character name. It is your factual record of what was actually said in the world.</p>
+  <p>Use it to:</p>
+  <ul>
+    <li>Settle player disputes and abuse reports with a written record.</li>
+    <li>Keep an audit trail of GM and staff conduct.</li>
+    <li>Spot spam, scams or harassment as patterns over time.</li>
+  </ul>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Server switch</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\ChatLog.ini</span></td><td>Turns logging on or off. One <code>Enable</code> key.</td></tr>
+    <tr><td>Log file</td><td><span class="path">.Server\Zoneserver\RF_Bin\ModulesLog\ChatLog.log</span></td><td>Created automatically beside the Zone server .exe; appended to, never overwritten.</td></tr>
+  </table>
+  <div class="box info"><b>Server-only</b>Nothing changes on the player's game client and no client file is involved. The log is written by the Zone server into its own <code>ModulesLog</code> folder &mdash; it never touches the client's <code>NetLog</code>.</div>
+
+  <h3 id="cl-activate">How to activate it</h3>
+  <ol class="steps">
+    <li>
+      <strong>Turn the feature on (server).</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\ChatLog.ini</span> in Notepad and change the <code>Enable</code> line under <code>[General]</code>:
+      <pre><code>[General]
+Enable = 1</code></pre>
+      Save the file. A running Zone server reloads it immediately and starts writing from the next chat line; if the server is not running yet it simply starts with logging on.
+    </li>
+    <li>
+      <strong>Nothing to do on the client.</strong> Players see no difference &mdash; chat behaves exactly as before, it is only also recorded.
+    </li>
+    <li>
+      <strong>Read the log.</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\ModulesLog\ChatLog.log</span> in Notepad any time. The <code>ModulesLog</code> folder is created the first time a line is logged.
+    </li>
+  </ol>
+  <div class="box warn"><b>Do not delete the .ini</b>Like every module file, <code>ChatLog.ini</code> is required when the Zone server starts &mdash; deleting it stops the server from booting. To stop logging, set <code>Enable = 0</code> instead; no further lines are written.</div>
+
+  <h3 id="cl-format">The log file &mdash; what each line means</h3>
+  <p>Each chat line becomes one line in the file:</p>
+  <pre><code>[2026-09-16 20:14:03] [ALL] checkquest: hello everyone
+[2026-09-16 20:14:11] [PARTY] checkquest: group up at the gate
+[2026-09-16 20:14:26] [WHISPER] checkquest -&gt; BellatoHero: trade?
+[2026-09-16 20:15:02] [GUILD] BellatoHero: war at nine</code></pre>
+  <ul>
+    <li><strong>Date and time</strong> as <code>[YYYY-MM-DD HH:MM:SS]</code>, using the server PC's clock.</li>
+    <li><strong>Channel</strong> in the second brackets &mdash; for example <code>ALL</code>, <code>RACE</code>, <code>PARTY</code>, <code>MAP</code>, <code>GUILD</code>, <code>WHISPER</code>, <code>NOTICE</code>, <code>RACEBOSS</code>.</li>
+    <li><strong>Sender</strong> character name before the colon.</li>
+    <li><strong>Whispers</strong> also record who received them, written as <code>sender -&gt; recipient</code>.</li>
+    <li>The text after the colon is exactly what was broadcast &mdash; the log hooks the chat after the server validates it, so rejected lines are not recorded.</li>
+  </ul>
+  <h4>Looking after the file</h4>
+  <ul>
+    <li>The file is <strong>appended to and never truncated</strong>, so it grows for as long as logging is on. Archive or move old copies yourself during a quiet period; switch logging off first (<code>Enable = 0</code>) if you want a clean cut.</li>
+    <li>Writing is best-effort: if the disk is full or the file is locked, a line is skipped rather than chat being blocked or corrupted. Players never notice a logging failure.</li>
+  </ul>
 </section>
 
   </main>
