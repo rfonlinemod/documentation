@@ -659,9 +659,17 @@ Item1 = ipgld40</code></pre>
     <li><strong>Weekly slots</strong> &mdash; recurring spawns like &ldquo;every Friday at 21:30&rdquo;.</li>
     <li><strong>One-off events</strong> &mdash; exact date-and-time spawns like &ldquo;2026-12-25 20:00&rdquo; for a Christmas boss; each fires once and is remembered, so a server restart never spawns it twice.</li>
     <li><strong>Auto-despawn</strong> &mdash; optionally kill the boss N minutes after spawn if nobody did, so stale bosses never clutter the map.</li>
-    <li><strong>Zone announcements</strong> &mdash; tell every player when a boss spawns and when it dies.</li>
+    <li><strong>Zone announcements</strong> &mdash; tell every player when a boss spawns and when it dies; the defeat line names the player who landed the killing blow and their race.</li>
+    <li><strong>Exactly one instance</strong> &mdash; every stock respawn path (the random regen <em>and</em> the boot-time boss schedule) is suppressed for managed bosses, so a slot spawns one boss &mdash; never a duplicate standing on top of it.</li>
     <li><strong>An in-game schedule window</strong> &mdash; a <strong>BOSS</strong> button beside SHOP opens a panel listing every managed boss with an accurate countdown, so players never have to ask &ldquo;when is Rock Jaw?&rdquo;.</li>
   </ul>
+  <pre><code>Notice : [Boss] Rock Jaw has appeared in Elan.
+Notice : [Boss] Rock Jaw has been defeated in Elan by Artemis (Bellato).</code></pre>
+  <p class="muted">The defeat line credits the player the kill itself is credited to (the loot taker), with one of the three race names. When no player is credited &mdash; a guard tower finished the boss, for example &mdash; the line stays anonymous.</p>
+  <figure class="shot">
+    <img src="assets/img/boss-respawn-defeat-announce.png" alt="In-game screenshot with the defeat notice banner across the top reading [Boss] Taraven has been defeated in Elan by checkquest, and the matching chat line with the killer race at the bottom left, both highlighted with red annotations">
+    <figcaption>The defeat announcement as players see it: the notice banner across the top of the screen <em>and</em> the matching line in the chat log (red arrow and box added here to point at them). The killer's name and race ride on both.</figcaption>
+  </figure>
   <p>The schedule lives in <strong>one plain-text Lua file written for non-programmers</strong>. The old Odin-style <code>BossRespawnManager.ini</code> plus per-map <code>.ini</code> files still work exactly as before when the Lua file is switched off.</p>
   <div class="box info"><b>One master switch</b>When <code>BossRespawn.lua</code> has <code>Enable = true</code>, the zone follows <em>that file</em> and ignores <code>BossRespawnManager.ini</code> completely. With <code>Enable = false</code> the Lua file is ignored and the INI behaves exactly like it always did. The two can never fight over the same boss.</div>
 
@@ -730,7 +738,7 @@ Map0 = Elan</code></pre>
   <table>
     <tr><th>Key</th><th>Where</th><th>Meaning</th></tr>
     <tr><td><code>Enable</code></td><td>top</td><td><code>true</code> = the zone follows this file and ignores the INI; <code>false</code> = this file is ignored.</td></tr>
-    <tr><td><code>Announce</code></td><td>top</td><td><code>true</code> = broadcast a line to every player when a managed boss spawns and when it dies.</td></tr>
+    <tr><td><code>Announce</code></td><td>top</td><td><code>true</code> = broadcast a line to every player when a managed boss spawns and when it dies. The defeat line carries the killer's name and race.</td></tr>
     <tr><td><code>AnnounceBlacklist</code></td><td>top</td><td>Boss codes that stay <em>silent on death only</em> (their spawn is still announced).</td></tr>
     <tr><td><code>Map</code></td><td>per boss</td><td>Map name, exactly as the old per-map <code>.ini</code> named it (for example <code>Elan</code>).</td></tr>
     <tr><td><code>Code</code></td><td>per boss</td><td>Monster record code of the pit boss (the same code the old <code>.ini</code> used).</td></tr>
