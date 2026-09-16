@@ -54,6 +54,11 @@
     <a class="sub" href="#mg-activate">Activate it</a>
     <a class="sub" href="#mg-config">The config file</a>
     <a class="sub" href="#mg-rules">Rules &amp; limits</a>
+    <a href="#boss-respawn">Boss Respawn Schedule</a>
+    <a class="sub" href="#br-what">What it does</a>
+    <a class="sub" href="#br-activate">Activate it</a>
+    <a class="sub" href="#br-lua">Write the schedule</a>
+    <a class="sub" href="#br-ui">The in-game window</a>
   </nav>
 
   <main class="content">
@@ -84,6 +89,7 @@
     <tr><td><a href="#potion-manager">Potion Effects</a></td><td><code>PotionManager\PotionManager.ini</code></td><td><span class="badge server">Server</span></td><td>New potion rewards (money, points, buffs, premium, megaphone&hellip;) plus endless potions</td></tr>
     <tr><td><a href="#potion-lua">Potion Lua Overrides</a></td><td><code>PotionLua\PotionLua.ini</code></td><td><span class="badge server">Server</span></td><td>Override what a specific potion does from one Lua list, without editing item scripts</td></tr>
     <tr><td><a href="#megaphone">Megaphone</a></td><td><code>Megaphone\Megaphone.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Players right-click a configured potion to compose a styled announcement (font, color, effects) that is broadcast to every player and mirrored in chat</td></tr>
+    <tr><td><a href="#boss-respawn">Boss Respawn Schedule</a></td><td><code>BossRespawnManager\BossRespawn.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Pit bosses respawn on exact weekly / one-off date-times you write in one simple Lua file, with an in-game countdown window on the BOSS button</td></tr>
   </table>
   <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
 </section>
@@ -578,7 +584,7 @@ Enable = 1</code></pre>
   <p>A live <strong>Preview</strong> strip shows exactly how the message will look before it is sent. On <strong>Send</strong> the server consumes <strong>one</strong> potion and broadcasts the styled message to <strong>every live player on every map and every race</strong>:</p>
   <ul>
     <li>It is projected across the <strong>top-center of the screen</strong>, above the action, always in front.</li>
-    <li>At most <strong>3 messages stack</strong> at once so the screen never blinds players; each is held for at least <strong>6 seconds</strong> before fading. Extra messages wait in a queue and project as soon as a slot frees.</li>
+    <li>Exactly <strong>one message is projected at a time</strong>: it is held for at least <strong>6 seconds</strong>, then fades out. Any announcement that arrives while one is on screen waits in a <strong>FIFO standby queue</strong> and only fades in after the current message has finished &mdash; messages never jump the queue or stack on top of each other.</li>
     <li>The same message is mirrored into the <strong>chat log and bottom chat bar</strong> as <code>[Megaphone] Name : message</code>, keeping the chosen color and the bold / italic / underline / glow / shadow styling.</li>
   </ul>
   <p><strong>Cancel</strong> (or <code>Esc</code>) closes the composer and the potion is <strong>not</strong> consumed &mdash; players only pay when they actually send.</p>
@@ -624,10 +630,135 @@ Item1 = ipgld40</code></pre>
     <li><strong>One potion per send.</strong> Sending consumes exactly one item from the stack; cancelling consumes nothing.</li>
     <li><strong>Cooldown rejects are free.</strong> A send refused by <code>CooldownSec</code> leaves the stack untouched.</li>
     <li><strong>Message length.</strong> Up to 127 characters; control characters are stripped and an empty message is refused (without consuming).</li>
-    <li><strong>Screen discipline.</strong> Maximum 3 banners on screen, each held at least 6 seconds plus a short fade; overflow waits in a queue (capped at 32) instead of flooding the screen.</li>
+    <li><strong>Screen discipline.</strong> One banner on screen at a time, held at least 6 seconds plus a short fade; everything else waits in a strict FIFO standby queue (capped at 32) and projects in send order.</li>
     <li><strong>Everyone, everywhere.</strong> The broadcast reaches every live player on the server &mdash; all maps and all races &mdash; and each of them also gets the chat-log mirror.</li>
     <li><strong>Chat mirror styling.</strong> The chat line keeps the chosen color and bold / italic / underline / glow / shadow. Size 24 and Pulse are banner-only (chat rows have a fixed height and chat history is static).</li>
     <li><strong>No double posts.</strong> Item codes listed here are excluded from the stock effect-170 automatic broadcast, so enabling the module never produces two messages for one potion.</li>
+  </ul>
+</section>
+
+<section id="boss-respawn">
+  <div class="doc-head">
+    <h2>Boss Respawn Schedule</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <figure class="shot">
+    <img src="assets/img/boss-respawn-schedule.png" alt="The Boss Respawn Schedule window open in game showing two pit bosses with countdown timers and Live status, and the BOSS button beside SHOP on the bottom bar">
+    <figcaption>The in-game Boss Respawn Schedule window: one row per managed pit boss with its map, a live DD:HH:MM:SS countdown and a Live / Down status &mdash; opened from the new <strong>BOSS</strong> button beside SHOP on the bottom bar.</figcaption>
+  </figure>
+
+  <h3 id="br-what">What it does &mdash; and why you would use it</h3>
+  <p>Stock RF Online respawns pit bosses on each map's random monster regen &mdash; no fixed time, no announcement, no way to tell players when the next fight is. This module <strong>takes the pit bosses off the random regen</strong> and respawns them <strong>exactly on the times you write down</strong>:</p>
+  <ul>
+    <li><strong>Weekly slots</strong> &mdash; recurring spawns like &ldquo;every Friday at 21:30&rdquo;.</li>
+    <li><strong>One-off events</strong> &mdash; exact date-and-time spawns like &ldquo;2026-12-25 20:00&rdquo; for a Christmas boss; each fires once and is remembered, so a server restart never spawns it twice.</li>
+    <li><strong>Auto-despawn</strong> &mdash; optionally kill the boss N minutes after spawn if nobody did, so stale bosses never clutter the map.</li>
+    <li><strong>Zone announcements</strong> &mdash; tell every player when a boss spawns and when it dies.</li>
+    <li><strong>An in-game schedule window</strong> &mdash; a <strong>BOSS</strong> button beside SHOP opens a panel listing every managed boss with an accurate countdown, so players never have to ask &ldquo;when is Rock Jaw?&rdquo;.</li>
+  </ul>
+  <p>The schedule lives in <strong>one plain-text Lua file written for non-programmers</strong>. The old Odin-style <code>BossRespawnManager.ini</code> plus per-map <code>.ini</code> files still work exactly as before when the Lua file is switched off.</p>
+  <div class="box info"><b>One master switch</b>When <code>BossRespawn.lua</code> has <code>Enable = true</code>, the zone follows <em>that file</em> and ignores <code>BossRespawnManager.ini</code> completely. With <code>Enable = false</code> the Lua file is ignored and the INI behaves exactly like it always did. The two can never fight over the same boss.</div>
+
+  <h3 id="br-activate">How to activate it</h3>
+  <ol class="steps">
+    <li>
+      <strong>Turn the Lua schedule on (recommended).</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\BossRespawnManager\BossRespawn.lua</span> in Notepad and set <code>Enable = true</code> near the top:
+      <pre><code>BossRespawn = {
+
+  -- Master switch for this file. true = the zone follows BossRespawn.lua.
+  Enable = true,</code></pre>
+      Save the file. A running Zone server re-reads it a moment later &mdash; <strong>no restart needed</strong>.
+    </li>
+    <li>
+      <strong>Or use the classic INI instead.</strong> Leave <code>Enable = false</code> in the Lua file, then open <span class="path">Modules\BossRespawnManager\BossRespawnManager.ini</span> and set:
+      <pre><code>[General]
+Enable = 1
+MapNum = 1
+Map0 = Elan</code></pre>
+      Each <code>Map&lt;n&gt;</code> name points at a per-map file in the same folder (here <code>Elan.ini</code>) holding the old Odin-format schedule. This path is kept for servers already running on the INI.
+    </li>
+    <li>
+      <strong>Write your boss list.</strong> Add one block per pit boss under <code>Bosses =</code> &mdash; see <a href="#br-lua">Write the schedule</a>.
+    </li>
+    <li>
+      <strong>Check it in game.</strong> Press the <strong>BOSS</strong> button beside SHOP: the window lists every managed boss with its countdown. A boss whose slot just passed spawns within a second of the save, and the zone gets the announcement line when <code>Announce = true</code>.
+    </li>
+  </ol>
+  <div class="box warn"><b>Do not delete the files</b>The Zone server needs <code>BossRespawnManager.ini</code> and <code>BossRespawn.lua</code> at startup &mdash; deleting either stops the server from booting. To switch the feature off, set <code>Enable = false</code> in the Lua file <em>and</em> <code>Enable = 0</code> in the INI.</div>
+  <div class="box warn"><b>First turn-on spawns due bosses immediately</b>The rule is &ldquo;spawn when the most recent scheduled time is later than the last recorded spawn&rdquo;. On a brand-new file there is no last spawn, so the most recent past slot (for example yesterday's 19:00) is due at once and the boss comes up the moment you enable it. From then on it follows the schedule &mdash; plan the first enable accordingly.</div>
+
+  <h3 id="br-lua">How to write the schedule</h3>
+  <p>Everything is one list of boss blocks. Copy a block, change the map / code / times, add as many as you like:</p>
+  <pre><code>BossRespawn = {
+
+  Enable = true,          -- master switch: true = the zone follows THIS file
+  Announce = true,        -- tell the whole zone when a boss spawns / dies
+
+  Bosses = {
+
+    {
+      Map  = "Elan",      -- map name (the same name the old .ini used)
+      Code = "0AB07",     -- pit boss monster code from the monster table
+
+      Weekly = {          -- recurring weekly spawn times
+        { day = "Friday",    hour = 21, minute = 30 },
+        { day = "Saturday",  hour = 21, minute = 30 },
+      },
+    },
+
+    {
+      Map  = "Elan",
+      Code = "0AF07",
+      DeathMin = 120,     -- auto-kill 2 hours after spawn if nobody killed it
+
+      Weekly = {
+        { day = "Friday", hour = 21, minute = 30 },
+      },
+      Events = {          -- one-off exact-date spawns
+        "2026-12-25 20:00",   -- Christmas event
+        "2026-12-31 23:00",   -- New Year's Eve event
+      },
+    },
+  },
+}</code></pre>
+  <table>
+    <tr><th>Key</th><th>Where</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td>top</td><td><code>true</code> = the zone follows this file and ignores the INI; <code>false</code> = this file is ignored.</td></tr>
+    <tr><td><code>Announce</code></td><td>top</td><td><code>true</code> = broadcast a line to every player when a managed boss spawns and when it dies.</td></tr>
+    <tr><td><code>AnnounceBlacklist</code></td><td>top</td><td>Boss codes that stay <em>silent on death only</em> (their spawn is still announced).</td></tr>
+    <tr><td><code>Map</code></td><td>per boss</td><td>Map name, exactly as the old per-map <code>.ini</code> named it (for example <code>Elan</code>).</td></tr>
+    <tr><td><code>Code</code></td><td>per boss</td><td>Monster record code of the pit boss (the same code the old <code>.ini</code> used).</td></tr>
+    <tr><td><code>DeathMin</code></td><td>per boss</td><td>Kill the boss this many minutes after spawn if nobody did. <code>0</code> or omitted = never auto-kill.</td></tr>
+    <tr><td><code>Weekly</code></td><td>per boss</td><td>List of <code>{ day, hour, minute }</code>. <code>day</code> = <code>"Sunday"</code>&hellip;<code>"Saturday"</code> (or a number 0&ndash;6, 0 = Sunday), <code>hour</code> 0&ndash;23, <code>minute</code> 0&ndash;59.</td></tr>
+    <tr><td><code>Events</code></td><td>per boss</td><td>List of one-off spawns as text <code>"YYYY-MM-DD HH:MM"</code>. Each fires once, then is remembered &mdash; restarting the server does not spawn it again.</td></tr>
+  </table>
+  <ul>
+    <li><strong>All times are the server PC's local time</strong>, 24-hour clock (<code>19</code> = 7 pm).</li>
+    <li><strong>Weekly only, Events only, or both</strong> &mdash; a boss spawns when the most recent slot or event time has passed since it last spawned.</li>
+    <li><strong>The server keeps its own memory.</strong> Last-spawn / killed state is written to a small per-map <code>.ini</code> beside the config so a restart never re-fires an event or doubles a spawn. Do not hand-edit those files while the server is running.</li>
+    <li><strong>Comments are your friend.</strong> Anything after <code>--</code> on a line is ignored &mdash; label your bosses freely.</li>
+  </ul>
+
+  <h3 id="br-ui">The in-game schedule window</h3>
+  <p>A <strong>BOSS</strong> button sits immediately right of SHOP on the bottom bar. Pressing it opens the Boss Respawn Schedule panel (the screenshot above); pressing it again, the <strong>X</strong>, or <code>Esc</code> closes it. The window is <strong>draggable</strong> by its title bar and remembers where you put it between opens.</p>
+  <table>
+    <tr><th>Column</th><th>What it shows</th></tr>
+    <tr><td><strong>Name</strong></td><td>The boss's display name from the monster table.</td></tr>
+    <tr><td><strong>Map</strong></td><td>The map the boss is managed on.</td></tr>
+    <tr><td><strong>Remain Time</strong></td><td>A live <code>DD:HH:MM:SS</code> countdown to the next scheduled spawn slot. It ticks every second on your screen and is re-synced from the server every ~30 seconds while the window is open.</td></tr>
+    <tr><td><strong>Status</strong></td><td><span class="badge on">Live</span> the boss is up right now &mdash; the countdown then shows the <em>next</em> scheduled slot, i.e. when it respawns if the current one dies. <span class="badge off">Down</span> the boss is waiting to respawn and the countdown is the respawn moment itself.</td></tr>
+  </table>
+  <div class="box info"><b>What the zone actually follows</b>The window is filled by the Zone server from whichever schedule source is active &mdash; <code>BossRespawn.lua</code> when its <code>Enable = true</code>, otherwise <code>BossRespawnManager.ini</code>. The UI can never disagree with the schedule the map really follows; with the module off the window simply says so.</div>
+  <ul>
+    <li><strong>Pagination.</strong> Ten bosses per page; the numbered tabs at the bottom left switch pages (up to 8).</li>
+    <li><strong>Row accents.</strong> A green tick on a row's left edge means Live, steel means Down &mdash; readable at a glance.</li>
+    <li><strong>&ldquo;Spawning...&rdquo;</strong> appears for the moment between a countdown reaching zero and the boss actually coming up.</li>
   </ul>
 </section>
 
