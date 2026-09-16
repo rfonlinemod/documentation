@@ -40,6 +40,14 @@
     <a class="sub" href="#bs-what">What it does</a>
     <a class="sub" href="#bs-activate">Activate it</a>
     <a class="sub" href="#bs-rules">What gets merged</a>
+    <a href="#potion-manager">Potion Effects</a>
+    <a class="sub" href="#pm-what">What it does</a>
+    <a class="sub" href="#pm-activate">Activate it</a>
+    <a class="sub" href="#pm-effects">The effect list</a>
+    <a href="#potion-lua">Potion Lua Overrides</a>
+    <a class="sub" href="#pl-what">What it does</a>
+    <a class="sub" href="#pl-activate">Activate it</a>
+    <a class="sub" href="#pl-config">Write the overrides</a>
   </nav>
 
   <main class="content">
@@ -67,6 +75,8 @@
     <tr><td><a href="#quest-monster">Quest Monster Marks</a></td><td><code>QuestMonster.ini</code></td><td><span class="badge client">Client</span></td><td>Yellow markers above the monsters a player still needs to kill for a quest</td></tr>
     <tr><td><a href="#chat-log">Chat Log</a></td><td><code>ChatLog.ini</code></td><td><span class="badge server">Server</span></td><td>Writes every in-game chat line to a log file for moderation and audit</td></tr>
     <tr><td><a href="#box-stack">Box Stack</a></td><td><code>BoxStack.ini</code></td><td><span class="badge server">Server</span></td><td>Lets box-open rewards merge into an existing inventory stack instead of using a new slot each time</td></tr>
+    <tr><td><a href="#potion-manager">Potion Effects</a></td><td><code>PotionManager\PotionManager.ini</code></td><td><span class="badge server">Server</span></td><td>New potion rewards (money, points, buffs, premium, megaphone&hellip;) plus endless potions</td></tr>
+    <tr><td><a href="#potion-lua">Potion Lua Overrides</a></td><td><code>PotionLua\PotionLua.ini</code></td><td><span class="badge server">Server</span></td><td>Override what a specific potion does from one Lua list, without editing item scripts</td></tr>
   </table>
   <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
 </section>
@@ -388,6 +398,147 @@ Enable = 1</code></pre>
     <li><strong>No match, no room &rarr; stock behaviour.</strong> If nothing qualifies, the reward simply goes into a new slot, so enabling the module can never lose or misplace an item.</li>
   </ul>
   <p class="muted">With the module off, behaviour is identical to stock: every box open grants its reward to a new slot.</p>
+</section>
+
+<section id="potion-manager">
+  <div class="doc-head">
+    <h2>Potion Effects</h2>
+    <div class="badges">
+      <span class="badge server">Server-only</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="pm-what">What it does &mdash; and why you would use it</h3>
+  <p>Potion Effects lets a potion grant a <strong>custom reward when it is drunk</strong> &mdash; money, points, cash, premium time, a megaphone broadcast, a spawned monster, or a temporary Skill / Force / Class-skill buff. Stock potions can only run the built-in effect scripts; this module opens up a new range of effect types (160&ndash;173) you can attach to any potion. It also adds an <strong>endless potion</strong> that is never consumed.</p>
+  <p>Use it to:</p>
+  <ul>
+    <li>Sell or reward &ldquo;buff potions&rdquo; that apply a real Skill / Force / Class-skill buff for a set time.</li>
+    <li>Hand out money, points, cash or premium days from a single drinkable item.</li>
+    <li>Make event or VIP potions that never run out (endless).</li>
+    <li>Let players broadcast a megaphone message or summon a monster from an item.</li>
+  </ul>
+  <div class="box info"><b>Every effect announces itself</b>When a potion effect is applied, the drinker gets a system message describing it &mdash; for example <code>Gold Capsule: +4000 Dalant</code>, or for a buff <code>&hellip;: Skill buff "Concession" (AF004) applied - Lv 7, 1080s</code>. Players always see what the potion did.</div>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Server switch</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\PotionManager\PotionManager.ini</span></td><td>Turns the extended effects and the endless potion on or off. One <code>Enable</code> key.</td></tr>
+    <tr><td>Potion script</td><td>The potion's own effect script (data table)</td><td>Says <strong>which</strong> effect a potion runs and its value &mdash; see <a href="#pm-effects">The effect list</a>.</td></tr>
+    <tr><td>Client half</td><td colspan="2">None &mdash; this is server-only. Players see no toggle and no client file is involved.</td></tr>
+  </table>
+
+  <h3 id="pm-activate">How to activate it</h3>
+  <ol class="steps">
+    <li>
+      <strong>Turn the feature on (server).</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\PotionManager\PotionManager.ini</span> in Notepad and change the <code>Enable</code> line under <code>[General]</code>:
+      <pre><code>[General]
+Enable = 1</code></pre>
+      Save the file. A running Zone server reloads it immediately; if it is not running yet it simply starts with the feature on.
+    </li>
+    <li>
+      <strong>Give a potion an effect.</strong> In that potion's effect script set three fields: <code>TempEffectType</code> to one of 160&ndash;173 (from the list below), <code>TempParamCode</code> to <code>-1</code>, and <code>TempValue1</code> to the reward amount, monster index or buff level the effect needs.
+    </li>
+    <li>
+      <strong>(Optional) Make it endless.</strong> Set the potion's <code>KindClt</code> to <code>255</code> in its PotionItem script (server side) and drinking it no longer consumes it.
+    </li>
+    <li>
+      <strong>Test it.</strong> Start the servers, log in, drink the potion &mdash; the reward is granted once and a system message describes it.
+    </li>
+  </ol>
+  <div class="box warn"><b>Do not delete the .ini</b>Like every module file, <code>PotionManager.ini</code> is required when the Zone server starts &mdash; deleting it stops the server from booting. To go back to stock behaviour, set <code>Enable = 0</code> instead. With it off, a potion whose effect type is 160&ndash;173 does nothing, exactly as stock.</div>
+  <div class="box info"><b>Prefer not to edit item scripts?</b>The <a href="#potion-lua">Potion Lua Overrides</a> module below gives the same effects from a single text list keyed by the potion's item code &mdash; no data-table editing, and it takes priority over the potion's own script.</div>
+
+  <h3 id="pm-effects">The effect list</h3>
+  <p>Set <code>TempEffectType</code> to one of these. <code>TempValue1</code> is the amount, index or level named in the last column.</p>
+  <table>
+    <tr><th>Type</th><th>Reward</th><th><code>TempValue1</code> means</th></tr>
+    <tr><td>160</td><td>Dalant</td><td>amount</td></tr>
+    <tr><td>161</td><td>Gold</td><td>amount</td></tr>
+    <tr><td>162</td><td>Certain Point</td><td>amount (PvP cash bag; needs level 39 + 2nd class)</td></tr>
+    <tr><td>163</td><td>PvP Point</td><td>amount (needs level 40 + 2nd class)</td></tr>
+    <tr><td>164</td><td>Processing Point</td><td>amount (Action Point System action 0 must be live)</td></tr>
+    <tr><td>165</td><td>Hunter Point</td><td>amount (Action Point System action 1 must be live)</td></tr>
+    <tr><td>166</td><td>Gold Point</td><td>amount (Action Point System action 2 must be live)</td></tr>
+    <tr><td>167</td><td>Monster spawn</td><td>monster index from the monster script (spawns 1)</td></tr>
+    <tr><td>168</td><td>Cash</td><td>amount (in-session; saving it needs the cash DB backend)</td></tr>
+    <tr><td>169</td><td>Premium days</td><td>days (extends billing remain-time; needs the billing backend)</td></tr>
+    <tr><td>170</td><td>VIP megaphone</td><td>a server-wide global announcement (the same prominent notice the GM greeting uses) showing the drinker's character name + the potion's own name; value 1&ndash;4 is still accepted but no longer limits the scope</td></tr>
+    <tr><td>171</td><td>Skill buff</td><td>applies the Skill record's continuous buff (buff level 1&ndash;7)</td></tr>
+    <tr><td>172</td><td>Force buff</td><td>applies the Force record's continuous buff (buff level 1&ndash;7)</td></tr>
+    <tr><td>173</td><td>Class-skill buff</td><td>applies the ClassSkill record's continuous buff (buff level 1&ndash;7)</td></tr>
+  </table>
+  <ul>
+    <li><strong>Buffs (171&ndash;173).</strong> These apply the record's temporary buff &mdash; its strength and duration come from the record's own per-level data. Only records that actually have a continuous buff (a <code>ContEffectType</code> of 0 or 1) do anything; anything else is a safe no-op and the potion is not consumed. Here the value is the record's <em>index</em>; the Potion Lua module lets you name it by <em>code</em> instead.</li>
+    <li><strong>Reward goes to the drinker, once.</strong> The effect is applied to the player who drinks the potion.</li>
+    <li><strong>Backend-dependent rewards.</strong> Cash (168) and premium days (169) last for the session unless the matching cash / billing database backend is running; points (164&ndash;166) need their Action Point System action to be live.</li>
+  </ul>
+</section>
+
+<section id="potion-lua">
+  <div class="doc-head">
+    <h2>Potion Lua Overrides</h2>
+    <div class="badges">
+      <span class="badge server">Server-only</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="pl-what">What it does &mdash; and why you would use it</h3>
+  <p>Potion Lua Overrides lets you change what a <strong>specific potion</strong> does from <strong>one plain text list</strong>, keyed by the potion's item code &mdash; instead of editing that potion's effect script in the data tables. When a potion's item code is in the list, it uses <strong>your</strong> effect and its normal script is skipped. Potions you do not list behave exactly as before.</p>
+  <p>Use it to:</p>
+  <ul>
+    <li>Turn an ordinary potion into a reward or buff potion without touching item data.</li>
+    <li>Apply a named Skill / Force / Class-skill buff by its <strong>code</strong> (for example <code>AF004</code>) at a chosen level.</li>
+    <li>Set up event potions quickly and change them live while the server runs.</li>
+  </ul>
+  <div class="box info"><b>It reuses the Potion Effects rewards</b>The overrides run the same 160&ndash;173 effects (and the same system messages) as the <a href="#potion-manager">Potion Effects</a> module &mdash; this module is simply a per-item-code way to trigger them, and it <strong>wins</strong> over the potion's own script. It runs on its own switch, so you do not have to enable Potion Effects to use it.</div>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Server switch</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\PotionLua\PotionLua.ini</span></td><td>Turns the overrides on or off. One <code>Enable</code> key.</td></tr>
+    <tr><td>Override list</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\PotionLua\PotionLua.lua</span></td><td>The list of item codes and the effect each one gets.</td></tr>
+    <tr><td>Client half</td><td colspan="2">None &mdash; server-only. No client file, no toggle, no rebuild.</td></tr>
+  </table>
+
+  <h3 id="pl-activate">How to activate it</h3>
+  <ol class="steps">
+    <li>
+      <strong>Turn the feature on (server).</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\PotionLua\PotionLua.ini</span> in Notepad and set:
+      <pre><code>[General]
+Enable = 1</code></pre>
+      Save the file.
+    </li>
+    <li>
+      <strong>List your potions.</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\PotionLua\PotionLua.lua</span> and add one line per potion you want to override. See <a href="#pl-config">Write the overrides</a>. Save it.
+    </li>
+    <li>
+      <strong>Test it.</strong> Start the servers, log in and drink one of the listed potions &mdash; it applies your effect and shows the system message. Both files reload live, so you can edit and re-drink without a restart.
+    </li>
+  </ol>
+  <div class="box warn"><b>Do not delete either file</b>The Zone server needs both <code>PotionLua.ini</code> and <code>PotionLua.lua</code> at startup &mdash; deleting either stops it from booting. To switch the overrides off, set <code>Enable = 0</code> in the <code>.ini</code>; every potion then uses its normal script again.</div>
+
+  <h3 id="pl-config">How to write the overrides</h3>
+  <p>Each line in <code>PotionLua.lua</code> maps one potion item code to an effect:</p>
+  <pre><code>PotionLua = {
+  ["ipgld30"] = { effect = 160, value = 1000 },               -- +1000 Dalant
+  ["ipgld39"] = { effect = 169, value = 7 },                  -- +7 premium days
+  ["ipgld41"] = { effect = 171, value = "AF004", level = 7 }, -- apply Skill AF004's buff at level 7
+  ["ipgld42"] = { effect = 172, value = "8000",  level = 7 }, -- apply Force 8000's buff at level 7
+  ["ipgld43"] = { effect = 173, value = "7F018", level = 7 }, -- apply ClassSkill 7F018's buff at level 7
+}</code></pre>
+  <table>
+    <tr><th>Part</th><th>What it is</th></tr>
+    <tr><td><code>["itemcode"]</code></td><td>The potion's item code (from the item table), as a quoted string.</td></tr>
+    <tr><td><code>effect</code></td><td>The effect type, 160&ndash;173 &mdash; the same list as <a href="#pm-effects">The effect list</a>.</td></tr>
+    <tr><td><code>value</code></td><td>The reward amount; for 171/172/173 it is the Skill / Force / ClassSkill <strong>code</strong> as a quoted string (a plain number is read as a record index instead).</td></tr>
+    <tr><td><code>level</code></td><td>Optional. For 171/172/173 it is the buff level 1&ndash;7 (default 7), which sets the buff's strength and duration from the record's per-level data.</td></tr>
+  </table>
+  <ul>
+    <li><strong>Only listed codes change.</strong> Any potion whose code is not a key here behaves exactly as stock.</li>
+    <li><strong>Overrides win.</strong> When a code is listed and the module is on, your effect is applied and the potion's own script is skipped.</li>
+    <li><strong>Buff codes must be real.</strong> For 171/172/173 use a code that exists in the Skill / Force / ClassSkill data and actually has a continuous buff, or nothing is applied (and the potion is not consumed).</li>
+    <li><strong>Live editing.</strong> Saving either file is picked up on the next game tick &mdash; no restart.</li>
+  </ul>
 </section>
 
   </main>
