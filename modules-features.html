@@ -16,6 +16,7 @@
     <a href="index.html">Home</a>
     <a href="server-client.html">Server &amp; Client</a>
     <a href="modules-features.html" class="active">Modules / Features</a>
+    <a class="discord" href="https://discord.gg/czbhwUNPse" target="_blank" rel="noopener">&#128172; Discord</a>
   </nav>
 </header>
 
@@ -48,6 +49,11 @@
     <a class="sub" href="#pl-what">What it does</a>
     <a class="sub" href="#pl-activate">Activate it</a>
     <a class="sub" href="#pl-config">Write the overrides</a>
+    <a href="#megaphone">Megaphone</a>
+    <a class="sub" href="#mg-what">What it does</a>
+    <a class="sub" href="#mg-activate">Activate it</a>
+    <a class="sub" href="#mg-config">The config file</a>
+    <a class="sub" href="#mg-rules">Rules &amp; limits</a>
   </nav>
 
   <main class="content">
@@ -77,6 +83,7 @@
     <tr><td><a href="#box-stack">Box Stack</a></td><td><code>BoxStack.ini</code></td><td><span class="badge server">Server</span></td><td>Lets box-open rewards merge into an existing inventory stack instead of using a new slot each time</td></tr>
     <tr><td><a href="#potion-manager">Potion Effects</a></td><td><code>PotionManager\PotionManager.ini</code></td><td><span class="badge server">Server</span></td><td>New potion rewards (money, points, buffs, premium, megaphone&hellip;) plus endless potions</td></tr>
     <tr><td><a href="#potion-lua">Potion Lua Overrides</a></td><td><code>PotionLua\PotionLua.ini</code></td><td><span class="badge server">Server</span></td><td>Override what a specific potion does from one Lua list, without editing item scripts</td></tr>
+    <tr><td><a href="#megaphone">Megaphone</a></td><td><code>Megaphone\Megaphone.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Players right-click a configured potion to compose a styled announcement (font, color, effects) that is broadcast to every player and mirrored in chat</td></tr>
   </table>
   <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
 </section>
@@ -538,6 +545,89 @@ Enable = 1</code></pre>
     <li><strong>Overrides win.</strong> When a code is listed and the module is on, your effect is applied and the potion's own script is skipped.</li>
     <li><strong>Buff codes must be real.</strong> For 171/172/173 use a code that exists in the Skill / Force / ClassSkill data and actually has a continuous buff, or nothing is applied (and the potion is not consumed).</li>
     <li><strong>Live editing.</strong> Saving either file is picked up on the next game tick &mdash; no restart.</li>
+  </ul>
+</section>
+
+<section id="megaphone">
+  <div class="doc-head">
+    <h2>Megaphone (Player Announcements)</h2>
+    <div class="badges">
+      <span class="badge server">Server switch</span>
+      <span class="badge client">Client-visible</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <figure class="shot">
+    <img src="assets/img/megaphone-composer.png" alt="The megaphone composer window open in game with a typed message, font, style, color and effect pickers and a live preview">
+    <figcaption>The composer a player gets after right-clicking a configured megaphone potion: the message box, the Font / Style / Color / Effect pickers, the live Preview strip, and Send / Cancel.</figcaption>
+  </figure>
+  <figure class="shot">
+    <img src="assets/img/megaphone-broadcast.png" alt="A styled green megaphone message projected across the top of the screen and mirrored in the chat log">
+    <figcaption>What every player sees: the styled message projected across the top-center of the screen, and the same line mirrored into the chat log and bottom chat bar as <code>[Megaphone] Name : message</code>.</figcaption>
+  </figure>
+
+  <h3 id="mg-what">What it does &mdash; and why you would use it</h3>
+  <p>The Megaphone turns a potion item into a <strong>player-authored announcement</strong>. Instead of the stock behaviour (the game shouting the potion's name automatically), the player <strong>right-clicks the potion</strong> and gets a composer window where they type their own message and style it:</p>
+  <ul>
+    <li><strong>Font:</strong> Default, Arial, Impact or Tahoma.</li>
+    <li><strong>Style:</strong> Bold, Italic, Underline and Size 24 (combinable).</li>
+    <li><strong>Color:</strong> twelve swatches, from plain white to bright neon.</li>
+    <li><strong>Effect:</strong> Glow, Outline, Shadow or Pulse (combinable).</li>
+  </ul>
+  <p>A live <strong>Preview</strong> strip shows exactly how the message will look before it is sent. On <strong>Send</strong> the server consumes <strong>one</strong> potion and broadcasts the styled message to <strong>every live player on every map and every race</strong>:</p>
+  <ul>
+    <li>It is projected across the <strong>top-center of the screen</strong>, above the action, always in front.</li>
+    <li>At most <strong>3 messages stack</strong> at once so the screen never blinds players; each is held for at least <strong>6 seconds</strong> before fading. Extra messages wait in a queue and project as soon as a slot frees.</li>
+    <li>The same message is mirrored into the <strong>chat log and bottom chat bar</strong> as <code>[Megaphone] Name : message</code>, keeping the chosen color and the bold / italic / underline / glow / shadow styling.</li>
+  </ul>
+  <p><strong>Cancel</strong> (or <code>Esc</code>) closes the composer and the potion is <strong>not</strong> consumed &mdash; players only pay when they actually send.</p>
+  <div class="box info"><b>Server-authoritative</b>The server decides everything: which item codes are megaphones, whether the feature is on, the cooldown, and the consumption. A modified client cannot broadcast without owning the potion, and cannot bypass the cooldown.</div>
+
+  <h3 id="mg-activate">How to activate it</h3>
+  <ol class="steps">
+    <li>
+      <strong>Turn the feature on.</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\Megaphone\Megaphone.ini</span> in Notepad and set <code>Enable = 1</code> under <code>[General]</code>:
+      <pre><code>[General]
+Enable = 1
+CooldownSec = 10</code></pre>
+      Save the file. A running Zone server hot-reloads it (checked at most once every 2 seconds) &mdash; no restart needed.
+    </li>
+    <li>
+      <strong>List the potion item codes.</strong> Under <code>[Items]</code>, set <code>ItemNum</code> to how many codes follow, then one <code>Item&lt;n&gt; = code</code> line each. The code is the potion's item code from the item table (for example <code>ipgld40</code>, the stock VIP megaphone potion):
+      <pre><code>[Items]
+ItemNum = 1
+Item1 = ipgld40</code></pre>
+      Listed codes are <strong>removed from the stock automatic name-broadcast</strong>, so a megaphone potion never double-posts.
+    </li>
+    <li>
+      <strong>Get the potion to players.</strong> Sell it in a shop, drop it, or grant it with a GM command &mdash; whatever fits your economy. Only players holding a listed potion can compose an announcement.
+    </li>
+    <li>
+      <strong>Test it.</strong> In game, right-click the potion &rarr; the composer opens &rarr; type a message, pick a style, press <strong>Send</strong>. The banner appears at the top of your screen and in chat; a second client logged in anywhere on the server sees the same. Press <strong>Enter</strong> to send and <strong>Esc</strong> to cancel from the keyboard.
+    </li>
+  </ol>
+  <div class="box warn"><b>Both the switch and the item list matter</b>With <code>Enable = 0</code> the potion behaves like a normal potion. With <code>Enable = 1</code> but an empty / wrong item list, right-clicking simply runs the potion's normal effect. Set the switch <em>and</em> list the exact item codes you want to act as megaphones.</div>
+
+  <h3 id="mg-config">The config file</h3>
+  <p>One file, <span class="path">Modules\Megaphone\Megaphone.ini</span>, beside the other module files in the Zone server's <code>Modules</code> folder:</p>
+  <table>
+    <tr><th>Key</th><th>Section</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td><code>[General]</code></td><td><code>0</code> = off (listed potions behave normally), <code>1</code> = on (listed potions open the composer).</td></tr>
+    <tr><td><code>CooldownSec</code></td><td><code>[General]</code></td><td>Seconds each player must wait between accepted sends. A send during cooldown is rejected and the potion is <strong>not</strong> consumed. <code>0</code> = no cooldown.</td></tr>
+    <tr><td><code>ItemNum</code></td><td><code>[Items]</code></td><td>How many <code>Item&lt;n&gt;</code> lines follow, counted from <code>Item1</code> with no gaps.</td></tr>
+    <tr><td><code>Item1</code>, <code>Item2</code>, &hellip;</td><td><code>[Items]</code></td><td>Potion item codes that act as megaphones (the same codes used by <a href="#potion-lua">Potion Lua Overrides</a>).</td></tr>
+  </table>
+
+  <h3 id="mg-rules">Rules &amp; limits</h3>
+  <ul>
+    <li><strong>One potion per send.</strong> Sending consumes exactly one item from the stack; cancelling consumes nothing.</li>
+    <li><strong>Cooldown rejects are free.</strong> A send refused by <code>CooldownSec</code> leaves the stack untouched.</li>
+    <li><strong>Message length.</strong> Up to 127 characters; control characters are stripped and an empty message is refused (without consuming).</li>
+    <li><strong>Screen discipline.</strong> Maximum 3 banners on screen, each held at least 6 seconds plus a short fade; overflow waits in a queue (capped at 32) instead of flooding the screen.</li>
+    <li><strong>Everyone, everywhere.</strong> The broadcast reaches every live player on the server &mdash; all maps and all races &mdash; and each of them also gets the chat-log mirror.</li>
+    <li><strong>Chat mirror styling.</strong> The chat line keeps the chosen color and bold / italic / underline / glow / shadow. Size 24 and Pulse are banner-only (chat rows have a fixed height and chat history is static).</li>
+    <li><strong>No double posts.</strong> Item codes listed here are excluded from the stock effect-170 automatic broadcast, so enabling the module never produces two messages for one potion.</li>
   </ul>
 </section>
 
