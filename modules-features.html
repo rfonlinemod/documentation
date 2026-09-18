@@ -64,6 +64,11 @@
     <a class="sub" href="#em-activate">Activate it</a>
     <a class="sub" href="#em-config">The config file</a>
     <a class="sub" href="#em-rules">Rules &amp; limits</a>
+    <a href="#item-upgrade">Item Upgrade &amp; Jade</a>
+    <a class="sub" href="#iu-what">What it does</a>
+    <a class="sub" href="#iu-activate">Activate it</a>
+    <a class="sub" href="#iu-lua">Write the jade table</a>
+    <a class="sub" href="#iu-window">The in-game window</a>
   </nav>
 
   <main class="content">
@@ -96,6 +101,7 @@
     <tr><td><a href="#megaphone">Megaphone</a></td><td><code>Megaphone\Megaphone.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Players right-click a configured potion to compose a styled announcement (font, color, effects) that is broadcast to every player and mirrored in chat</td></tr>
     <tr><td><a href="#boss-respawn">Boss Respawn Schedule</a></td><td><code>BossRespawnManager\BossRespawn.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Pit bosses respawn on exact weekly / one-off date-times you write in one simple Lua file, with an in-game countdown window on the BOSS button</td></tr>
     <tr><td><a href="#election-manager">Election Manager</a></td><td><code>ElectionManager\ElectionManager.ini</code></td><td><span class="badge server">Server</span></td><td>Governs the patriarch / archont (race leader) election: candidate register price, extra vote / register eligibility gates, and whether the live vote-score list is shown</td></tr>
+    <tr><td><a href="#item-upgrade">Item Upgrade &amp; Jade Protection</a></td><td><code>ItemUpgradeProtection\ItemUpgradeProtection.lua</code></td><td><span class="badge server">Server</span></td><td>Jade materials slotted in the upgrade window lower the Destroy / Fail odds (and raise Success) by the percentages you set, and the Upgrade Chances panel shows the exact same numbers the server actually rolls against</td></tr>
   </table>
   <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
 </section>
@@ -870,6 +876,89 @@ ScoreHide = 1</code></pre>
     <li><strong>Odin defaults are opt-in.</strong> Odin's own <code>ElectionManager.ini</code> ships <code>[Vote] Level=30 / ClassGrade=0</code> and <code>[Register] Level=30</code>. This tree ships the <code>-1</code> sentinel instead so enabling the module is inert &mdash; set those keys explicitly if you want Odin's literal defaults.</li>
   </ul>
   <p class="muted">With the module off, the election behaves identically to stock: the register price is <code>10000000</code>, scores are shown, and only the built-in vote / register requirements apply.</p>
+</section>
+
+<section id="item-upgrade">
+  <div class="doc-head">
+    <h2>Item Upgrade &amp; Jade Protection</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <figure class="shot">
+    <img src="assets/img/item-upgrade-jade.png" alt="The Item Upgrade window in game showing the slotted Intense Hora Staff with its Upgrade talic icons, the JADE PROTECTION socket active with a Destroy -20% / Fail -10% breakdown, and the UPGRADE CHANCES panel with Success 9.8%, Destroyed 35.1% and Fail 6.0% marked down with green arrows">
+    <figcaption>The Item Upgrade window with a jade slotted: the item's <strong>Upgrade</strong> talic icons sit above its name, the <strong>JADE PROTECTION</strong> socket reads <em>Active</em> with the jade's <strong>Destroy &minus;20% / Fail &minus;10%</strong> breakdown, and the <strong>UPGRADE CHANCES</strong> panel shows the jade-modified odds &mdash; the lowered Destroyed and Fail rows turn green with a small <strong>&#9660;</strong> marker and Success rises to absorb the freed chance.</figcaption>
+  </figure>
+
+  <h3 id="iu-what">What it does &mdash; and why you would use it</h3>
+  <p>Stock RF Online item upgrading is a coin-flip you cannot hedge: every attempt can <strong>fail</strong>, <strong>strip the item's upgrades (talic removed)</strong>, or <strong>destroy the item outright</strong>. This module lets you define <em>jade</em> protection materials that a player can slot into the upgrade window's <strong>JADE PROTECTION</strong> socket to bend those odds in their favour &mdash; for a price (one jade is consumed per protected attempt).</p>
+  <p>When a valid jade is slotted, it reshapes the four outcome probabilities <strong>before the roll happens</strong>:</p>
+  <ul>
+    <li><strong>Destroyed</strong> is reduced by the jade's <code>DestroyProtect</code> percent.</li>
+    <li><strong>Fail</strong> is reduced by the jade's <code>FailProtect</code> percent.</li>
+    <li><strong>Talic removed</strong> is left unchanged.</li>
+    <li>Whatever probability is taken away from Destroyed and Fail <strong>folds into Success</strong>, so the four still add up to exactly 100%.</li>
+  </ul>
+  <pre><code>Destroyed'     = Destroyed      * (1 - DestroyProtect/100)
+Fail'          = Fail           * (1 - FailProtect/100)
+Talic removed' = Talic removed            (unchanged)
+Success'       = Success + (Destroyed - Destroyed') + (Fail - Fail')</code></pre>
+  <div class="box info"><b>What the player sees is what the server rolls</b>The <strong>exact same</strong> reshaping drives both the live <em>Upgrade Chances</em> preview in the window <em>and</em> the real upgrade roll on the server. The client asks the server for the numbers, so the panel can never show &ldquo;Fail 6%&rdquo; while the server still uses &ldquo;Fail 60%&rdquo; &mdash; nothing is faked or hardcoded in the UI.</div>
+  <p>The jade table &mdash; which item is a protection material, how strongly, and which gear it may protect &mdash; lives in <strong>one plain-text Lua file</strong>. The in-game upgrade window (the chances panel, the jade breakdown and the item's upgrade-status icons) is part of the client and always present; it simply reflects whatever the server's module says.</p>
+
+  <h3 id="iu-activate">How to activate it</h3>
+  <ol class="steps">
+    <li>
+      <strong>Turn the feature on.</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\ItemUpgradeProtection\ItemUpgradeProtection.ini</span> in Notepad and set the <code>Enable</code> key under <code>[General]</code>:
+      <pre><code>[General]
+Enable = 1</code></pre>
+      Save the file. A running Zone server re-reads it on the next game tick &mdash; <strong>no restart needed</strong>.
+    </li>
+    <li>
+      <strong>Define your jades.</strong> Open the sibling <span class="path">ItemUpgradeProtection.lua</span> and add one block per protection item &mdash; see <a href="#iu-lua">Write the jade table</a>.
+    </li>
+    <li>
+      <strong>Check it in game.</strong> Open the Item Upgrade window, drop an upgradable item in, then put a configured jade in the <strong>JADE PROTECTION</strong> socket. The socket flips to <em>Active</em>, the jade's <strong>Destroy / Fail</strong> reduction appears beneath it, and the <strong>UPGRADE CHANCES</strong> panel updates live (lowered rows turn green with a <strong>&#9660;</strong> marker).
+    </li>
+  </ol>
+  <div class="box warn"><b>Do not delete the files</b>The Zone server needs both <code>ItemUpgradeProtection.ini</code> and <code>ItemUpgradeProtection.lua</code> at startup &mdash; deleting either stops the server from booting. To switch the feature off, set <code>Enable = 0</code> in the INI and leave the Lua file in place.</div>
+  <div class="box warn"><b>With the module off, the socket is inert</b>At <code>Enable = 0</code> the upgrade roll behaves exactly like stock: no jade is ever consumed and the protect socket does nothing. The <em>chances panel and the item's upgrade icons still show</em> (they are always-on client UI) &mdash; only the jade reduction is inactive.</div>
+
+  <h3 id="iu-lua">How to write the jade table</h3>
+  <p>Everything is one list of jade blocks. Copy a block, change the code / percentages / gear kinds, add as many as you like:</p>
+  <pre><code>ItemUpgradeProtection = {
+  { Code = "irjad01", DestroyProtect = 20, FailProtect = 10, AppliesTo = { "All" } },                                          -- Lucky Jade: weak, protects anything
+  { Code = "irjad02", DestroyProtect = 30, FailProtect = 15, AppliesTo = { "Weapon" } },                                       -- Promise Jade: weapons only
+  { Code = "irjad03", DestroyProtect = 50, FailProtect = 20, AppliesTo = { "Shield", "Cloak" } },                              -- Wealth Jade: shield + cloak
+  { Code = "irjad05", DestroyProtect = 40, FailProtect = 25, AppliesTo = { "Upper", "Lower", "Gloves", "Shoes", "Helmet" } },  -- Separation Jade: armor pieces, strong
+}</code></pre>
+  <table>
+    <tr><th>Key</th><th>Meaning</th></tr>
+    <tr><td><code>Code</code></td><td>The jade's <strong>item Code</strong> from <code>ResourceItem.dat</code> (the &ldquo;Code&rdquo; column, e.g. <code>"irjad01"</code>), as a quoted string. This is what the server matches against the slotted item. It is <strong>not</strong> the Model / graphic id (e.g. <code>"A3012E"</code>) &mdash; matching on that fails and the upgrade is rejected with error 14.</td></tr>
+    <tr><td><code>DestroyProtect</code></td><td>Percent (<code>0..100</code>) to reduce the <em>Destroyed</em> chance by. Values are clamped to 0&ndash;100.</td></tr>
+    <tr><td><code>FailProtect</code></td><td>Percent (<code>0..100</code>) to reduce the <em>Fail</em> chance by. The probability freed from Destroy and Fail is added to Success.</td></tr>
+    <tr><td><code>AppliesTo</code></td><td>Which equipment kinds this jade may protect. Valid names (case-insensitive): <code>"Weapon"</code>, <code>"Upper"</code>, <code>"Lower"</code>, <code>"Gloves"</code>, <code>"Shoes"</code>, <code>"Helmet"</code>, <code>"Shield"</code>, <code>"Cloak"</code>, or <code>"All"</code> (every kind). A block with an empty / invalid <code>AppliesTo</code> is ignored.</td></tr>
+  </table>
+  <ul>
+    <li><strong>One jade per protected attempt.</strong> A successful protection consumes the slotted jade; if the attempt would not have destroyed / failed, the jade is untouched.</li>
+    <li><strong>Kind must match.</strong> A jade slotted against gear that is not in its <code>AppliesTo</code> list is rejected with a clear &ldquo;not a protection item for this gear&rdquo; message &mdash; it never silently does nothing.</li>
+    <li><strong>Unlisted items are not jades.</strong> Only the <code>Code</code>s written here act as protection materials.</li>
+    <li><strong>Comments and live reload.</strong> Anything after <code>--</code> is ignored, and editing this file reloads on the game tick with no restart.</li>
+  </ul>
+
+  <h3 id="iu-window">The in-game upgrade window</h3>
+  <p>The window is laid out in two columns and is <strong>draggable</strong> by its title bar. Hover any socket for that item's normal tooltip.</p>
+  <table>
+    <tr><th>Area</th><th>What it shows</th></tr>
+    <tr><td><strong>UPGRADE ITEM</strong></td><td>The item you are upgrading, its icon, and &mdash; directly above the name &mdash; its current <strong>Upgrade</strong> status as the same row of talic icons the item's tooltip uses (filled sockets show the talic, empty sockets show a dim plate). The count and icons are read live from the item, never hardcoded, so a freshly-upgraded or downgraded item updates instantly.</td></tr>
+    <tr><td><strong>MATERIALS</strong></td><td>The talic / jewel sockets that feed the upgrade (Talic, Fire, Water, Terra, Wind).</td></tr>
+    <tr><td><strong>JADE PROTECTION</strong></td><td>The protect socket. It reads <em>None</em> when empty and <span class="badge on">Active</span> when a matching jade is slotted, with the jade's own <strong>Destroy &minus;X% / Fail &minus;Y%</strong> figures shown beneath &mdash; taken straight from <code>ItemUpgradeProtection.lua</code>, not typed into the UI.</td></tr>
+    <tr><td><strong>UPGRADE CHANCES</strong></td><td>The four outcomes (Success, Destroyed, Talic removed, Fail) as a live preview the server computes. When a jade lowers a row, that value turns green with a small <strong>&#9660;</strong> marker and Success climbs by the freed amount. These are the very numbers the server rolls against.</td></tr>
+  </table>
+  <div class="box info"><b>Display and calculation are one and the same</b>Whenever a slot changes, the client sends the current item / materials / jade to the server and asks for the chances. The server answers using the same jade-aware engine it uses for the real upgrade, so the panel, the jade breakdown and the actual roll can never drift apart.</div>
 </section>
 
   </main>
