@@ -59,6 +59,11 @@
     <a class="sub" href="#br-activate">Activate it</a>
     <a class="sub" href="#br-lua">Write the schedule</a>
     <a class="sub" href="#br-ui">The in-game window</a>
+    <a href="#election-manager">Election Manager</a>
+    <a class="sub" href="#em-what">What it does</a>
+    <a class="sub" href="#em-activate">Activate it</a>
+    <a class="sub" href="#em-config">The config file</a>
+    <a class="sub" href="#em-rules">Rules &amp; limits</a>
   </nav>
 
   <main class="content">
@@ -90,6 +95,7 @@
     <tr><td><a href="#potion-lua">Potion Lua Overrides</a></td><td><code>PotionLua\PotionLua.ini</code></td><td><span class="badge server">Server</span></td><td>Override what a specific potion does from one Lua list, without editing item scripts</td></tr>
     <tr><td><a href="#megaphone">Megaphone</a></td><td><code>Megaphone\Megaphone.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Players right-click a configured potion to compose a styled announcement (font, color, effects) that is broadcast to every player and mirrored in chat</td></tr>
     <tr><td><a href="#boss-respawn">Boss Respawn Schedule</a></td><td><code>BossRespawnManager\BossRespawn.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Pit bosses respawn on exact weekly / one-off date-times you write in one simple Lua file, with an in-game countdown window on the BOSS button</td></tr>
+    <tr><td><a href="#election-manager">Election Manager</a></td><td><code>ElectionManager\ElectionManager.ini</code></td><td><span class="badge server">Server</span></td><td>Governs the patriarch / archont (race leader) election: candidate register price, extra vote / register eligibility gates, and whether the live vote-score list is shown</td></tr>
   </table>
   <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
 </section>
@@ -768,6 +774,102 @@ Map0 = Elan</code></pre>
     <li><strong>Row accents.</strong> A green tick on a row's left edge means Live, steel means Down &mdash; readable at a glance.</li>
     <li><strong>&ldquo;Spawning...&rdquo;</strong> appears for the moment between a countdown reaching zero and the boss actually coming up.</li>
   </ul>
+</section>
+
+<section id="election-manager">
+  <div class="doc-head">
+    <h2>Election Manager</h2>
+    <div class="badges">
+      <span class="badge server">Server-only</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="em-what">What it does &mdash; and why you would use it</h3>
+  <p>Election Manager governs the periodic <strong>patriarch / archont election</strong> &mdash; the race-leader vote where players register as candidates and everyone else votes. Stock RF Online already runs that election with a fixed set of rules; this module lets you <strong>tune three things from one text file</strong> without touching the engine:</p>
+  <ul>
+    <li><strong>The candidate register price</strong> &mdash; how many dalant it costs to put your name forward (stock <code>10000000</code>).</li>
+    <li><strong>Extra eligibility gates</strong> &mdash; optional minimum level, play time, contribution point, PvP cash bag and class grade layered on top of the stock vote / register checks.</li>
+    <li><strong>The live vote-score list</strong> &mdash; whether players can see the running candidate scores during the vote.</li>
+  </ul>
+  <p>Use it to:</p>
+  <ul>
+    <li>Raise or lower the cost of running for patriarch to fit your economy.</li>
+    <li>Require a minimum level or play time before a player may vote or register, so brand-new characters cannot swing the election.</li>
+    <li>Gate candidacy behind a contribution point / PvP cash bag threshold to keep serious candidates in.</li>
+    <li>Hide the running scores for a &ldquo;blind&rdquo; vote, or leave them visible exactly as stock does.</li>
+  </ul>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Server switch</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\ElectionManager\ElectionManager.ini</span></td><td>Turns the module on or off and holds the register price, the vote / register gates and the score-visibility flags.</td></tr>
+    <tr><td>Client half</td><td colspan="2">None &mdash; this is server-only. The election / candidacy screens are the stock client and simply obey whatever the server allows; there is no client file to edit and no client toggle.</td></tr>
+  </table>
+  <div class="box info"><b>Neutral by default</b>This is a server-only feature: it takes no slot in the client feature-state packet and players see no toggle. It is inert twice over &mdash; with <code>Enable = 0</code> every setting is ignored (exact stock behaviour), and even with <code>Enable = 1</code> the shipped values reproduce stock: the price stays <code>10000000</code>, scores stay visible, and every gate is left at its <code>-1</code> / <code>-1.0</code> sentinel (= &ldquo;no extra gate&rdquo;). Turning the module on changes nothing until you edit a value.</div>
+
+  <h3 id="em-activate">How to activate it</h3>
+  <ol class="steps">
+    <li>
+      <strong>Turn the feature on.</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\ElectionManager\ElectionManager.ini</span> in Notepad and set <code>Enable = 1</code> under <code>[General]</code>:
+      <pre><code>[General]
+Enable = 1</code></pre>
+      Save the file. A running Zone server hot-reloads it &mdash; no restart needed. On its own this still behaves exactly like stock; the next steps are what actually change the election.
+    </li>
+    <li>
+      <strong>Set the price and gates you want.</strong> Change the register price, and replace the <code>-1</code> / <code>-1.0</code> sentinels with real minimums. For example, charge <code>5000000</code> dalant to register and require level 30 to both vote and register:
+      <pre><code>[Register]
+PatriarchRegisterPrice = 5000000
+Level = 30
+
+[Vote]
+Level = 30</code></pre>
+      Any gate you leave at its sentinel simply defers to the stock rule.
+    </li>
+    <li>
+      <strong>(Optional) Hide the live scores.</strong> Still under <code>[General]</code>, set <code>ScoreHide = 1</code> (or <code>ScoreListShow = 0</code>) to suppress the running vote-score list:
+      <pre><code>[General]
+ScoreListShow = 1
+ScoreHide = 1</code></pre>
+      Scores are shown only when <code>ScoreListShow = 1</code> <em>and</em> <code>ScoreHide = 0</code>.
+    </li>
+    <li>
+      <strong>Nothing to do on the client.</strong> The stock election / candidacy screens pick the new rules up automatically &mdash; no file, no setting and no rebuild.
+    </li>
+    <li>
+      <strong>Test it.</strong> Start the servers, log in during an election period, open the candidacy screen and try to register a candidate and to vote. The server applies your price and gates; a character below a gate is refused exactly as it would be for a stock requirement.
+    </li>
+  </ol>
+  <div class="box warn"><b>Do not delete the .ini</b>Like every module file, <code>ElectionManager.ini</code> is required when the Zone server starts &mdash; deleting it stops the server from booting. To go back to stock behaviour, set <code>Enable = 0</code> instead.</div>
+
+  <h3 id="em-config">The config file</h3>
+  <p>One file, <span class="path">Modules\ElectionManager\ElectionManager.ini</span>, in its own <code>ElectionManager</code> folder beside the other modules. Integer gates use <code>-1</code> and float gates use <code>-1.0</code> to mean &ldquo;no extra gate&rdquo;.</p>
+  <table>
+    <tr><th>Key</th><th>Section</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td><code>[General]</code></td><td>Master switch. <code>1</code> = apply the price / gates below, <code>0</code> = inert (exact stock).</td></tr>
+    <tr><td><code>ScoreListShow</code></td><td><code>[General]</code></td><td><code>1</code> = show the live vote-score list, <code>0</code> = suppress it. Stock = <code>1</code>.</td></tr>
+    <tr><td><code>ScoreHide</code></td><td><code>[General]</code></td><td><code>1</code> = force-hide the vote-score list, <code>0</code> = no. Stock = <code>0</code>. Scores are shown only when <code>ScoreListShow = 1</code> <em>and</em> <code>ScoreHide = 0</code>.</td></tr>
+    <tr><td><code>Level</code></td><td><code>[Vote]</code></td><td>Minimum character level to vote. <code>-1</code> = no extra gate. (Odin default <code>30</code>.)</td></tr>
+    <tr><td><code>PlayTime</code></td><td><code>[Vote]</code></td><td>Minimum accumulated play time to vote, in the same unit the engine's own play-time check uses. <code>-1</code> = no extra gate.</td></tr>
+    <tr><td><code>PvpPoint</code></td><td><code>[Vote]</code></td><td>Minimum contribution point (PvP point) to vote. <code>-1.0</code> = no extra gate.</td></tr>
+    <tr><td><code>PvpCashBag</code></td><td><code>[Vote]</code></td><td>Minimum persistent PvP cash bag to vote. <code>-1.0</code> = no extra gate.</td></tr>
+    <tr><td><code>ClassGrade</code></td><td><code>[Vote]</code></td><td>Minimum class grade to vote. <code>-1</code> = no extra gate (stock already requires grade &ge; 2). (Odin default <code>0</code>.)</td></tr>
+    <tr><td><code>PatriarchRegisterPrice</code></td><td><code>[Register]</code></td><td>Candidate register price in dalant, charged on a successful register. Stock (and Odin) = <code>10000000</code>.</td></tr>
+    <tr><td><code>Level</code></td><td><code>[Register]</code></td><td>Minimum character level to register as a candidate. <code>-1</code> = no extra gate. (Odin default <code>30</code>.)</td></tr>
+    <tr><td><code>PlayTime</code></td><td><code>[Register]</code></td><td>Minimum accumulated play time to register. <code>-1</code> = no extra gate.</td></tr>
+    <tr><td><code>PvpPoint</code></td><td><code>[Register]</code></td><td>Minimum contribution point (PvP point) to register. <code>-1.0</code> = no extra gate.</td></tr>
+    <tr><td><code>PvpCashBag</code></td><td><code>[Register]</code></td><td>Minimum persistent PvP cash bag to register. <code>-1.0</code> = no extra gate.</td></tr>
+  </table>
+
+  <h3 id="em-rules">Rules &amp; limits</h3>
+  <ul>
+    <li><strong>Gates only ever tighten.</strong> The configured gates are <em>additional</em> to the stock checks &mdash; they can only make eligibility stricter, never looser. The stock rules always run first: voting already requires accumulated play time, <code>VoteEnable</code>, the scanner count, the engine's level setting and a hardcoded class grade &ge; 2; registering already requires PvP grade &ge; 3 and the dalant price.</li>
+    <li><strong>The sentinel means &ldquo;hands off&rdquo;.</strong> A gate left at <code>-1</code> (integer) or <code>-1.0</code> (float) is not applied at all, so that check defers entirely to stock. Set it to a real number to activate it.</li>
+    <li><strong>Price on register.</strong> The register price is charged in dalant when a candidate successfully registers, exactly where stock charged its hardcoded <code>10000000</code>. With the module disabled the price is always <code>10000000</code>, whatever the file says.</li>
+    <li><strong>No class-grade gate on register.</strong> <code>ClassGrade</code> exists only under <code>[Vote]</code>; candidate registration has no extra class-grade key (the stock PvP-grade check still applies).</li>
+    <li><strong>Score visibility.</strong> The live vote-score list reaches players only when <code>ScoreListShow = 1</code> and <code>ScoreHide = 0</code>. Either flag can suppress it, and disabling the module always shows scores (stock).</li>
+    <li><strong>Odin defaults are opt-in.</strong> Odin's own <code>ElectionManager.ini</code> ships <code>[Vote] Level=30 / ClassGrade=0</code> and <code>[Register] Level=30</code>. This tree ships the <code>-1</code> sentinel instead so enabling the module is inert &mdash; set those keys explicitly if you want Odin's literal defaults.</li>
+  </ul>
+  <p class="muted">With the module off, the election behaves identically to stock: the register price is <code>10000000</code>, scores are shown, and only the built-in vote / register requirements apply.</p>
 </section>
 
   </main>
