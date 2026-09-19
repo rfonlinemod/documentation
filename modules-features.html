@@ -69,6 +69,11 @@
     <a class="sub" href="#iu-activate">Activate it</a>
     <a class="sub" href="#iu-lua">Write the jade table</a>
     <a class="sub" href="#iu-window">The in-game window</a>
+    <a href="#npc-buffer">NPC Buffer</a>
+    <a class="sub" href="#nb-what">What it does</a>
+    <a class="sub" href="#nb-activate">Activate it</a>
+    <a class="sub" href="#nb-lua">Write the buff list</a>
+    <a class="sub" href="#nb-badge">The BUFFER badge</a>
   </nav>
 
   <main class="content">
@@ -102,6 +107,7 @@
     <tr><td><a href="#boss-respawn">Boss Respawn Schedule</a></td><td><code>BossRespawnManager\BossRespawn.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Pit bosses respawn on exact weekly / one-off date-times you write in one simple Lua file, with an in-game countdown window on the BOSS button</td></tr>
     <tr><td><a href="#election-manager">Election Manager</a></td><td><code>ElectionManager\ElectionManager.ini</code></td><td><span class="badge server">Server</span></td><td>Governs the patriarch / archont (race leader) election: candidate register price, extra vote / register eligibility gates, and whether the live vote-score list is shown</td></tr>
     <tr><td><a href="#item-upgrade">Item Upgrade &amp; Jade Protection</a></td><td><code>ItemUpgradeProtection\ItemUpgradeProtection.lua</code></td><td><span class="badge server">Server</span></td><td>Jade materials slotted in the upgrade window lower the Destroy / Fail odds (and raise Success) by the percentages you set, and the Upgrade Chances panel shows the exact same numbers the server actually rolls against</td></tr>
+    <tr><td><a href="#npc-buffer">NPC Buffer</a></td><td><code>NPCManager\NPCBuffer.ini</code> + <code>NPCBuffer.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Turns a chosen store NPC into a &ldquo;buffer&rdquo; that sells self-buffs for dalant; the NPC shows a gold <strong>BUFFER</strong> nameplate and a glowing aura in the world, and a Buffer window lists the buffs with a Purchase button</td></tr>
   </table>
   <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
 </section>
@@ -959,6 +965,87 @@ Enable = 1</code></pre>
     <tr><td><strong>UPGRADE CHANCES</strong></td><td>The four outcomes (Success, Destroyed, Talic removed, Fail) as a live preview the server computes. When a jade lowers a row, that value turns green with a small <strong>&#9660;</strong> marker and Success climbs by the freed amount. These are the very numbers the server rolls against.</td></tr>
   </table>
   <div class="box info"><b>Display and calculation are one and the same</b>Whenever a slot changes, the client sends the current item / materials / jade to the server and asks for the chances. The server answers using the same jade-aware engine it uses for the real upgrade, so the panel, the jade breakdown and the actual roll can never drift apart.</div>
+</section>
+
+<section id="npc-buffer">
+  <div class="doc-head">
+    <h2>NPC Buffer</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <figure class="shot">
+    <img src="assets/img/npc-buffer.png" alt="In-game screenshot of the NeutralB starting area: the store NPC Honakan wears a gold BUFFER nameplate above his name with a glowing light aura around him, and the Buffer window is open beside him listing Available Buffs (Soul Ballad, Increase Speed, Agility) each with a dalant cost and a Purchase button, with Buff applied lines in the chat log">
+    <figcaption>A buffer NPC in game: Honakan carries a gold <strong>BUFFER</strong> nameplate above his name and a glowing aura (the &ldquo;light&rdquo;, like a race leader's status flag), and the <strong>Buffer</strong> window lists every buff he sells with its dalant cost and a <strong>Purchase</strong> button. Buying one applies the effect and prints a &ldquo;Buff applied.&rdquo; line in chat.</figcaption>
+  </figure>
+
+  <h3 id="nb-what">What it does &mdash; and why you would use it</h3>
+  <p>Stock RF Online has no way to sell a player a temporary self-buff from an NPC &mdash; buffs only come from spells another player casts. The <strong>NPC Buffer</strong> module turns any designated store NPC into a <em>buff vendor</em>: a player talks to it, opens the <strong>Buffer</strong> window, and buys the effects you have listed for a dalant price. The granted buff behaves exactly like a normally-cast one (same duration, same stacking rules), because it rides the engine's own assist-cast path.</p>
+  <ul>
+    <li><strong>A named, glowing NPC.</strong> A buffer NPC shows a gold <strong>BUFFER</strong> nameplate floating above its name and a light aura around it, so players can spot it across the square without clicking anything &mdash; the same &ldquo;status light&rdquo; treatment a race leader gets. See <a href="#nb-badge">The BUFFER badge &amp; light</a>.</li>
+    <li><strong>A Buffer window.</strong> Clicking the NPC opens a <strong>Buffer</strong> button; it lists each buff with its icon, level, cost and a <strong>Purchase</strong> button, and shows the player's current balance.</li>
+    <li><strong>You choose who sells what.</strong> Every buff &mdash; which effect, what level, what price, which race may buy it &mdash; is a line you write in a plain-text file. No item scripts, no recompiling.</li>
+    <li><strong>Two ways to configure it.</strong> A simple per-NPC <strong>Lua list</strong> (recommended, keyed by the NPC's store code), or the classic <strong>INI</strong> store-button path. The Lua list wins for any NPC it defines; everyone else falls back to the INI.</li>
+  </ul>
+
+  <h3 id="nb-activate">How to activate it</h3>
+  <p>The feature has one master switch and one path switch, both in the same INI file. Turn them on and write your buff list.</p>
+  <ol class="steps">
+    <li>
+      <strong>Open the module file.</strong> Edit <span class="path">.Server\Zoneserver\RF_Bin\Modules\NPCManager\NPCBuffer.ini</span> in Notepad. Set the <strong>master</strong> switch and the <strong>Lua path</strong> switch to <code>1</code>:
+      <pre><code>[General]
+; MASTER switch: 0 = whole feature inert, 1 = active.
+Enable=1
+
+[Lua]
+; 1 = the NPCBuffer.lua list is used (and wins for any NPC it defines).
+Enable=1</code></pre>
+      Save the file. A running Zone server re-reads it on the next game tick &mdash; <strong>no restart needed</strong>.
+    </li>
+    <li>
+      <strong>Write your buff list.</strong> Open the sibling <span class="path">NPCBuffer.lua</span> and add one block per NPC &mdash; see <a href="#nb-lua">Write the buff list</a>. The shipped file already contains a ready-to-run example for <strong>Honakan</strong> (store code <code>"03100"</code>) in the Bellato starting area.
+    </li>
+    <li>
+      <strong>Check it in game.</strong> Walk to the NPC: it now wears the gold <strong>BUFFER</strong> nameplate and aura. Click it and the <strong>Buffer</strong> button appears; open it, buy a buff, and watch the effect apply and the &ldquo;Buff applied.&rdquo; line appear in chat.
+    </li>
+  </ol>
+  <div class="box info"><b>INI-only servers can skip Lua</b>If you would rather not use the Lua list, leave <code>[Lua] Enable=0</code> and use only <code>[General] Enable=1</code>. Buffs are then driven by the <code>[Buff]</code> block in the INI, which maps reserved store-button indices (<code>156..185</code>) you place in the NPC's own StoreList. The Lua path is easier to author and is what the screenshot above uses.</div>
+  <div class="box warn"><b>Do not delete the files</b>The Zone server needs <code>NPCBuffer.ini</code> at startup &mdash; a missing module file stops the server from booting. To switch the feature off, set <code>Enable=0</code> under <code>[General]</code> and leave the files in place.</div>
+  <div class="box warn"><b>An unknown effect code just fails quietly</b>Every <code>BuffCode</code> you list must exist in this server's skill / force / class-skill data. A bad code does not crash anything and is never charged &mdash; the purchase simply does nothing &mdash; so verify effect codes against your own tables before advertising a buff.</div>
+
+  <h3 id="nb-lua">How to write the buff list</h3>
+  <p>The Lua file is one table keyed by each NPC's <strong>store code</strong>; the value is a list of buff entries (up to 20 per NPC). Copy a block, change the code and effects, add as many NPCs as you like:</p>
+  <pre><code>NPCBuffer = {
+  -- Honakan, a Bellato vendor. Store code "03100".
+  ["03100"] = {
+    { BuffType = 1, BuffCode = "7102", BuffLevel = 7, BuffCost = 1000, BuffRace = 0 },
+    { BuffType = 1, BuffCode = "7105", BuffLevel = 7, BuffCost = 1000, BuffRace = 0 },
+    { BuffType = 1, BuffCode = "7106", BuffLevel = 7, BuffCost = 1500, BuffRace = 0 },
+  },
+}</code></pre>
+  <table>
+    <tr><th>Key</th><th>Meaning</th></tr>
+    <tr><td><code>["&hellip;"]</code></td><td>The NPC's <strong>store code</strong> (<code>m_strStore_NPCcode</code>, a quoted string such as <code>"03100"</code>) as it appears in <code>StoreList.dat</code>. Discover it with the GM command <code>/goto_npc &lt;code&gt;</code>, which walks to the NPC whose store code matches.</td></tr>
+    <tr><td><code>BuffType</code></td><td>Which table the effect comes from: <code>0</code> = skill (<code>skill.dat</code>), <code>1</code> = force (<code>force.dat</code>), <code>2</code> = class skill (<code>ClassSkill.dat</code>).</td></tr>
+    <tr><td><code>BuffCode</code></td><td>The effect code, resolved in the table named by <code>BuffType</code>. It <strong>must</strong> exist in this server's effect data or the purchase fails silently.</td></tr>
+    <tr><td><code>BuffLevel</code></td><td>Level of the granted effect (<code>1..7</code>).</td></tr>
+    <tr><td><code>BuffCost</code></td><td>Dalant charged to buy it (<code>0</code> = free).</td></tr>
+    <tr><td><code>BuffRace</code></td><td>Who may buy: <code>0</code> = Bellato, <code>1</code> = Cora, <code>2</code> = Accretia, <code>255</code> = any race.</td></tr>
+  </table>
+  <p class="muted">Anything after <code>--</code> is a comment and is ignored. Editing this file reloads live on the game tick, so you can tune prices and lists while players are online.</p>
+
+  <h3 id="nb-badge">The BUFFER badge &amp; light</h3>
+  <p>When a store NPC is a configured buffer, the server marks it in the very packet that makes the merchant appear in a player's view. The client uses that mark to draw the world indicators &mdash; no dialog round-trip required:</p>
+  <ul>
+    <li><strong>Gold BUFFER nameplate.</strong> A <strong>BUFFER</strong> label on a dark, gold-framed plate floats just above the NPC's normal name, matching the honor / guild overhead styling a race leader wears.</li>
+    <li><strong>Light aura.</strong> A soft glow plays on the NPC's model, so the buffer is visible as a &ldquo;lit&rdquo; figure from across the map.</li>
+    <li><strong>Automatic and live.</strong> The badge follows the server's Lua / INI configuration: add or remove an NPC and its nameplate and aura appear or vanish on reload, with nothing to edit on the client.</li>
+  </ul>
+  <div class="box info"><b>Both halves are needed</b>The badge and window are drawn by the game client that ships with this kit. Players on an <em>older</em> client simply will not see the nameplate &mdash; the buffs themselves are still applied by the server when bought.</div>
 </section>
 
   </main>
