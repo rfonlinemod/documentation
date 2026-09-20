@@ -74,6 +74,18 @@
     <a class="sub" href="#nb-activate">Activate it</a>
     <a class="sub" href="#nb-lua">Write the buff list</a>
     <a class="sub" href="#nb-badge">The BUFFER badge</a>
+    <a href="#race-leader-effect">Race Leader Effect</a>
+    <a class="sub" href="#rle-what">What it does</a>
+    <a class="sub" href="#rle-activate">Activate it</a>
+    <a class="sub" href="#rle-aura">The aura visuals</a>
+    <a class="sub" href="#rle-bonus">The stat bonuses</a>
+    <a class="sub" href="#rle-view">How far it is seen</a>
+    <a href="#chip-hp">Chip HP Bars</a>
+    <a class="sub" href="#ch-what">What it does</a>
+    <a class="sub" href="#ch-activate">Activate it</a>
+    <a href="#module-logs">Module Logs</a>
+    <a class="sub" href="#ml-what">What it is</a>
+    <a class="sub" href="#ml-use">Reading the logs</a>
   </nav>
 
   <main class="content">
@@ -108,6 +120,9 @@
     <tr><td><a href="#election-manager">Election Manager</a></td><td><code>ElectionManager\ElectionManager.ini</code></td><td><span class="badge server">Server</span></td><td>Governs the patriarch / archont (race leader) election: candidate register price, extra vote / register eligibility gates, and whether the live vote-score list is shown</td></tr>
     <tr><td><a href="#item-upgrade">Item Upgrade &amp; Jade Protection</a></td><td><code>ItemUpgradeProtection\ItemUpgradeProtection.lua</code></td><td><span class="badge server">Server</span></td><td>Jade materials slotted in the upgrade window lower the Destroy / Fail odds (and raise Success) by the percentages you set, and the Upgrade Chances panel shows the exact same numbers the server actually rolls against</td></tr>
     <tr><td><a href="#npc-buffer">NPC Buffer</a></td><td><code>NPCManager\NPCBuffer.ini</code> + <code>NPCBuffer.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Turns a chosen store NPC into a &ldquo;buffer&rdquo; that sells self-buffs for dalant; the NPC shows a gold <strong>BUFFER</strong> nameplate and a glowing aura in the world, and a Buffer window lists the buffs with a Purchase button</td></tr>
+    <tr><td><a href="#race-leader-effect">Race Leader Effect</a></td><td><code>RaceLeaderEffect\RaceLeaderEffect.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>The glowing world aura a race leader / council member wears, plus the percent Attack / Defence / HP bonus they gain while in office &mdash; tuned per race and per rank</td></tr>
+    <tr><td><a href="#chip-hp">Chip HP Bars</a></td><td><code>ConfigurationManager\ClientManager.ini</code></td><td><span class="badge client">Client</span></td><td>Shows or hides the three race-crystal (Belato / Cora / Accretia) HP bars on the HUD beside the radar</td></tr>
+    <tr><td><a href="#module-logs">Module Logs</a></td><td>&mdash; (automatic)</td><td><span class="badge server">Server</span></td><td>Every feature module writes a plain-language log into one <code>ModulesLog</code> folder, with a single <em>_ALL PROBLEMS</em> file that lists anything that went wrong</td></tr>
   </table>
   <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
 </section>
@@ -1046,6 +1061,160 @@ Enable=1</code></pre>
     <li><strong>Automatic and live.</strong> The badge follows the server's Lua / INI configuration: add or remove an NPC and its nameplate and aura appear or vanish on reload, with nothing to edit on the client.</li>
   </ul>
   <div class="box info"><b>Both halves are needed</b>The badge and window are drawn by the game client that ships with this kit. Players on an <em>older</em> client simply will not see the nameplate &mdash; the buffs themselves are still applied by the server when bought.</div>
+</section>
+
+<section id="race-leader-effect">
+  <div class="doc-head">
+    <h2>Race Leader Effect</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client-visible</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <figure class="shot">
+    <img src="assets/img/race-leader-effect.png" alt="In-game screenshot of a Cora race leader named testaura wearing the RACE LEADER nameplate and a bright winged light aura, with two more distant auras visible across the plaza marked by red arrows">
+    <figcaption>A race leader in game: the elected president wears a <strong>RACE&nbsp;LEADER</strong> nameplate and a bright winged aura, and council members wear the same aura. This one file controls both that <em>look</em> and the <em>stat bonus</em> they receive while in office.</figcaption>
+  </figure>
+
+  <h3 id="rle-what">What it does &mdash; and why you would use it</h3>
+  <p>When a player is elected <strong>race leader</strong> (the president / patriarch) or joins the <strong>council</strong> (the eight sub-leaders), the game can give them two things: a glowing world <strong>aura</strong> that marks them out, and a <strong>percent stat bonus</strong> to Attack, Defence and HP for as long as they hold office. This module lets you tune both from a single text file, separately for each race and each rank.</p>
+  <ul>
+    <li><strong>The aura (what players see).</strong> The size, height and transparency of the wings, the ground ring and the ground burst, plus whether the tall light beam is shown &mdash; per race, and different for the leader vs the council.</li>
+    <li><strong>The bonus (what the server applies).</strong> How much Attack / Defence / HP a leader or council member gains while in office &mdash; again per race and per rank.</li>
+    <li><strong>Server-authoritative.</strong> The Zone server reads this file and pushes the look to every player's client, so players cannot edit their own aura &mdash; there is no client-side copy to tamper with.</li>
+  </ul>
+  <div class="box info"><b>One file, two halves</b>The aura is <span class="badge client">Client</span> (it changes what players see) and the bonus is <span class="badge server">Server</span> (it changes combat numbers), but they live in the <em>same</em> <code>RaceLeaderEffect.ini</code> and share one <code>Enable</code> switch.</div>
+
+  <h3 id="rle-activate">How to activate it</h3>
+  <ol class="steps">
+    <li><strong>Open the module file.</strong> Edit <span class="path">.Server\Zoneserver\RF_Bin\Modules\RaceLeaderEffect\RaceLeaderEffect.ini</span> in Notepad.</li>
+    <li>
+      <strong>Turn it on.</strong> Under <code>[General]</code>, set:
+      <pre><code>[General]
+Enable = 1</code></pre>
+      With <code>Enable = 0</code> the feature is inert: leaders keep the stock aura look (no tall beam) and get <strong>no</strong> stat bonus.
+    </li>
+    <li><strong>Tune the aura and the bonus.</strong> Edit the per-race sections described in <a href="#rle-aura">The aura visuals</a> and <a href="#rle-bonus">The stat bonuses</a> below, then save.</li>
+    <li><strong>It applies live.</strong> A running server re-reads the file about twice a second and pushes the new aura to everyone already in the world &mdash; no restart and no re-login needed. The stat bonus updates on the leader's next stat refresh.</li>
+  </ol>
+  <div class="box warn"><b>Do not delete the file</b>Like every module, a missing <code>RaceLeaderEffect.ini</code> stops the Zone server from starting. To turn the feature off, set <code>Enable = 0</code> and leave the file in place.</div>
+
+  <h3 id="rle-aura">The aura visuals</h3>
+  <p>There are six aura sections &mdash; one per race, one for the leader and one for the council:</p>
+  <table>
+    <tr><th>Section</th><th>Who it is for</th></tr>
+    <tr><td><code>[BELLATO_LEADER]</code> / <code>[CORA_LEADER]</code> / <code>[ACCRETIA_LEADER]</code></td><td>The rank-0 race leader (president / patriarch).</td></tr>
+    <tr><td><code>[BELLATO_SUB]</code> / <code>[CORA_SUB]</code> / <code>[ACCRETIA_SUB]</code></td><td>The council &mdash; the eight sub-leaders (vice presidents).</td></tr>
+  </table>
+  <p>Each section has the same keys, grouped by the four parts of the aura:</p>
+  <table>
+    <tr><th>Part</th><th>On screen</th><th>Keys</th></tr>
+    <tr><td><strong>Wings</strong></td><td>The energy wings / crystal spikes around the body.</td><td><code>WingScale</code>, <code>WingHeight</code>, <code>WingOpacity</code></td></tr>
+    <tr><td><strong>Ring</strong></td><td>The glowing ring on the ground.</td><td><code>RingScale</code>, <code>RingHeight</code>, <code>RingOpacity</code></td></tr>
+    <tr><td><strong>Base</strong></td><td>The ground burst and foot sparks at the feet.</td><td><code>BaseScale</code>, <code>BaseHeight</code>, <code>BaseOpacity</code></td></tr>
+    <tr><td><strong>Beam</strong></td><td>The tall vertical light pillar.</td><td><code>BeamOn</code> (0 / 1), <code>BeamScale</code>, <code>BeamHeight</code>, <code>BeamOpacity</code></td></tr>
+  </table>
+  <p>What the three value types mean (they repeat for every part):</p>
+  <ul>
+    <li><strong>Scale</strong> &mdash; size multiplier. <code>1.0</code> = the stock size, <code>2.0</code> = twice as big, <code>0.5</code> = half.</li>
+    <li><strong>Height</strong> &mdash; how far to lift the part, as a fraction of the character's height. <code>0.0</code> = stock, <code>0.5</code> = up by half a head.</li>
+    <li><strong>Opacity</strong> &mdash; transparency, <code>0.0</code> (invisible) to <code>1.0</code> (solid). Anything above <code>1.0</code> is treated as fully solid.</li>
+    <li><strong>BeamOn</strong> &mdash; <code>1</code> shows the tall pillar, <code>0</code> hides it.</li>
+  </ul>
+  <p>Example &mdash; make the Cora leader's wings a little bigger, raise them, and turn the tall beam on:</p>
+  <pre><code>[CORA_LEADER]
+WingScale = 1.5
+WingHeight = 0.2
+WingOpacity = 1.0
+RingScale = 1.0
+RingHeight = 0.0
+RingOpacity = 1.0
+BaseScale = 1.0
+BaseHeight = 0.0
+BaseOpacity = 1.0
+BeamOn = 1
+BeamScale = 1.0
+BeamHeight = 0.0
+BeamOpacity = 1.0</code></pre>
+
+  <h3 id="rle-bonus">The stat bonuses</h3>
+  <p>Below the aura sections are the bonus sections &mdash; one per race <em>per office slot</em>. Slot <code>0</code> is the race leader; slots <code>1</code>&ndash;<code>8</code> are the eight council seats.</p>
+  <pre><code>[CORA_0]        ; the Cora race leader
+Attack = 10
+Defence = 10
+HP = 10
+
+[CORA_1]        ; a Cora council seat
+Attack = 5
+Defence = 5
+HP = 5</code></pre>
+  <table>
+    <tr><th>Key</th><th>Meaning</th></tr>
+    <tr><td><code>Attack</code> / <code>Defence</code> / <code>HP</code></td><td>A <strong>percent</strong> bonus (so <code>10</code> = +10%). Applied automatically while the player holds that office, and removed the moment they lose it.</td></tr>
+  </table>
+  <div class="box info"><b>Percent, not flat</b>These are percentages of the character's base stat, so they scale with the player. Set <code>0</code> for any slot to give that office no bonus while still showing its aura.</div>
+
+  <h3 id="rle-view">How far the aura can be seen</h3>
+  <p>The aura is deliberately bright, so left unchecked it acts as a beacon that reveals where a race leader is standing from all across the map &mdash; an easy way for enemies to find and target them. To prevent that, the game only draws <strong>another player's</strong> aura while they are close by (roughly the distance your own camera pulls out to). Your <em>own</em> aura is always shown, and a leader's aura reappears automatically for nearby players as they walk back into range.</p>
+  <div class="box warn"><b>A client-side courtesy</b>This distance limit stops a <em>normal</em> game client from painting distant auras. A heavily modified / cheating client could still try to reveal them, because a leader's status is part of the data sent to any client that can see the player. There is no INI switch for the range yet &mdash; it is built in.</div>
+</section>
+
+<section id="chip-hp">
+  <div class="doc-head">
+    <h2>Chip HP Bars</h2>
+    <div class="badges">
+      <span class="badge client">Client-visible</span>
+      <span class="badge off">Hidden by default</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="ch-what">What it does &mdash; and why you would use it</h3>
+  <p>The <strong>Chip HP bars</strong> are the three small health gauges on the head-up display that show the current HP of each race's crystal / holystone &mdash; <strong>Belato</strong>, <strong>Cora</strong> and <strong>Accretia</strong> &mdash; each with a percentage. They sit just to the left of the round radar in the top-right corner of the screen. This switch shows or hides them with one line.</p>
+  <ul>
+    <li><strong>One toggle.</strong> <code>ChipHP = 1</code> shows the bars, <code>ChipHP = 0</code> hides them.</li>
+    <li><strong>Server-pushed and live.</strong> The Zone server tells every connected client the new state the moment you save the file &mdash; hiding them even closes the bars for anyone already looking.</li>
+    <li><strong>Who actually sees them.</strong> When enabled, the bars follow the game's normal rule and are shown to race leaders and their council. The switch turns the whole feature on or off; it does not force the bars onto ordinary players.</li>
+  </ul>
+
+  <h3 id="ch-activate">How to activate it</h3>
+  <ol class="steps">
+    <li><strong>Open the file.</strong> Edit <span class="path">.Server\Zoneserver\RF_Bin\Modules\ConfigurationManager\ClientManager.ini</span> in Notepad.</li>
+    <li>
+      <strong>Set the switch.</strong> Under <code>[General]</code>, change (or add) the <code>ChipHP</code> line:
+      <pre><code>[General]
+ChipHP=1</code></pre>
+      <code>1</code> = show the three race-crystal HP bars, <code>0</code> = hide them. Save the file &mdash; it takes effect within about half a second, no restart.
+    </li>
+  </ol>
+  <div class="box info"><b>Same file, different feature</b><code>ClientManager.ini</code> also holds the <strong>per-IP login limit</strong> (<code>Enable</code> and <code>MaxLoginPerIP</code>). Those are unrelated to the HP bars &mdash; leave them as they are unless you also want to change the login rule. A missing <code>ChipHP</code> line simply means the bars stay hidden.</div>
+</section>
+
+<section id="module-logs">
+  <div class="doc-head">
+    <h2>Module Logs</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge on">Automatic</span>
+    </div>
+  </div>
+
+  <h3 id="ml-what">What it is</h3>
+  <p>Every feature module on this server keeps its own plain-language diary. When the Zone server starts, it creates a <span class="path">ModulesLog</span> folder and writes one small <code>.log</code> file per feature &mdash; for example <em>Race Leader Effect.log</em>, <em>Client Manager.log</em>, <em>Welcome Window.log</em> &mdash; recording whether the feature started, whether it is on or off, when your saved edits were applied, and any problem it hit. There is nothing to turn on and nothing to configure; it just works.</p>
+  <p>The logs live beside the server's other output, at:</p>
+  <pre><code>.Server\Zoneserver\ZoneServerLog\ModulesLog\</code></pre>
+
+  <h3 id="ml-use">Reading the logs when something is wrong</h3>
+  <ul>
+    <li><strong>Start with <em>_ALL PROBLEMS.log</em>.</strong> This one file collects every warning and error from <em>all</em> modules, so you can see at a glance whether anything is unhappy.</li>
+    <li><strong>Then open the matching feature file</strong> for the full story on that one module. The newest entry is at the bottom.</li>
+    <li><strong>Each line is tagged in plain English:</strong> <code>INFO</code> (just what happened), <code>CHECK</code> (something worth a look), and <code>PROBLEM</code> (something that failed and needs fixing).</li>
+  </ul>
+  <div class="box info"><b>No programming needed</b>The wording is written for a server owner, not a developer. If a feature is not behaving, open its log first &mdash; it will usually tell you exactly which setting or missing file is the cause.</div>
+  <div class="box warn"><b>Logs reset on each server start</b>These are per-session logs: each time the Zone server starts, the files are recreated fresh for that run. If you need history from an earlier session, copy the files out before restarting.</div>
 </section>
 
   </main>
