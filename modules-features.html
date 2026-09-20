@@ -80,6 +80,7 @@
     <a class="sub" href="#rle-aura">The aura visuals</a>
     <a class="sub" href="#rle-bonus">The stat bonuses</a>
     <a class="sub" href="#rle-view">How far it is seen</a>
+    <a class="sub" href="#rle-badge">The overhead badges</a>
     <a href="#chip-hp">Chip HP Bars</a>
     <a class="sub" href="#ch-what">What it does</a>
     <a class="sub" href="#ch-activate">Activate it</a>
@@ -1158,8 +1159,36 @@ HP = 5</code></pre>
   <div class="box info"><b>Percent, not flat</b>These are percentages of the character's base stat, so they scale with the player. Set <code>0</code> for any slot to give that office no bonus while still showing its aura.</div>
 
   <h3 id="rle-view">How far the aura can be seen</h3>
-  <p>The aura is deliberately bright, so left unchecked it acts as a beacon that reveals where a race leader is standing from all across the map &mdash; an easy way for enemies to find and target them. To prevent that, the game only draws <strong>another player's</strong> aura while they are close by (roughly the distance your own camera pulls out to). Your <em>own</em> aura is always shown, and a leader's aura reappears automatically for nearby players as they walk back into range.</p>
-  <div class="box warn"><b>A client-side courtesy</b>This distance limit stops a <em>normal</em> game client from painting distant auras. A heavily modified / cheating client could still try to reveal them, because a leader's status is part of the data sent to any client that can see the player. There is no INI switch for the range yet &mdash; it is built in.</div>
+  <p>The aura is deliberately bright, so left unchecked it acts as a beacon that reveals where a race leader is standing from all across the map &mdash; an easy way for enemies to find and target them. By default the game only draws <strong>another player's</strong> aura while they are close by (roughly the distance your own camera pulls out to); your <em>own</em> aura is always shown. You can now change that range &mdash; or remove the limit entirely &mdash; with one key under <code>[General]</code>:</p>
+  <table>
+    <tr><th>Key</th><th>Meaning</th></tr>
+    <tr><td><code>AuraViewDistance</code></td><td>How far (in world units) you can see <em>other</em> players' auras. <code>0</code> (the default) turns the limit off completely, so auras stay visible all across the map; any positive number stops drawing them beyond that distance. Around <code>50</code> matches the old built-in range.</td></tr>
+  </table>
+  <pre><code>[General]
+Enable = 1
+AuraViewDistance = 0        ; 0 = visible map-wide; e.g. 80 = only within 80 units</code></pre>
+  <div class="box info"><b>Show everywhere, or keep it subtle</b>Set <code>AuraViewDistance = 0</code> to let everyone admire the leaders from anywhere; put it back toward <code>50</code> if you want the old anti-spot behaviour where a distant leader's aura stops drawing until they walk closer. It is pushed live to every client, so a leader's aura reappears for nearby players as they move, with no re-login.</div>
+
+  <h3 id="rle-badge">The overhead nameplate badges</h3>
+  <p>Above every office-holder's name floats a golden <strong>badge</strong> that announces their rank. It used to read <strong>RACE&nbsp;LEADER</strong> for everyone; now the wording matches the exact office, and you can turn each one on or off and resize the whole plate from <code>[General]</code>. The badge follows the same <code>Enable</code> switch as the aura, and shows for the president and the eight council seats (a plain guild master gets no badge).</p>
+  <table>
+    <tr><th>Office (slot)</th><th>Badge text</th><th>On/off key</th></tr>
+    <tr><td>Race leader / president (slot 0)</td><td><code>RACE LEADER</code></td><td><code>BadgeRaceLeader</code></td></tr>
+    <tr><td>Consul (slots 1 &amp; 5)</td><td><code>CONSUL</code></td><td><code>BadgeConsul</code></td></tr>
+    <tr><td>Strike team (slots 2 &amp; 6)</td><td><code>STRIKE TEAM</code></td><td><code>BadgeStrikeTeam</code></td></tr>
+    <tr><td>Defense team (slots 3 &amp; 7)</td><td><code>DEFENSE TEAM</code></td><td><code>BadgeDefenseTeam</code></td></tr>
+    <tr><td>Support team (slots 4 &amp; 8)</td><td><code>SUPPORT TEAM</code></td><td><code>BadgeSupportTeam</code></td></tr>
+  </table>
+  <p>The two overall badge switches (each office row above also has its own <code>1</code>/<code>0</code>):</p>
+  <pre><code>[General]
+BadgeEnable = 1             ; master switch: 0 hides every badge, 1 shows them
+BadgeScale = 1.0            ; overall size of the plate (1.0 = stock, 1.5 = bigger)</code></pre>
+  <ul>
+    <li><strong>BadgeEnable</strong> &mdash; one switch for all badges. <code>1</code> shows them, <code>0</code> hides every office badge at once.</li>
+    <li><strong>BadgeScale</strong> &mdash; grows or shrinks the whole plate (background, border and position). <code>1.0</code> is the stock size.</li>
+    <li><strong>Per-office keys</strong> &mdash; the <code>BadgeRaceLeader</code> / <code>BadgeConsul</code> / <code>BadgeStrikeTeam</code> / <code>BadgeDefenseTeam</code> / <code>BadgeSupportTeam</code> lines each take <code>1</code> or <code>0</code>, so you can show the president and consul but hide the team leads, for example.</li>
+  </ul>
+  <div class="box warn"><b>Needs the matching client</b>The badge text, per-office toggles and scale are drawn by the game client that ships with this kit, and pushed live from the server's <code>RaceLeaderEffect.ini</code>. A player on an <em>older</em> <code>RF_Online.bin</code> will keep showing the old single <strong>RACE LEADER</strong> plate. Redeploy both the server exe and the client after changing these keys.</div>
 </section>
 
 <section id="chip-hp">
@@ -1177,7 +1206,7 @@ HP = 5</code></pre>
   <ul>
     <li><strong>One toggle.</strong> <code>ChipHP = 1</code> shows the bars, <code>ChipHP = 0</code> hides them.</li>
     <li><strong>Server-pushed and live.</strong> The Zone server tells every connected client the new state the moment you save the file &mdash; hiding them even closes the bars for anyone already looking.</li>
-    <li><strong>Who actually sees them.</strong> When enabled, the bars follow the game's normal rule and are shown to race leaders and their council. The switch turns the whole feature on or off; it does not force the bars onto ordinary players.</li>
+    <li><strong>Who actually sees them.</strong> When enabled, the bars are shown to <em>every</em> character in the zone &mdash; GMs, ordinary players and race leaders / council alike &mdash; not just the race-boss group. The switch turns the whole feature on or off for everyone at once.</li>
   </ul>
 
   <h3 id="ch-activate">How to activate it</h3>
