@@ -81,6 +81,11 @@
     <a class="sub" href="#rle-bonus">The stat bonuses</a>
     <a class="sub" href="#rle-view">How far it is seen</a>
     <a class="sub" href="#rle-badge">The overhead badges</a>
+    <a href="#share-pvp">Share PvP</a>
+    <a class="sub" href="#sp-what">What it does</a>
+    <a class="sub" href="#sp-activate">Activate it</a>
+    <a class="sub" href="#sp-config">The config file</a>
+    <a class="sub" href="#sp-lua">The Lua override</a>
     <a href="#chip-hp">Chip HP Bars</a>
     <a class="sub" href="#ch-what">What it does</a>
     <a class="sub" href="#ch-activate">Activate it</a>
@@ -122,6 +127,7 @@
     <tr><td><a href="#item-upgrade">Item Upgrade &amp; Jade Protection</a></td><td><code>ItemUpgradeProtection\ItemUpgradeProtection.lua</code></td><td><span class="badge server">Server</span></td><td>Jade materials slotted in the upgrade window lower the Destroy / Fail odds (and raise Success) by the percentages you set, and the Upgrade Chances panel shows the exact same numbers the server actually rolls against</td></tr>
     <tr><td><a href="#npc-buffer">NPC Buffer</a></td><td><code>NPCManager\NPCBuffer.ini</code> + <code>NPCBuffer.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Turns a chosen store NPC into a &ldquo;buffer&rdquo; that sells self-buffs for dalant; the NPC shows a gold <strong>BUFFER</strong> nameplate and a glowing aura in the world, and a Buffer window lists the buffs with a Purchase button</td></tr>
     <tr><td><a href="#race-leader-effect">Race Leader Effect</a></td><td><code>RaceLeaderEffect\RaceLeaderEffect.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>The glowing world aura a race leader / council member wears, plus the percent Attack / Defence / HP bonus they gain while in office &mdash; tuned per race and per rank</td></tr>
+    <tr><td><a href="#share-pvp">Share PvP</a></td><td><code>PlayerManager\SharePvP.ini</code> (+ optional <code>SharePvP.lua</code>)</td><td><span class="badge server">Server</span></td><td>Choose how a PvP kill&rsquo;s CPT points and temporary cash are split between the killer and their nearby party, with per-role cash multipliers, flat cash amounts, and an auto-detected Lua override</td></tr>
     <tr><td><a href="#chip-hp">Chip HP Bars</a></td><td><code>ConfigurationManager\ClientManager.ini</code></td><td><span class="badge client">Client</span></td><td>Shows or hides the three race-crystal (Belato / Cora / Accretia) HP bars on the HUD beside the radar</td></tr>
     <tr><td><a href="#module-logs">Module Logs</a></td><td>&mdash; (automatic)</td><td><span class="badge server">Server</span></td><td>Every feature module writes a plain-language log into one <code>ModulesLog</code> folder, with a single <em>_ALL PROBLEMS</em> file that lists anything that went wrong</td></tr>
   </table>
@@ -1189,6 +1195,91 @@ BadgeScale = 1.0            ; overall size of the plate (1.0 = stock, 1.5 = bigg
     <li><strong>Per-office keys</strong> &mdash; the <code>BadgeRaceLeader</code> / <code>BadgeConsul</code> / <code>BadgeStrikeTeam</code> / <code>BadgeDefenseTeam</code> / <code>BadgeSupportTeam</code> lines each take <code>1</code> or <code>0</code>, so you can show the president and consul but hide the team leads, for example.</li>
   </ul>
   <div class="box warn"><b>Needs the matching client</b>The badge text, per-office toggles and scale are drawn by the game client that ships with this kit, and pushed live from the server's <code>RaceLeaderEffect.ini</code>. A player on an <em>older</em> <code>RF_Online.bin</code> will keep showing the old single <strong>RACE LEADER</strong> plate. Redeploy both the server exe and the client after changing these keys.</div>
+</section>
+
+<section id="share-pvp">
+  <div class="doc-head">
+    <h2>Share PvP</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="sp-what">What it does &mdash; and why you would use it</h3>
+  <p>When a player kills another player the game hands out two rewards: <strong>CPT</strong> (the PvP rating point) and <strong>PvP temporary cash</strong>. In the stock game the split is hard-coded &mdash; the killer keeps 70% of the CPT and <em>all</em> of the temporary cash, and only the leftover 30% of CPT trickles to the killer&rsquo;s nearby party. <strong>Share PvP lets you choose that split yourself</strong>, separately for each reward pool, and to scale the cash reward up or down.</p>
+  <p>Use it to:</p>
+  <ul>
+    <li>Reward whole PvP gangs, not just the last hitter &mdash; share the CPT and/or the cash evenly across the party.</li>
+    <li>Tune your PvP economy with per-role cash multipliers (killer with a party, solo killer, and the victim&rsquo;s loss).</li>
+    <li>Hand out a flat, predictable amount of temp cash per kill / per death instead of the engine&rsquo;s computed figure.</li>
+  </ul>
+  <p>&ldquo;Nearby party members&rdquo; means the killer&rsquo;s <strong>live, same-map party members inside the normal party circle</strong>, not counting the killer. There is no separate radius to set.</p>
+  <div class="box info"><b>Server-only, and inert until you change a value</b>This module changes only what the server does &mdash; nothing is pushed to the player&rsquo;s client and there is no client file. With <code>Enable = 0</code> (the shipped default) the game behaves exactly as stock, and even after you set <code>Enable = 1</code> the shipped values (Type 0, &times;1.0 multipliers, 0 fixed amounts) reproduce stock behaviour until you edit one.</div>
+
+  <h3 id="sp-activate">How to activate it (the INI)</h3>
+  <ol class="steps">
+    <li>
+      <strong>Turn the feature on.</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\PlayerManager\SharePvP.ini</span> in Notepad and change the <code>Enable</code> line under <code>[General]</code>:
+      <pre><code>[General]
+Enable = 1</code></pre>
+      Save the file &mdash; a running Zone server picks it up within a second; no restart needed.
+    </li>
+    <li>
+      <strong>Pick your split types and multipliers.</strong> Edit the <code>[CPT]</code> and <code>[PvPTempCash]</code> keys described in <a href="#sp-config">The config file</a>.
+    </li>
+    <li>
+      <strong>Test it.</strong> Have two party members kill an enemy player and watch how the CPT and temp cash land. Tweak the file, save, and the new rules apply to the very next kill.
+    </li>
+  </ol>
+  <div class="box warn"><b>Do not delete the file</b>Like every module, <code>SharePvP.ini</code> is required when the Zone server starts &mdash; deleting it stops the server from booting. To turn the feature off, set <code>Enable = 0</code> instead. (The optional <a href="#sp-lua">SharePvP.lua</a> is the one exception &mdash; it is never required and may be absent.)</div>
+
+  <h3 id="sp-config">The config file</h3>
+  <p>Every key lives in <span class="path">Modules\PlayerManager\SharePvP.ini</span>. Change a value, save, and the next PvP kill uses it &mdash; the file is hot-reloaded about twice a second.</p>
+  <table>
+    <tr><th>Section &amp; key</th><th>Values</th><th>What it does</th></tr>
+    <tr><td><code>[General] Enable</code></td><td><code>0</code> / <code>1</code></td><td>Master switch. <code>0</code> = stock reward handling (module off).</td></tr>
+    <tr><td><code>[CPT] Type</code></td><td><code>0</code> / <code>1</code> / <code>2</code></td><td>How the CPT point is split. <code>0</code> = killer 70% / party 30% (level-weighted, stock); <code>1</code> = killer 50% / party 50% (level-weighted); <code>2</code> = equal share among killer + every nearby member (a total of 100 among 4 = 25 each).</td></tr>
+    <tr><td><code>[PvPTempCash] Type</code></td><td><code>0</code>&ndash;<code>3</code></td><td>How the temp cash is split. <code>0</code> = killer takes all (stock); <code>1</code> = 70/30; <code>2</code> = 50/50; <code>3</code> = equal among killer + party.</td></tr>
+    <tr><td><code>[PvPTempCash] KillerCashMultiply</code></td><td>float, e.g. <code>1.5</code></td><td>Extra multiplier on the temp-cash reward for a killer who <strong>has</strong> nearby party. Neutral = <code>1.0</code>.</td></tr>
+    <tr><td><code>[PvPTempCash] SoloKillerCashMultiply</code></td><td>float</td><td>Multiplier for a killer with <strong>no</strong> nearby party. Neutral = <code>1.0</code>.</td></tr>
+    <tr><td><code>[PvPTempCash] DierCashMultiply</code></td><td>float</td><td>Multiplier on the victim&rsquo;s temp-cash <em>loss</em>. Neutral = <code>1.0</code>.</td></tr>
+    <tr><td><code>[General] FixedPvPTempCashPerKill</code></td><td>int, <code>0</code> = off</td><td>Replace the killer&rsquo;s computed cash gain with this flat amount (the killer multipliers then apply on top). <code>0</code> keeps the engine&rsquo;s value.</td></tr>
+    <tr><td><code>[General] FixedPvPTempCashPerDeath</code></td><td>int, <code>0</code> = off</td><td>Replace the victim&rsquo;s computed cash loss with this flat amount (then <code>DierCashMultiply</code> applies). <code>0</code> keeps the engine&rsquo;s value.</td></tr>
+  </table>
+  <p class="muted">Two keys &mdash; <code>ShareRadius</code> and <code>ShareCashQuest</code> &mdash; are read only to match the original Odin file and currently have <strong>no effect</strong>: the party-circle radius is fixed in the engine and shared with non-PvP code, and the temp-cash path exposes no quest trigger. Leave them at their shipped values.</p>
+
+  <h3 id="sp-lua">Optional: drive it from SharePvP.lua</h3>
+  <p>If you would rather keep your PvP-sharing rules in one clean Lua list, drop a <code>SharePvP.lua</code> beside the INI. <strong>The server notices it automatically</strong> &mdash; the moment the file appears it starts watching and hot-reloading it, so you never touch the INI and never restart.</p>
+  <div class="box ok"><b>Nothing to &ldquo;enable&rdquo; in the INI</b>Just create <span class="path">.Server\Zoneserver\RF_Bin\Modules\PlayerManager\SharePvP.lua</span> with <code>Enable = true</code> inside it. While that file is present and switched on, the server follows the Lua and ignores the sharing keys in <code>SharePvP.ini</code>. Set <code>Enable = false</code> or delete the file and the INI takes over again.</div>
+  <pre><code>SharePvP = {
+  Enable = true,          -- true = the server follows THIS file, not the INI
+
+  CptType  = 2,           -- 0 = 70/30, 1 = 50/50, 2 = equal party split
+  CashType = 1,           -- 0 = killer all, 1 = 70/30, 2 = 50/50, 3 = equal
+
+  KillerCashMultiply     = 1.5,   -- killer WITH nearby party
+  SoloKillerCashMultiply = 1.0,   -- killer with NO nearby party
+  DierCashMultiply       = 1.0,   -- the victim's loss
+
+  FixedPvPTempCashPerKill  = 0,   -- flat cash per kill, 0 = use the engine value
+  FixedPvPTempCashPerDeath = 0,   -- flat cash per death, 0 = use the engine value
+}</code></pre>
+  <table>
+    <tr><th>Lua field</th><th>Matches INI key</th><th>Notes</th></tr>
+    <tr><td><code>Enable</code></td><td><code>[General] Enable</code></td><td>The switch. <code>true</code> (or <code>1</code>) = follow this file; <code>false</code> (or <code>0</code>) = ignore it and use the INI.</td></tr>
+    <tr><td><code>CptType</code></td><td><code>[CPT] Type</code></td><td><code>0</code>&ndash;<code>2</code>; a value out of range falls back to <code>0</code>.</td></tr>
+    <tr><td><code>CashType</code></td><td><code>[PvPTempCash] Type</code></td><td><code>0</code>&ndash;<code>3</code>; out of range falls back to <code>0</code>.</td></tr>
+    <tr><td><code>KillerCashMultiply</code> / <code>SoloKillerCashMultiply</code> / <code>DierCashMultiply</code></td><td>same names in <code>[PvPTempCash]</code></td><td>Floats, default <code>1.0</code>.</td></tr>
+    <tr><td><code>FixedPvPTempCashPerKill</code> / <code>FixedPvPTempCashPerDeath</code></td><td>same names in <code>[General]</code></td><td>Integers, default <code>0</code>.</td></tr>
+  </table>
+  <ul>
+    <li><strong>Every field is optional.</strong> Anything you leave out keeps the neutral default shown above.</li>
+    <li><strong>Comments use <code>--</code>.</strong> Everything after two dashes on a line is ignored, so label your rules freely.</li>
+    <li><strong>A typo cannot break your server.</strong> If the file has a syntax mistake (or is missing the <code>SharePvP = { ... }</code> table), the server writes a plain-language note into the <span class="path">ModulesLog</span> folder and safely keeps using the INI.</li>
+    <li><strong>It is never required at boot.</strong> The Zone server starts fine with no <code>SharePvP.lua</code> at all; only <code>SharePvP.ini</code> must exist. Add the Lua whenever you like and it is picked up live.</li>
+  </ul>
 </section>
 
 <section id="chip-hp">
