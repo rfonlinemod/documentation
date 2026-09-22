@@ -86,6 +86,11 @@
     <a class="sub" href="#sp-activate">Activate it</a>
     <a class="sub" href="#sp-config">The config file</a>
     <a class="sub" href="#sp-lua">The Lua override</a>
+    <a href="#skill-desc">Skill Additional Description</a>
+    <a class="sub" href="#sd-what">What it does</a>
+    <a class="sub" href="#sd-activate">Activate it</a>
+    <a class="sub" href="#sd-lua">Edit the text</a>
+    <a class="sub" href="#sd-rules">How the text is built</a>
     <a href="#chip-hp">Chip HP Bars</a>
     <a class="sub" href="#ch-what">What it does</a>
     <a class="sub" href="#ch-activate">Activate it</a>
@@ -128,6 +133,7 @@
     <tr><td><a href="#npc-buffer">NPC Buffer</a></td><td><code>NPCManager\NPCBuffer.ini</code> + <code>NPCBuffer.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Turns a chosen store NPC into a &ldquo;buffer&rdquo; that sells self-buffs for dalant; the NPC shows a gold <strong>BUFFER</strong> nameplate and a glowing aura in the world, and a Buffer window lists the buffs with a Purchase button</td></tr>
     <tr><td><a href="#race-leader-effect">Race Leader Effect</a></td><td><code>RaceLeaderEffect\RaceLeaderEffect.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>The glowing world aura a race leader / council member wears, plus the percent Attack / Defence / HP bonus they gain while in office &mdash; tuned per race and per rank</td></tr>
     <tr><td><a href="#share-pvp">Share PvP</a></td><td><code>PlayerManager\SharePvP.ini</code> (+ optional <code>SharePvP.lua</code>)</td><td><span class="badge server">Server</span></td><td>Choose how a PvP kill&rsquo;s CPT points and temporary cash are split between the killer and their nearby party, with per-role cash multipliers, flat cash amounts, and an auto-detected Lua override</td></tr>
+    <tr><td><a href="#skill-desc">Skill Additional Description</a></td><td><code>SkillDescExtnd\SkillDescExtnd.ini</code> + <code>SkillDescExtnd.lua</code></td><td><span class="badge server">Server</span></td><td>Adds a real, per-level <strong>[Additional Description]</strong> under the stock text on every skill, class-skill and force tooltip, generated from the ability's actual effect numbers and editable in one auto-generated Lua file</td></tr>
     <tr><td><a href="#chip-hp">Chip HP Bars</a></td><td><code>ConfigurationManager\ClientManager.ini</code></td><td><span class="badge client">Client</span></td><td>Shows or hides the three race-crystal (Belato / Cora / Accretia) HP bars on the HUD beside the radar</td></tr>
     <tr><td><a href="#module-logs">Module Logs</a></td><td>&mdash; (automatic)</td><td><span class="badge server">Server</span></td><td>Every feature module writes a plain-language log into one <code>ModulesLog</code> folder, with a single <em>_ALL PROBLEMS</em> file that lists anything that went wrong</td></tr>
   </table>
@@ -1280,6 +1286,81 @@ Enable = 1</code></pre>
     <li><strong>A typo cannot break your server.</strong> If the file has a syntax mistake (or is missing the <code>SharePvP = { ... }</code> table), the server writes a plain-language note into the <span class="path">ModulesLog</span> folder and safely keeps using the INI.</li>
     <li><strong>It is never required at boot.</strong> The Zone server starts fine with no <code>SharePvP.lua</code> at all; only <code>SharePvP.ini</code> must exist. Add the Lua whenever you like and it is picked up live.</li>
   </ul>
+</section>
+
+<section id="skill-desc">
+  <div class="doc-head">
+    <h2>Skill Additional Description</h2>
+    <div class="badges">
+      <span class="badge server">Server-only</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="sd-what">What it does &mdash; and why you would use it</h3>
+  <p>Stock RF Online tooltips give you only the old <code>[Description]</code> &mdash; a single vague sentence like &ldquo;Saps the target's strength, temporarily reducing attack power&rdquo; that never tells you <em>how much</em>, or <em>what it actually changes</em>. This module adds a second block, <strong><code>[Additional Description]</code></strong>, under the original text on every <strong>skill, class-skill and force</strong> tooltip, spelling out the ability's real effect &mdash; per level, straight from the numbers the server actually applies.</p>
+  <figure class="shot">
+    <img src="assets/img/skill-desc-extnd-tooltip.png" alt="A force tooltip in game showing the stock Description followed by an Additional Description block listing the exact per-level effect numbers">
+    <figcaption>With the module on, hovering a force shows the stock <code>[Description]</code> and, beneath it, the new <code>[Additional Description]</code> block &mdash; here the exact <em>-13% ATK Power</em> lines the server really applies. The original description is never removed.</figcaption>
+  </figure>
+  <p>Use it to:</p>
+  <ul>
+    <li>Give players the honest numbers behind every ability instead of guessing from flavor text.</li>
+    <li>Show continuous buffs / debuffs (attack, defense, range, delay, EXP&hellip;), inflicted states (Silence, Stun, Immobilize, Prevents Running&hellip;) and one-shot effects (buff removal, HP&rarr;FP conversion, DP gain) as plain lines.</li>
+    <li>Fine-tune the wording for any single ability without recompiling &mdash; the text lives in one editable Lua file.</li>
+  </ul>
+  <div class="box info"><b>Server-authoritative</b>The native client has no Lua interpreter, so the server computes the finished tooltip text and pushes it to the player's client &mdash; a player cannot tamper with the numbers locally. The matching tooltip receiver is already compiled into the distributed game client, so there is nothing for you to configure on each player's machine.</div>
+
+  <h3 id="sd-activate">How to activate it</h3>
+  <p>This module uses a <strong>two-step switch</strong> &mdash; both halves must be on before players see anything.</p>
+  <ol class="steps">
+    <li>
+      <strong>Open the boot gate.</strong> Edit <span class="path">.Server\Zoneserver\RF_Bin\Modules\SkillDescExtnd\SkillDescExtnd.ini</span> and set <code>Enable = 1</code>:
+      <pre><code>[General]
+Enable = 1</code></pre>
+      This lets the module run. On its own it still shows nothing &mdash; the actual on/off for players lives in the Lua.
+    </li>
+    <li>
+      <strong>Let the Lua be generated.</strong> If there is no <code>SkillDescExtnd.lua</code> beside the INI, the server writes one automatically on next boot &mdash; a complete list of every skill, class-skill and force, each pre-filled with an accurate effect line for levels 1&hellip;7 and a <code>-- [DTIndex] EN: &hellip; | KO: &hellip;</code> comment naming the ability. It ships with <code>Enable = false</code>.
+    </li>
+    <li>
+      <strong>Turn the effect on.</strong> Open <span class="path">&hellip;\Modules\SkillDescExtnd\SkillDescExtnd.lua</span> and flip the top switch to <code>true</code>:
+      <pre><code>SkillDescExtnd = {
+  Enable = true,</code></pre>
+      Save. A running server hot-reloads the file and re-pushes the tooltips to everyone online &mdash; no restart, no client rebuild.
+    </li>
+  </ol>
+  <div class="box warn"><b>Do not delete the .ini</b><code>SkillDescExtnd.ini</code> is required when the Zone server starts &mdash; a missing module file aborts boot. To go back to plain stock tooltips, set the INI's <code>Enable = 0</code> (or the Lua's <code>Enable = false</code>); never delete the file. The <code>.lua</code>, by contrast, <em>is</em> safe to delete &mdash; the server just regenerates a fresh default one.</div>
+
+  <h3 id="sd-lua">Editing the text</h3>
+  <p>The generated Lua is the <strong>source of truth</strong>. Everything in it is plain text you can rewrite; save and it reloads live. Under each of the three type tables (<code>Skill</code>, <code>Force</code>, <code>ClassSkill</code>) an entry is keyed by the ability's DTIndex and holds up to seven strings &mdash; one per level. <code>&lt;br&gt;</code> starts a new line inside the tooltip.</p>
+  <pre><code>  -- [100692905] EN: Accurate  |  KO: Accuracy
+  [100692905] = {
+    "Atk/Per +31",                       -- level 1
+    "Atk/Per +35",                       -- level 2
+    ...                                  -- up to level 7
+  },</code></pre>
+  <ul>
+    <li><strong>Rename freely.</strong> Change any string to whatever reads best for your server; the server pushes your text verbatim.</li>
+    <li><strong>Multi-line entries.</strong> Put <code>&lt;br&gt;</code> inside a string to break it across lines in the tooltip.</li>
+    <li><strong>Find an ability fast.</strong> Each block is preceded by a comment with its numeric DTIndex and both the English and Korean display name, so you can locate the right entry without a lookup table.</li>
+    <li><strong>Blank means no line.</strong> An empty string (or a missing level) simply shows no additional line for that level.</li>
+  </ul>
+
+  <h3 id="sd-rules">How the default text is built</h3>
+  <p>The generator reads each ability's real effect parameters from the <code>Skill.dat</code> / <code>Force.dat</code> / <code>ClassSkill.dat</code> tables and turns them into words. Two independent effect systems feed the block:</p>
+  <ul>
+    <li><strong>Continuous effects</strong> &mdash; the buff / debuff that persists while the ability is active. These come in three kinds: a <em>rate</em> (a percent change to a stat such as attack, defense, range, delay, EXP&hellip;), a <em>plus</em> (a flat change to a stat), and a <em>state</em> (an inflicted condition such as Silence, Stun, Immobilize, Prevents Running, Cannot Be Hit&hellip;). Each is labelled with the stat it really touches.</li>
+    <li><strong>Instant (one-shot) effects</strong> &mdash; what the cast does the moment it lands, such as removing one or all skill / force buffs or debuffs, converting a percentage of your HP into FP, stunning, or raising DP.</li>
+  </ul>
+  <ul>
+    <li><strong>Per level.</strong> A skill's numbers change with its level, so each of the seven strings is generated from that level's own value.</li>
+    <li><strong>Labels come from the engine, not flavor.</strong> The stat / state names are derived from the exact code path that applies the effect, so they match what actually happens in combat.</li>
+    <li><strong>A few are best-effort.</strong> A small number of states the server never gates on (or that only monster AI reads) are labelled from the ability's clear intent; if one reads wrong for your server, just edit that line in the Lua &mdash; it is the source of truth.</li>
+    <li><strong>Regenerating.</strong> Delete the <code>.lua</code> and restart the Zone server to rebuild the default text from the current data tables (you will need to flip <code>Enable = true</code> again).</li>
+  </ul>
+  <p class="muted">With either switch off, tooltips are exactly stock: the original <code>[Description]</code> only, no additional block.</p>
 </section>
 
 <section id="chip-hp">
