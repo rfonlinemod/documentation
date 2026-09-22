@@ -94,6 +94,12 @@
     <a href="#chip-hp">Chip HP Bars</a>
     <a class="sub" href="#ch-what">What it does</a>
     <a class="sub" href="#ch-activate">Activate it</a>
+    <a href="#chip-war">Chip War Control Panel</a>
+    <a class="sub" href="#cw-what">What it does</a>
+    <a class="sub" href="#cw-activate">Activate it</a>
+    <a class="sub" href="#cw-config">The control panel</a>
+    <a class="sub" href="#cw-drops">The loot lists</a>
+    <a class="sub" href="#cw-limits">What stays in the .ini</a>
     <a href="#module-logs">Module Logs</a>
     <a class="sub" href="#ml-what">What it is</a>
     <a class="sub" href="#ml-use">Reading the logs</a>
@@ -135,6 +141,7 @@
     <tr><td><a href="#share-pvp">Share PvP</a></td><td><code>PlayerManager\SharePvP.ini</code> (+ optional <code>SharePvP.lua</code>)</td><td><span class="badge server">Server</span></td><td>Choose how a PvP kill&rsquo;s CPT points and temporary cash are split between the killer and their nearby party, with per-role cash multipliers, flat cash amounts, and an auto-detected Lua override</td></tr>
     <tr><td><a href="#skill-desc">Skill Additional Description</a></td><td><code>SkillDescExtnd\SkillDescExtnd.ini</code> + <code>SkillDescExtnd.lua</code></td><td><span class="badge server">Server</span></td><td>Adds a real, per-level <strong>[Additional Description]</strong> under the stock text on every skill, class-skill and force tooltip, generated from the ability's actual effect numbers and editable in one auto-generated Lua file</td></tr>
     <tr><td><a href="#chip-hp">Chip HP Bars</a></td><td><code>ConfigurationManager\ClientManager.ini</code></td><td><span class="badge client">Client</span></td><td>Shows or hides the three race-crystal (Belato / Cora / Accretia) HP bars on the HUD beside the radar</td></tr>
+    <tr><td><a href="#chip-war">Chip War Control Panel</a></td><td><code>ChipWar\ChipWar.lua</code></td><td><span class="badge server">Server</span></td><td>Re-tune the whole crystal / Holy Stone war from one plain-language Lua file &mdash; phase timings, crystal &amp; keeper strength, scanner points, ore amounts and the per-race loot lists &mdash; without recompiling</td></tr>
     <tr><td><a href="#module-logs">Module Logs</a></td><td>&mdash; (automatic)</td><td><span class="badge server">Server</span></td><td>Every feature module writes a plain-language log into one <code>ModulesLog</code> folder, with a single <em>_ALL PROBLEMS</em> file that lists anything that went wrong</td></tr>
   </table>
   <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
@@ -1392,6 +1399,97 @@ ChipHP=1</code></pre>
     </li>
   </ol>
   <div class="box info"><b>Same file, different feature</b><code>ClientManager.ini</code> also holds the <strong>per-IP login limit</strong> (<code>Enable</code> and <code>MaxLoginPerIP</code>). Those are unrelated to the HP bars &mdash; leave them as they are unless you also want to change the login rule. A missing <code>ChipHP</code> line simply means the bars stay hidden.</div>
+</section>
+
+<section id="chip-war">
+  <div class="doc-head">
+    <h2>Chip War Control Panel</h2>
+    <div class="badges">
+      <span class="badge server">Server-only</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="cw-what">What it does &mdash; and why you would use it</h3>
+  <p>The <strong>chip war</strong> (also called the <strong>crystal</strong> or <strong>Holy Stone war</strong>) is the server's repeating three-team battle. The teams are <strong>Bellato</strong>, <strong>Cora</strong> and <strong>Accretia</strong>; each guards its own crystal, and they fight to smash the rivals' crystals. When the fighting window closes, the team still holding its crystal wins the right to defend the <strong>keeper</strong> (a guard creature) and mine ore in peace.</p>
+  <p>Normally re-tuning that event means editing <span class="path">NewHolySystem.ini</span> by hand and, for a couple of behaviours, recompiling the server. The <strong>Chip War Control Panel</strong> is a single plain-language <code>ChipWar.lua</code> file that lets you drive almost the whole event instead &mdash; no programming, no recompiling:</p>
+  <ul>
+    <li><strong>Phase timings</strong> &mdash; how long each stage of the war lasts (the main battle, the keeper windows, the mining phase and so on).</li>
+    <li><strong>Crystal and keeper strength</strong> &mdash; how tough each crystal is (including whether it scales with how many players are online) and what percentage health the keeper starts at.</li>
+    <li><strong>Basic switches</strong> &mdash; how many crystals are in play, free mining, and the mental-pass rule.</li>
+    <li><strong>Scanner points and ore</strong> &mdash; the Holy-Scanner score deltas awarded on a win / loss, and the winning team's ore-mining amounts and per-day bonus multipliers.</li>
+    <li><strong>The loot lists</strong> &mdash; exactly which items drop when a crystal or the keeper is destroyed, split per team for the crystals.</li>
+  </ul>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Server control panel</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\ChipWar\ChipWar.lua</span></td><td>The one file that holds every setting below. Turn it on with <code>Enable = true</code>.</td></tr>
+    <tr><td>Client half</td><td colspan="2">None &mdash; this is server-only. It takes no slot in the client feature-state packet and players see no toggle; the war simply follows whatever this file says.</td></tr>
+  </table>
+  <div class="box info"><b>Not the same as Chip HP Bars</b>This page is about <em>running</em> the war. The little on-screen <a href="#chip-hp">Chip HP Bars</a> that show each crystal's health on the HUD are a separate client switch in <code>ClientManager.ini</code>. They work independently of this file.</div>
+  <div class="box info"><b>Neutral by default</b>The file ships with <code>Enable = false</code>, so it is completely ignored and the war behaves exactly as it does today (the old <code>NewHolySystem.ini</code> settings plus the normal built-in loot tables). Even once you set <code>Enable = true</code>, any individual setting you leave untouched keeps its stock value &mdash; you never have to fill everything in at once. Adding this file changes nothing until you flip that one word.</div>
+
+  <h3 id="cw-activate">How to activate it</h3>
+  <ol class="steps">
+    <li>
+      <strong>Open the control panel.</strong> Edit <span class="path">.Server\Zoneserver\RF_Bin\Modules\ChipWar\ChipWar.lua</span> in Notepad. The file opens with a plain-English guide at the top.
+    </li>
+    <li>
+      <strong>Flip the one switch.</strong> Find the line near the top and change <code>false</code> to <code>true</code> (lowercase):
+      <pre><code>ChipWar = {
+  Enable = true,
+  ...</code></pre>
+      Saving applies it live &mdash; a running Zone server notices the change in about a second, no restart.
+    </li>
+    <li>
+      <strong>Adjust only what you care about.</strong> Each block is separated by a banner comment. The popular ones are the loot lists, the crystal / keeper toughness and the phase timings. Change the number after the <code>=</code> and save.
+    </li>
+    <li>
+      <strong>Nothing to do on the client.</strong> Players' game clients need no file and no setting &mdash; they just see the war follow your new rules.
+    </li>
+    <li>
+      <strong>Revert any time.</strong> Put <code>Enable = false</code> back and save; the war instantly returns to the stock <code>NewHolySystem.ini</code> behaviour.
+    </li>
+  </ol>
+  <div class="box warn"><b>One timing caveat, and don't delete the file</b>Every setting here hot-reloads immediately <em>except the phase timings</em>: a war already in progress keeps the clock it started with, so <code>SceneTerms</code> edits take effect at the <strong>start of the next war</strong>. Also, like every module file, <code>ChipWar.lua</code> is required when the Zone server starts &mdash; deleting it stops the server from booting. To switch the feature off, set <code>Enable = false</code> instead of removing the file.</div>
+
+  <h3 id="cw-config">The control panel</h3>
+  <p>Everything lives in one <code>ChipWar = { ... }</code> block. You only ever change the value after the <code>=</code>. Times are in <strong>milliseconds</strong> (1000 = 1 second, 60000 = 1 minute, 3600000 = 1 hour). Here is what each group controls and the stock default it reproduces.</p>
+  <table>
+    <tr><th>Group in the file</th><th>Knobs</th><th>What it sets (stock default)</th></tr>
+    <tr><td><code>SceneTerms</code></td><td>Seven durations per schedule slot</td><td>The phase lengths. <code>ChangeTerm</code> (get-ready pause, 600000), <code>BattleTerm</code> (main fight, 7200000), <code>AttackableKeeperTerm</code> (1800000), <code>DeattackableKeeperTerm</code> (keeper protected, 10800000), <code>ChaosKeeperTerm</code> (free-for-all, 3000000), <code>BaseMiningTerm</code> (10800000), <code>TouchDownAddTerm</code> (3600000). There are three identical slots; keep their number equal to <code>schedule_count</code> in the ini. <em>(Next-war only.)</em></td></tr>
+    <tr><td><code>Keeper</code></td><td><code>HPRate</code>, <code>FirstHPRate</code></td><td>The keeper's starting health as a percentage of full &mdash; a normal round (20) and the very first round (5). Bigger = harder to kill = safer mining.</td></tr>
+    <tr><td><code>StoneNum</code> / <code>FreeMining</code> / <code>MentalPass</code></td><td>three flat values</td><td>How many crystals are in play (max 3, one per race), whether mining is free, and the mental-pass rule.</td></tr>
+    <tr><td><code>ChipHP</code></td><td><code>ScaleByPopulation</code>, <code>PopulationDivisor</code>, <code>MinScale</code>, <code>MaxScale</code>, <code>FixedMultiplier</code></td><td>How tough each crystal is. By default its health scales with the online player count (the average divided by <code>PopulationDivisor</code>, clamped between <code>MinScale</code> and <code>MaxScale</code>). Set <code>ScaleByPopulation = false</code> to ignore player count, and use <code>FixedMultiplier</code> as the easy overall knob (1.0 = normal, 2.0 = twice the HP, 0.5 = half).</td></tr>
+    <tr><td><code>AlterScheduleCarryOver</code></td><td>one fraction</td><td>How much of a destroyed crystal's remaining health carries into the next round (stock 0.2 = 20%).</td></tr>
+    <tr><td><code>RaceBattlePoint</code></td><td>five scanner deltas</td><td>Holy-Scanner points awarded or removed: <code>WinEmptyScanner</code> (0), <code>FailGetScanner</code> (3000), <code>FailEmptyScanner</code> (0), <code>LoseGetScanner</code> (1000), <code>LoseEmptyScanner</code> (0).</td></tr>
+    <tr><td><code>OreTotalAmount</code></td><td><code>Set</code>, <code>MinSet</code>, <code>SUN_1</code>&hellip;<code>SAT_3</code></td><td>The winning team's ore pool and a per-day, per-time-slot bonus multiplier (100 = normal, 500 = five times). This reads live, so ore edits apply immediately. Stock: <code>Set=1</code>, <code>MinSet=20</code>, every rate 100 except Saturday's 3rd slot at 500.</td></tr>
+    <tr><td><code>DropRange</code></td><td>one number</td><td>How wide (in game units) around the corpse loot may land (default 400).</td></tr>
+  </table>
+
+  <h3 id="cw-drops">The loot lists</h3>
+  <p>When <code>Enable = true</code>, the lists in this file <strong>completely replace</strong> the game's normal loot tables for the crystal and the keeper &mdash; what you write is exactly what drops. Leave a list empty and that thing drops nothing.</p>
+  <ul>
+    <li><strong>The crystals are per team.</strong> There are three crystals, one owned by each race, so <code>ChipDrops</code> holds three separate lists: <code>Bellato</code>, <code>Cora</code> and <code>Accretia</code>. When a crystal dies, the loot that falls is the list of the team that <em>owned</em> it, so you can make each team drop different things. The three lists start out identical.</li>
+    <li><strong>The keeper is one creature</strong>, so it has a single <code>KeeperDrops</code> list.</li>
+  </ul>
+  <p>Add an item by copying one line inside the right list:</p>
+  <pre><code>{ Item = "irtal01", Count = 1, Chance = 10000 },</code></pre>
+  <ul>
+    <li><code>Item</code> &mdash; the item's code, in quotes (find it in your item list).</li>
+    <li><code>Count</code> &mdash; how many (for a stackable item this is one box holding <em>Count</em>).</li>
+    <li><code>Chance</code> &mdash; 0 to 10000: 10000 drops every time, 5000 about half, 1000 one in ten, 100 rare.</li>
+  </ul>
+  <p>To switch a single line off without deleting it, put two dashes <code>--</code> in front of it. To remove it entirely, delete the whole line.</p>
+  <div class="box info"><b>Only when the module is on</b>The &ldquo;ignore the normal loot tables&rdquo; behaviour applies only while <code>Enable = true</code>. With the module off, crystals and the keeper fall their usual built-in ItemLooting loot, exactly as before.</div>
+
+  <h3 id="cw-limits">What stays in the .ini</h3>
+  <p>Almost every war setting is now here, but a few groups in <code>NewHolySystem.ini</code> are deliberately <strong>not</strong> live knobs in this file. The control panel lists them at the bottom as comments so nothing feels missing; you still change them in the ini and restart.</p>
+  <ul>
+    <li><strong>Spawn topology.</strong> The crystal and keeper create-map, the create / active / centre dummy markers, the monster codes, the per-crystal race ownership, the portal dummy names, the <code>HolyMental</code> item and the <code>RaceBuff</code> scanner codes. The server <em>creates</em> the three crystals and the keeper from these values at start-up &mdash; before this Lua is ever read &mdash; so re-pointing them mid-run would move the sign-post but leave the creature where it was spawned. Edit them in <code>NewHolySystem.ini</code> and restart.</li>
+    <li><strong>Dead switches (marked UNUSED).</strong> The old <code>[RaceBattleRewardItem]</code> Fix / Rate item lists and the misspelled <code>WinGetScanet</code> point key are read by no current code. The real loot now comes from the drop lists above, and the five scanner deltas that <em>are</em> honoured live under <code>RaceBattlePoint</code>. They are documented in the file only for honesty.</li>
+  </ul>
+  <p class="muted">With the module off, the war behaves identically to stock: every timing, HP, point and ore value comes from <code>NewHolySystem.ini</code>, and crystals and the keeper drop their normal ItemLooting loot.</p>
 </section>
 
 <section id="module-logs">
