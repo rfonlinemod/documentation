@@ -100,6 +100,22 @@
     <a class="sub" href="#cw-config">The control panel</a>
     <a class="sub" href="#cw-drops">The loot lists</a>
     <a class="sub" href="#cw-limits">What stays in the .ini</a>
+    <a href="#autoloot">Auto Loot</a>
+    <a class="sub" href="#al-what">What it does</a>
+    <a class="sub" href="#al-activate">Activate it</a>
+    <a class="sub" href="#al-config">The config files</a>
+    <a class="sub" href="#al-lua">The Autoloot.lua override</a>
+    <a class="sub" href="#al-rules">Rules &amp; limits</a>
+    <a href="#additional-settings">Additional Settings (Auto-Target)</a>
+    <a class="sub" href="#as-what">What it does</a>
+    <a class="sub" href="#as-activate">Activate it</a>
+    <a class="sub" href="#as-config">The config file</a>
+    <a class="sub" href="#as-type">What TAB targets</a>
+    <a href="#item-stack">Item Stack Limit (1M)</a>
+    <a class="sub" href="#is-what">What it does</a>
+    <a class="sub" href="#is-activate">Use / restrict it</a>
+    <a class="sub" href="#is-config">The config files</a>
+    <a class="sub" href="#is-rules">Rules &amp; limits</a>
     <a href="#module-logs">Module Logs</a>
     <a class="sub" href="#ml-what">What it is</a>
     <a class="sub" href="#ml-use">Reading the logs</a>
@@ -142,6 +158,9 @@
     <tr><td><a href="#skill-desc">Skill Additional Description</a></td><td><code>SkillDescExtnd\SkillDescExtnd.ini</code> + <code>SkillDescExtnd.lua</code></td><td><span class="badge server">Server</span></td><td>Adds a real, per-level <strong>[Additional Description]</strong> under the stock text on every skill, class-skill and force tooltip, generated from the ability's actual effect numbers and editable in one auto-generated Lua file</td></tr>
     <tr><td><a href="#chip-hp">Chip HP Bars</a></td><td><code>ConfigurationManager\ClientManager.ini</code></td><td><span class="badge client">Client</span></td><td>Shows or hides the three race-crystal (Belato / Cora / Accretia) HP bars on the HUD beside the radar</td></tr>
     <tr><td><a href="#chip-war">Chip War Control Panel</a></td><td><code>ChipWar\ChipWar.lua</code></td><td><span class="badge server">Server</span></td><td>Re-tune the whole crystal / Holy Stone war from one plain-language Lua file &mdash; phase timings, crystal &amp; keeper strength, scanner points, ore amounts and the per-race loot lists &mdash; without recompiling</td></tr>
+    <tr><td><a href="#autoloot">Auto Loot</a></td><td><code>LootManager\AutoLoot.ini</code> (+ <code>Autoloot.lua</code>)</td><td><span class="badge server">Server</span></td><td>Pulls qualifying mob drops straight into the loot owner&rsquo;s inventory (magnet loot) and can scatter boss drops around the corpse &mdash; drive it by item tables, or easier, by exact item codes in one Lua file</td></tr>
+    <tr><td><a href="#additional-settings">Additional Settings (TAB Auto-Target)</a></td><td><code>AdditionalSettings\AdditionalSettings.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Turns the <strong>TAB</strong> key into an auto-target that instantly grabs &mdash; and cycles &mdash; the nearest monster, enemy player or both within a range you set, honouring each player&rsquo;s in-game target filters</td></tr>
+    <tr><td><a href="#item-stack">Item Stack Limit (1M Stacks)</a></td><td><code>ItemStack\ItemStack.ini</code> (+ <code>ItemStack.lua</code>)</td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Raises the maximum stack of every stackable item from 99 to <strong>1,000,000</strong>; the config file is a restriction gate you use only to pull individual items back to a smaller cap (or <code>0</code> = non-stackable)</td></tr>
     <tr><td><a href="#module-logs">Module Logs</a></td><td>&mdash; (automatic)</td><td><span class="badge server">Server</span></td><td>Every feature module writes a plain-language log into one <code>ModulesLog</code> folder, with a single <em>_ALL PROBLEMS</em> file that lists anything that went wrong</td></tr>
   </table>
   <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
@@ -1490,6 +1509,203 @@ ChipHP=1</code></pre>
     <li><strong>Dead switches (marked UNUSED).</strong> The old <code>[RaceBattleRewardItem]</code> Fix / Rate item lists and the misspelled <code>WinGetScanet</code> point key are read by no current code. The real loot now comes from the drop lists above, and the five scanner deltas that <em>are</em> honoured live under <code>RaceBattlePoint</code>. They are documented in the file only for honesty.</li>
   </ul>
   <p class="muted">With the module off, the war behaves identically to stock: every timing, HP, point and ore value comes from <code>NewHolySystem.ini</code>, and crystals and the keeper drop their normal ItemLooting loot.</p>
+</section>
+
+<section id="autoloot">
+  <div class="doc-head">
+    <h2>Auto Loot</h2>
+    <div class="badges">
+      <span class="badge server">Server-only</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="al-what">What it does &mdash; and why you would use it</h3>
+  <p>Auto Loot pulls a mob&rsquo;s drops straight into the loot owner&rsquo;s (usually the killer&rsquo;s) inventory &mdash; the &ldquo;magnet&rdquo; loot most private servers run &mdash; instead of leaving every item as a ground box, and it can optionally <strong>scatter a boss&rsquo;s drops around its corpse</strong> for a free-for-all. You turn it on and choose <em>which</em> items get vacuumed up and <em>who</em> is allowed to.</p>
+  <p>It ships as a native server module driven by <span class="path">Modules\LootManager\AutoLoot.ini</span>, plus an easier companion <span class="path">Autoloot.lua</span> in the same folder that lets you drive the whole thing from plain item codes. When the Lua&rsquo;s <code>Enable = true</code>, it <strong>overrides both sections of the .ini</strong>.</p>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Classic config</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\LootManager\AutoLoot.ini</span></td><td><code>[MagnetLoot]</code> = which item <em>tables</em> are auto-picked and who qualifies; <code>[MassiveLootBoss]</code> = the boss corpse scatter.</td></tr>
+    <tr><td>Easy override</td><td><span class="path">&hellip;\Modules\LootManager\Autoloot.lua</span></td><td>The same feature by <em>exact item codes</em>, plus a &ldquo;carry this key item&rdquo; gate and a loot-everything switch. When its <code>Enable = true</code> it wins over the .ini.</td></tr>
+    <tr><td>Client half</td><td colspan="2">None &mdash; server-only. Players just see their inventory fill up; there is no client file or client toggle.</td></tr>
+  </table>
+  <div class="box info"><b>Off by default</b>Both files ship disabled (<code>Enable = 0</code> in the .ini, <code>Enable = false</code> in the Lua), so nothing is auto-looted until you turn one on. Whichever file is in charge writes a plain-language line into the <a href="#module-logs">Module Logs</a> <em>AutoLoot.log</em> telling you what it resolved.</div>
+
+  <h3 id="al-activate">How to activate it</h3>
+  <ol class="steps">
+    <li><strong>Choose the easy route (recommended) &mdash; the Lua.</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\LootManager\Autoloot.lua</span> and set the master switch on:
+      <pre><code>Autoloot = {
+  Enable = true,
+  TypeAutoLoot = 0,        -- 0 = all players
+  LootAll = true,          -- pick up every drop (Items is then ignored)
+  RequireItemCode = "",    -- or an item code a player must carry to auto-loot
+}</code></pre>
+      Save it &mdash; a running server re-reads it a moment later, no restart.</li>
+    <li><strong>&hellip; or the classic .ini.</strong> To drive it from <code>AutoLoot.ini</code> instead, leave the Lua <code>Enable = false</code> and set <code>[MagnetLoot] Enable = 1</code>, choosing the item tables to magnet and who qualifies (see the config below).</li>
+    <li><strong>(Optional) Scatter boss drops.</strong> Either add the nested <code>MassiveLootBoss = { Enable = true, FreeForAll = false, Range = 40 }</code> block in the Lua, or set <code>[MassiveLootBoss] Enable = 1</code> in the .ini. Boss drops then burst out around the corpse instead of going straight to the owner.</li>
+    <li><strong>Test it.</strong> Kill a mob with a qualifying character &mdash; matching drops disappear off the floor and land in the inventory; kill a boss to see the scatter.</li>
+  </ol>
+  <div class="box warn"><b>Do not delete the .ini</b><code>AutoLoot.ini</code> is required when the Zone server starts &mdash; deleting it stops the server from booting. To turn the feature off, set <code>Enable = 0</code> (or the Lua <code>Enable = false</code>) instead.</div>
+
+  <h3 id="al-config">The config files</h3>
+  <p>Auto Loot has <strong>two</strong> files in <span class="path">Modules\LootManager\</span>. The Lua, when enabled, owns the whole feature; otherwise the .ini rules.</p>
+  <p><strong><code>AutoLoot.ini</code></strong> &mdash; two sections:</p>
+  <table>
+    <tr><th>Key</th><th>Section</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td><code>[MagnetLoot]</code></td><td><code>1</code> = auto-pick normal drops into the loot owner&rsquo;s inventory, <code>0</code> = off.</td></tr>
+    <tr><td><code>TypeAutoLoot</code></td><td><code>[MagnetLoot]</code></td><td>Who may use the magnet: <code>0</code> all players, <code>1</code> only players carrying effect <code>EffectCode</code>, <code>2</code> billing type not 8, <code>3</code> VIP (degree != 0).</td></tr>
+    <tr><td><code>EffectCode</code></td><td><code>[MagnetLoot]</code></td><td>The item effect checked when <code>TypeAutoLoot = 1</code>.</td></tr>
+    <tr><td><code>TabListCnt</code> + <code>TabLXL0..</code></td><td><code>[MagnetLoot]</code></td><td>Which item <em>tables</em> are auto-picked (the stackables are 13,17,18,20,22,23,26,30,31,32,34,35).</td></tr>
+    <tr><td><code>BlackListCnt</code> + <code>BlackTable0 / BlackIndex0..</code></td><td><code>[MagnetLoot]</code></td><td><em>Table-code + index</em> pairs that always drop as normal ground boxes.</td></tr>
+    <tr><td><code>Enable</code></td><td><code>[MassiveLootBoss]</code></td><td><code>1</code> = scatter boss drops around the corpse.</td></tr>
+    <tr><td><code>LA</code></td><td><code>[MassiveLootBoss]</code></td><td><code>1</code> = free-for-all (no loot owner), <code>0</code> = keep the killer&rsquo;s loot rights.</td></tr>
+    <tr><td><code>RangeLoot</code></td><td><code>[MassiveLootBoss]</code></td><td>Scatter radius in world units (e.g. 40).</td></tr>
+  </table>
+
+  <h3 id="al-lua">The Autoloot.lua override</h3>
+  <p>If you would rather list <strong>exact item codes</strong> than table numbers, set the Lua&rsquo;s <code>Enable = true</code>. It replaces <em>both</em> .ini sections &mdash; unless you delete the <code>MassiveLootBoss</code> block, in which case the .ini&rsquo;s boss scatter stays in charge and only the magnet part follows the Lua.</p>
+  <table>
+    <tr><th>Field</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td><code>true</code> = this file takes over (both .ini sections go quiet); <code>false</code> / omitted = the .ini rules.</td></tr>
+    <tr><td><code>TypeAutoLoot</code></td><td>Same 0 / 1 / 2 / 3 gate as the .ini.</td></tr>
+    <tr><td><code>EffectCode</code></td><td>Used only when <code>TypeAutoLoot = 1</code>.</td></tr>
+    <tr><td><code>RequireItemCode</code></td><td><strong>Optional key item.</strong> An exact item code a player must be <em>carrying</em> to auto-loot at all. <code>""</code> = no carry gate. Checked on top of <code>TypeAutoLoot</code>.</td></tr>
+    <tr><td><code>LootAll</code></td><td><code>true</code> = pick up <em>every</em> drop (then only <code>BlackList</code> is respected and <code>Items</code> is ignored); <code>false</code> / omitted = only the <code>Items</code> codes.</td></tr>
+    <tr><td><code>Items</code></td><td>The whitelist of <em>exact item codes</em> (lower-case, copied from the item table) that get auto-picked. Only used when <code>LootAll</code> is false.</td></tr>
+    <tr><td><code>BlackList</code></td><td>Optional exact codes that are <em>never</em> auto-picked.</td></tr>
+    <tr><td><code>MassiveLootBoss</code></td><td>Nested <code>{ Enable, FreeForAll, Range }</code> for the boss scatter (= the .ini&rsquo;s <code>LA</code> / <code>RangeLoot</code>). Delete the whole block to leave boss scatter to the .ini.</td></tr>
+  </table>
+  <div class="box info"><b>The intended &ldquo;key item&rdquo; setup</b>A common want is &ldquo;only players holding a special ticket auto-loot everything.&rdquo; That is <code>RequireItemCode</code> = the ticket&rsquo;s item code together with <code>LootAll = true</code> &mdash; carrying it magnets every drop; everyone else loots normally.</div>
+
+  <h3 id="al-rules">Rules &amp; limits</h3>
+  <ul>
+    <li><strong>Codes, not table numbers, in the Lua.</strong> <code>Items</code> / <code>BlackList</code> / <code>RequireItemCode</code> use the exact lower-case <em>item code</em> (e.g. <code>"irjad04"</code>). A code that does not resolve is named in <em>AutoLoot.log</em> and simply never auto-loots &mdash; and a bad <code>RequireItemCode</code> disables the carry gate rather than locking everyone out.</li>
+    <li><strong>The Lua wins wholesale.</strong> When <code>Autoloot.lua</code> parses with <code>Enable = true</code>, <code>[MagnetLoot]</code> and <code>[MassiveLootBoss]</code> in the .ini are both ignored &mdash; they do not merge, it is all-or-nothing.</li>
+    <li><strong>Gates stack.</strong> <code>TypeAutoLoot</code> and <code>RequireItemCode</code> are checked together: a player must pass the type <em>and</em>, if you set one, be carrying the key item.</li>
+    <li><strong>Empty whitelist = nothing.</strong> With <code>LootAll = false</code> and an empty <code>Items</code>, nothing is auto-picked &mdash; that combination is flagged in the log.</li>
+  </ul>
+  <p class="muted">Off (both files disabled), Auto Loot is inert: every drop is a normal ground box and bosses drop normally.</p>
+</section>
+
+<section id="additional-settings">
+  <div class="doc-head">
+    <h2>Additional Settings (TAB Auto-Target)</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="as-what">What it does &mdash; and why you would use it</h3>
+  <p>Additional Settings is the server&rsquo;s bag of extra client switches that have no file of their own. Its first entry is <strong>TAB auto-target</strong>: with it on, a player taps <strong>TAB</strong> to instantly target &mdash; and taps again to <em>cycle</em> &mdash; the nearest eligible target within a range you set, instead of fumbling to click a mob in a crowded field.</p>
+  <p>You choose <em>how far</em> TAB reaches and <em>what</em> it may target (monsters, enemy players, both, or just whatever each player&rsquo;s own in-game Options allow). The server resolves the settings and pushes them to every client as they enter the world &mdash; <strong>there is no client file to edit</strong>.</p>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Server switch</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\AdditionalSettings\AdditionalSettings.ini</span> (+ <span class="path">AdditionalSettings.lua</span>)</td><td>Turns TAB auto-target on and sets the reach and what may be targeted.</td></tr>
+    <tr><td>Client half</td><td colspan="2">No client file. The server pushes the resolved settings to each client, which re-binds <strong>TAB</strong> accordingly. When the module is off, <strong>TAB</strong> keeps its stock rotate-to-next-target behaviour.</td></tr>
+  </table>
+  <div class="box info"><b>Off by default</b>The module ships <code>Enable = 0</code>, so <strong>TAB</strong> is unchanged until you turn it on. Because the client re-binds <strong>TAB</strong> when the feature is pushed, <strong>both the Zone server and the game client must be the current build</strong> for it to work.</div>
+
+  <h3 id="as-activate">How to activate it</h3>
+  <ol class="steps">
+    <li><strong>Turn it on.</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\AdditionalSettings\AdditionalSettings.ini</span> in Notepad:
+      <pre><code>[AdditionalSettings]
+Enable = 1
+AutoTargetRange = 500
+AutoTargetType = 3</code></pre>
+      Save it &mdash; a running server hot-reloads and re-pushes to every online client.</li>
+    <li><strong>Set the reach.</strong> <code>AutoTargetRange</code> is the maximum distance, in world units, TAB will grab a target from (larger reaches further across the map; clamped <code>1..2000</code>).</li>
+    <li><strong>Choose what TAB cycles.</strong> Set <code>AutoTargetType</code> from <a href="#as-type">the legend below</a> &mdash; monsters, enemy players, both, or defer to each player&rsquo;s own Options.</li>
+    <li><strong>Nothing to do on the client.</strong> Eligible clients re-bind <strong>TAB</strong> automatically on the push.</li>
+    <li><strong>Test it.</strong> Stand near a few mobs (or players) and tap <strong>TAB</strong> &mdash; the first tap targets the nearest match, and each further tap advances to the next one and wraps around.</li>
+  </ol>
+  <div class="box warn"><b>Do not delete the file</b>Like every module, <code>AdditionalSettings.ini</code> is required when the Zone server starts &mdash; deleting it stops the server from booting. To turn the feature off, set <code>Enable = 0</code>. (The companion <code>AdditionalSettings.lua</code> is optional and may be absent.)</div>
+
+  <h3 id="as-config">The config file</h3>
+  <p>One file, <span class="path">Modules\AdditionalSettings\AdditionalSettings.ini</span>, with an optional <span class="path">AdditionalSettings.lua</span> beside it &mdash; a value set in the Lua wins over the .ini. Both hot-reload live.</p>
+  <table>
+    <tr><th>Key</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td>Master switch for TAB auto-target. <code>1</code> = on, <code>0</code> = off (stock <strong>TAB</strong>).</td></tr>
+    <tr><td><code>AutoTargetRange</code></td><td>How far (world units) TAB reaches for the nearest target. Clamped <code>1..2000</code>.</td></tr>
+    <tr><td><code>AutoTargetType</code></td><td><em>What</em> TAB cycles between &mdash; see the legend below. Clamped <code>0..3</code>, default <code>3</code>.</td></tr>
+  </table>
+
+  <h3 id="as-type">Choosing what TAB targets (AutoTargetType)</h3>
+  <table>
+    <tr><th>Value</th><th>Targets</th></tr>
+    <tr><td><code>0</code></td><td><strong>Monsters only.</strong></td></tr>
+    <tr><td><code>1</code></td><td><strong>Other-race players only</strong> &mdash; enemy players, not your own race.</td></tr>
+    <tr><td><code>2</code></td><td><strong>Monsters + other-race players.</strong></td></tr>
+    <tr><td><code>3</code></td><td><strong>Default &mdash; defer to the in-game Options.</strong> TAB cycles whatever each player&rsquo;s own <em>Options &rarr; Targeting</em> &ldquo;check target&rdquo; boxes allow (Monster / Bellato / Cora / Accretia); own-race players are targetable only if that player has ticked their own race.</td></tr>
+  </table>
+  <ul>
+    <li><strong>The Options filters always apply.</strong> Whatever type you set, a candidate is only chosen if the player&rsquo;s matching in-game race / monster target filter is on &mdash; the module never grabs something the player has filtered out.</li>
+    <li><strong>Dead and allied mobs are skipped.</strong> TAB never targets a corpse or a friendly / allied creature.</li>
+    <li><strong>It cycles, it does not re-pick.</strong> The first tap picks the nearest match; each further tap advances to the next-nearest and wraps back round, so you can walk a target list with repeated taps. A fresh tap fires instantly and hammering the key is rate-limited, so it cannot flood the server.</li>
+  </ul>
+  <p class="muted">With <code>Enable = 0</code> the settings are ignored entirely and <strong>TAB</strong> behaves exactly as stock RF Online.</p>
+</section>
+
+<section id="item-stack">
+  <div class="doc-head">
+    <h2>Item Stack Limit (1M Stacks)</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="is-what">What it does &mdash; and why you would use it</h3>
+  <p>Stock RF Online caps a stackable item (potions, ore, resources, boxes&hellip;) at <strong>99</strong> per slot. This feature raises that ceiling to <strong>1,000,000</strong> so a single slot can hold a huge stack. <span class="path">ItemStack.ini</span> / <span class="path">ItemStack.lua</span> are then a <strong>restriction gate</strong>: you do <em>not</em> list an item to make it stack big &mdash; that is already the default &mdash; you list it only to give a specific item a <em>smaller</em> cap (or <code>0</code> to force it non-stackable).</p>
+  <p>The big default is baked into both binaries, so it just works; the config is purely for pulling individual items back down. The server resolves each item&rsquo;s real cap, enforces it everywhere a stack can grow (merge, split, loot, buy / sell / trade, warehouse, and on login) and pushes the <em>exceptions</em> to each client &mdash; there is no client file.</p>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Restriction table</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\ItemStack\ItemStack.ini</span> (+ <span class="path">ItemStack.lua</span>)</td><td>Lists per-item caps <em>below</em> the 1M default. A Lua code wins over an .ini row.</td></tr>
+    <tr><td>Client half</td><td colspan="2">No client file. The server pushes each item&rsquo;s non-default cap so the client clamps split / combine / use identically. Both the Zone server and the client must be the current build.</td></tr>
+  </table>
+  <div class="box info"><b>The default IS 1,000,000</b>You do not have to list the 12 stackable item tables to make them big &mdash; every stackable item already stacks to 1M by default. Editing this file is only how you <em>restrict</em> an item. A row left at <code>1000000</code> (or absent) keeps the full ceiling.</div>
+
+  <h3 id="is-activate">How to use / restrict it</h3>
+  <ol class="steps">
+    <li><strong>Do nothing for the common case.</strong> With the current build, stackables already go to 1,000,000. The files ship <code>Enable = 1</code> but every value at the default, so the shipped behaviour is simply &ldquo;every stackable stacks to 1M unless you say otherwise.&rdquo;</li>
+    <li><strong>To cap one item lower</strong>, edit its row in <span class="path">ItemStack.ini</span> under <code>[ItemStack]</code> &mdash; the form is <code>tableCode.itemIndex = MAXSTACK</code>:
+      <pre><code>13.0  = 5000    ; cap this potion (table 13) at 5,000
+18.40 = 1000    ; cap this resource (table 18) at 1,000
+20.5  = 0       ; make this booty (table 20) non-stackable</code></pre>
+      Save &mdash; it hot-reloads and re-pushes the changed caps to clients.</li>
+    <li><strong>&hellip; or by item code in the Lua.</strong> In <span class="path">ItemStack.lua</span> add the code under <code>MaxStack</code>:
+      <pre><code>MaxStack = {
+  [ "iopy01" ] = 5000,
+}</code></pre>
+      A <code>MaxStack</code> code wins over the .ini row for that item.</li>
+    <li><strong>Test it.</strong> Pick up past 99 of a stackable (it merges into one slot up to 1M); split exactly 1,000,000 into an empty slot; for a restricted item, confirm it stops at the number you set while everything else keeps 1M.</li>
+  </ol>
+  <div class="box warn"><b>Do not delete the file</b><code>ItemStack.ini</code> is required when the Zone server starts &mdash; deleting it stops the server from booting. To stop using the restriction rows but keep 1M stacks, set <code>[Settings] Enable = 0</code> (the .ini is then ignored and only the Lua, if enabled, restricts).</div>
+
+  <h3 id="is-config">The config files</h3>
+  <p>Two files in <span class="path">Modules\ItemStack\</span>, each with its own <code>Enable</code> so you can drive the restriction from one, both or neither. Each is auto-generated to list every item explicitly at its stock category default, so the whole behaviour is visible and individually editable.</p>
+  <table>
+    <tr><th>Key / field</th><th>File</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td>.ini <code>[Settings]</code></td><td><code>1</code> = apply the <code>[ItemStack]</code> rows, <code>0</code> = ignore the whole .ini (default <code>1</code>).</td></tr>
+    <tr><td><code>tableCode.itemIndex = N</code></td><td>.ini <code>[ItemStack]</code></td><td>The cap for one item: <code>0</code> = non-stackable, <code>2..1000000</code> = that item&rsquo;s max (<code>1</code> is treated as non-stack; values above 1M clamp to 1M).</td></tr>
+    <tr><td><code>Enable</code></td><td>.lua</td><td><code>1</code> = apply the Lua, <code>0</code> = ignore it.</td></tr>
+    <tr><td><code>Stack</code> / <code>NoStack</code></td><td>.lua</td><td>Codes that stack at the 1M default / codes forced non-stackable.</td></tr>
+    <tr><td><code>MaxStack</code></td><td>.lua</td><td>Explicit per-item caps by exact code &mdash; the restriction gate; wins over the .ini and over Stack / NoStack.</td></tr>
+  </table>
+  <p>Resolution priority for an item: <strong>Lua <code>MaxStack</code></strong> &rarr; .ini row &rarr; Lua <code>Stack</code> / <code>NoStack</code> &rarr; stock category rule. Anything not explicitly restricted keeps its category default &mdash; the 12 stackable tables go to 1M, everything else is non-stackable.</p>
+
+  <h3 id="is-rules">Rules &amp; limits</h3>
+  <ul>
+    <li><strong>1M is the hard ceiling.</strong> <code>1,000,000</code> is both the default for stackables and the maximum; the packet widths and counters are sized for exactly this, so you cannot go above it by config.</li>
+    <li><strong>Some systems deliberately stay at 99.</strong> A few byte-only subsystems were left at the old cap so they are not corrupted &mdash; mining / auto-mine, ore cutting, the cash shop, the unmanned trader, guard-tower and talk-crystal combine. Those still max at 99.</li>
+    <li><strong>Login trims oversized stacks.</strong> If you lower an item&rsquo;s cap below what a player is already carrying, their stack is clamped down to the new cap when they log in.</li>
+    <li><strong>Lockstep build.</strong> Because the count fields were widened, the Zone server and the client must be the matching build; an old client will not understand the new push.</li>
+  </ul>
+  <p class="muted">Both files ship listing every item at its default (1M for stackables, 0 for the rest), so the out-of-box behaviour is simply &ldquo;every stackable item now stacks to 1,000,000.&rdquo;</p>
 </section>
 
 <section id="module-logs">
