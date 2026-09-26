@@ -116,6 +116,12 @@
     <a class="sub" href="#is-activate">Use / restrict it</a>
     <a class="sub" href="#is-config">The config files</a>
     <a class="sub" href="#is-rules">Rules &amp; limits</a>
+    <a href="#battlepass">Battle Pass</a>
+    <a class="sub" href="#bp-what">What it does</a>
+    <a class="sub" href="#bp-activate">Activate it</a>
+    <a class="sub" href="#bp-season">Seasons &amp; activities</a>
+    <a class="sub" href="#bp-tiers">Write the tiers</a>
+    <a class="sub" href="#bp-ui">The in-game window</a>
     <a href="#module-logs">Module Logs</a>
     <a class="sub" href="#ml-what">What it is</a>
     <a class="sub" href="#ml-use">Reading the logs</a>
@@ -161,6 +167,7 @@
     <tr><td><a href="#autoloot">Auto Loot</a></td><td><code>LootManager\AutoLoot.ini</code> (+ <code>Autoloot.lua</code>)</td><td><span class="badge server">Server</span></td><td>Pulls qualifying mob drops straight into the loot owner&rsquo;s inventory (magnet loot) and can scatter boss drops around the corpse &mdash; drive it by item tables, or easier, by exact item codes in one Lua file</td></tr>
     <tr><td><a href="#additional-settings">Additional Settings (TAB Auto-Target)</a></td><td><code>AdditionalSettings\AdditionalSettings.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Turns the <strong>TAB</strong> key into an auto-target that instantly grabs &mdash; and cycles &mdash; the nearest monster, enemy player or both within a range you set, honouring each player&rsquo;s in-game target filters</td></tr>
     <tr><td><a href="#item-stack">Item Stack Limit (1M Stacks)</a></td><td><code>ItemStack\ItemStack.ini</code> (+ <code>ItemStack.lua</code>)</td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Raises the maximum stack of every stackable item from 99 to <strong>1,000,000</strong>; the config file is a restriction gate you use only to pull individual items back to a smaller cap (or <code>0</code> = non-stackable)</td></tr>
+    <tr><td><a href="#battlepass">Battle Pass</a></td><td><code>Battlepass\Battlepass.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>A seasonal reward ladder of 20 tiers that players climb just by playing &mdash; killing mobs, PvP, quests, Chip Wars and time online &mdash; with a free track and a premium-only track, each tier paying out a set-quantity item you define in one plain-language Lua file</td></tr>
     <tr><td><a href="#module-logs">Module Logs</a></td><td>&mdash; (automatic)</td><td><span class="badge server">Server</span></td><td>Every feature module writes a plain-language log into one <code>ModulesLog</code> folder, with a single <em>_ALL PROBLEMS</em> file that lists anything that went wrong</td></tr>
   </table>
   <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
@@ -1446,7 +1453,7 @@ ChipHP=1</code></pre>
     <tr><td>Client half</td><td colspan="2">None &mdash; this is server-only. It takes no slot in the client feature-state packet and players see no toggle; the war simply follows whatever this file says.</td></tr>
   </table>
   <div class="box info"><b>Not the same as Chip HP Bars</b>This page is about <em>running</em> the war. The little on-screen <a href="#chip-hp">Chip HP Bars</a> that show each crystal's health on the HUD are a separate client switch in <code>ClientManager.ini</code>. They work independently of this file.</div>
-  <div class="box info"><b>Neutral by default</b>The file ships with <code>Enable = false</code>, so it is completely ignored and the war behaves exactly as it does today (the old <code>NewHolySystem.ini</code> settings plus the normal built-in loot tables). Even once you set <code>Enable = true</code>, any individual setting you leave untouched keeps its stock value &mdash; you never have to fill everything in at once. Adding this file changes nothing until you flip that one word.</div>
+  <div class="box info"><b>Neutral by default</b>The file ships with <code>Enable = false</code>, so it is completely ignored and the war behaves exactly as it does today (the old <code>NewHolySystem.ini</code> settings plus the normal built-in loot tables). Even once you set <code>Enable = true</code>, any individual setting you leave untouched keeps its stock value &mdash; you never have to fill everything in at once. Adding this file changes nothing until you flip that one word. (One small exception: the <code>AllowGMAttackCW</code> GM-testing switch below is honoured even while <code>Enable = false</code>, so staff can test the war without turning the rest of the panel on.)</div>
 
   <h3 id="cw-activate">How to activate it</h3>
   <ol class="steps">
@@ -1476,6 +1483,7 @@ ChipHP=1</code></pre>
   <p>Everything lives in one <code>ChipWar = { ... }</code> block. You only ever change the value after the <code>=</code>. Times are in <strong>milliseconds</strong> (1000 = 1 second, 60000 = 1 minute, 3600000 = 1 hour). Here is what each group controls and the stock default it reproduces.</p>
   <table>
     <tr><th>Group in the file</th><th>Knobs</th><th>What it sets (stock default)</th></tr>
+    <tr><td><code>AllowGMAttackCW</code></td><td>one <code>true</code> / <code>false</code> switch</td><td><strong>Testing aid.</strong> Lets GM (privileged) accounts damage the crystal and the keeper so staff can test the war. <code>false</code> (default) keeps the live behaviour where GMs are refused. <em>Unlike every other setting on this page, this one is still read even when <code>Enable = false</code></em> &mdash; flip just this line to let a GM hit a crystal without changing any timing, HP or loot. When it is on, a GM attack also <strong>skips the normal battle-phase requirement</strong>, so staff can smash a crystal at any moment on demand; everything else is untouched, and a GM still cannot damage their <em>own</em> race&rsquo;s crystal (and normal players still follow the stock phase rules).</td></tr>
     <tr><td><code>SceneTerms</code></td><td>Seven durations per schedule slot</td><td>The phase lengths. <code>ChangeTerm</code> (get-ready pause, 600000), <code>BattleTerm</code> (main fight, 7200000), <code>AttackableKeeperTerm</code> (1800000), <code>DeattackableKeeperTerm</code> (keeper protected, 10800000), <code>ChaosKeeperTerm</code> (free-for-all, 3000000), <code>BaseMiningTerm</code> (10800000), <code>TouchDownAddTerm</code> (3600000). There are three identical slots; keep their number equal to <code>schedule_count</code> in the ini. <em>(Next-war only.)</em></td></tr>
     <tr><td><code>Keeper</code></td><td><code>HPRate</code>, <code>FirstHPRate</code></td><td>The keeper's starting health as a percentage of full &mdash; a normal round (20) and the very first round (5). Bigger = harder to kill = safer mining.</td></tr>
     <tr><td><code>StoneNum</code> / <code>FreeMining</code> / <code>MentalPass</code></td><td>three flat values</td><td>How many crystals are in play (max 3, one per race), whether mining is free, and the mental-pass rule.</td></tr>
@@ -1706,6 +1714,126 @@ AutoTargetType = 3</code></pre>
     <li><strong>Lockstep build.</strong> Because the count fields were widened, the Zone server and the client must be the matching build; an old client will not understand the new push.</li>
   </ul>
   <p class="muted">Both files ship listing every item at its default (1M for stackables, 0 for the rest), so the out-of-box behaviour is simply &ldquo;every stackable item now stacks to 1,000,000.&rdquo;</p>
+</section>
+
+<section id="battlepass">
+  <div class="doc-head">
+    <h2>Battle Pass</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <figure class="shot">
+    <img src="assets/img/battlepass-window.png" alt="The in-game Battle Pass window open over the world: a read-out line showing season, tier and the five activity totals, a FREE row and a PREMIUM row of ten reward cells each with an x-quantity label and a CLAIMED stamp on the first cell, tier numbers between the rows, a tier-ladder progress bar, the Next-tier requirement line and PREV / NEXT paging, opened from the PASS button beside SHOP on the bottom bar">
+    <figcaption>The Battle Pass window as players see it, opened from the new <strong>PASS</strong> button beside SHOP / BOSS on the bottom bar. The top read-out shows the live season, current tier and the five activity totals; the <strong>FREE</strong> row (blue shield) is the track everyone can claim and the <strong>PREMIUM</strong> row (gold shield) is the premium-only track. Every cell carries its reward <strong>quantity</strong> (<code>&times;50</code>, <code>&times;100</code>&hellip;), a claimed reward is stamped <strong>CLAIMED</strong>, and the ladder bar plus the <em>Next (Tier&hellip;)</em> line show exactly what is still needed.</figcaption>
+  </figure>
+
+  <h3 id="bp-what">What it does &mdash; and why you would use it</h3>
+  <p>The Battle Pass is a <strong>seasonal reward ladder</strong>. Instead of a shop or a spin, players climb <strong>20 tiers</strong> simply by playing the game the way they already do. Each tier lists how much of each activity it wants; once a player&rsquo;s season totals meet every requirement, the tier <strong>unlocks</strong> and they claim its two rewards &mdash; a <strong>FREE</strong> one everybody gets and a <strong>PREMIUM</strong> one only premium accounts get.</p>
+  <ul>
+    <li><strong>Progress by activity, not points.</strong> There is nothing to farm into a currency &mdash; the pass counts <strong>mob kills, PvP kills on other races, finished quests, Chip Wars attended and minutes online</strong>, straight from what the player does.</li>
+    <li><strong>Two tracks per tier.</strong> A free reward open to everyone, and a better premium reward that only accounts flagged premium in the database can claim.</li>
+    <li><strong>A strict ladder.</strong> Tier <em>N+1</em> only shows as ready once tier <em>N</em>&rsquo;s requirements are met &mdash; players cannot skip to the end.</li>
+    <li><strong>Seasons on a clock.</strong> Up to 20 seasons run back to back; when the last one ends the cycle wraps to season 1 and everyone&rsquo;s progress starts fresh. Per-player progress lives in the game database, not in the config file.</li>
+    <li><strong>Whole thing is one plain-text Lua file.</strong> You set the season clock, which activities count, and the full 20-tier list of requirements and rewards &mdash; no programming, no recompiling.</li>
+  </ul>
+
+  <h3 id="bp-activate">How to activate it</h3>
+  <ol class="steps">
+    <li>
+      <strong>Open the config file.</strong> Edit <span class="path">.Server\Zoneserver\RF_Bin\Modules\Battlepass\Battlepass.lua</span> in Notepad. Near the top is the master switch:
+      <pre><code>Battlepass = {
+
+  -- Master on/off switch. true = battle pass live, false = completely off.
+  Enable = true,</code></pre>
+    </li>
+    <li>
+      <strong>Set <code>Enable = true</code> and save.</strong> A running Zone server re-reads the file about a second later and uses the new values immediately &mdash; <strong>no restart needed</strong>. While <code>Enable = false</code> nothing is counted, nothing can be claimed and players see no button action at all.
+    </li>
+    <li>
+      <strong>Fill in the tiers.</strong> The <code>Tiers = { ... }</code> list at the bottom is the whole ladder &mdash; see <a href="#bp-tiers">Write the tiers</a>. The shipped file already has a complete, balanced 20-tier example you can edit or copy from.
+    </li>
+    <li>
+      <strong>Check it in game.</strong> Press the <strong>PASS</strong> button beside SHOP / BOSS: the window opens on the current season and tier with live activity totals. (The client also pops the window open the first time a tier becomes claimable in a session.)
+    </li>
+  </ol>
+  <div class="box info"><b>Adding the file is 100% safe</b>With <code>Enable = false</code> the module is completely inert: no counters run, no rewards are offered, and the client shows nothing until the server tells it the pass is live. You can drop the file in and turn it on whenever you like.</div>
+  <div class="box warn"><b>Premium status is not set here</b>Whether a player can claim the <strong>PREMIUM</strong> row comes from the account&rsquo;s <strong>billing / premium flag in the database</strong>, exactly like the rest of the premium features &mdash; this file only decides what the premium reward <em>is</em>, not who qualifies for it.</div>
+
+  <h3 id="bp-season">Seasons &amp; activities</h3>
+  <p>Two blocks above the tiers control the shape of the season &mdash; how long it runs and which ways of playing actually advance it:</p>
+  <pre><code>  Season = {
+    Total        = 20,             -- number of seasons in the loop
+    DurationDays = 28,             -- how long each season lasts (days)
+    BaseDate     = "2026-01-01",   -- season 1 starts here (YYYY-MM-DD)
+    NamePrefix   = "Season",       -- shown to players as "Season &lt;n&gt;"
+    Id           = 1,              -- MANUAL season id (used only if the two
+                                   -- lines above are blank / 0)
+  },
+
+  Activities = {
+    MobKill = true,   -- each monster killed
+    PvpKill = true,   -- each kill on a player of another race
+    Quest   = true,   -- each quest finished
+    ChipWar = true,   -- each Chip War you are present for at the end
+    Online  = true,   -- each MINUTE the character is logged in
+  },</code></pre>
+  <table>
+    <tr><th>Key</th><th>Meaning</th></tr>
+    <tr><td><code>Total</code></td><td>How many seasons are in the loop. Once season <code>Total</code> ends it wraps back to 1 and everyone resets.</td></tr>
+    <tr><td><code>DurationDays</code></td><td>Length of one season in days. The live season is simply which <code>DurationDays</code>-slot since <code>BaseDate</code> you are in, counted <code>mod Total</code>, + 1.</td></tr>
+    <tr><td><code>BaseDate</code></td><td>The calendar date season 1 begins, <code>"YYYY-MM-DD"</code>. All seasons are derived from this one date and the clock.</td></tr>
+    <tr><td><code>NamePrefix</code></td><td>The word shown before the season number in the window (default <code>Season</code>, so players see <em>Season 10 / 20</em>).</td></tr>
+    <tr><td><code>Id</code></td><td><strong>Manual mode.</strong> Leave <code>BaseDate</code> or <code>DurationDays</code> at <code>0</code> / <code>""</code> and the server ignores the clock and just uses this fixed number &mdash; bump <code>Id</code> yourself to force a fresh season.</td></tr>
+    <tr><td><code>Activities.*</code></td><td>One <code>true</code> / <code>false</code> per activity. <code>true</code> = it counts toward the pass; <code>false</code> = it is ignored entirely. Turn any of the five off to stop it advancing tiers.</td></tr>
+  </table>
+  <p class="muted">All times are the server PC&rsquo;s local time. <code>Online</code> accrues whole minutes while the character is logged in, so a tier asking for <code>ReqOnline = 300</code> wants five hours of play that season.</p>
+
+  <h3 id="bp-tiers">How to write the tiers</h3>
+  <p>The ladder is one list of exactly 20 rows. Copy a row, change the numbers and item codes, and you have changed the whole pass. Each row lists the activity counts it <em>requires</em> and the two rewards it <em>pays out</em>:</p>
+  <pre><code>  Tiers = {
+    { ReqMob = 10, ReqPvp = 0, ReqQuest = 0, ReqChip = 0, ReqOnline =  5,
+      Free    = { Item = "ipgld30", Qty = 50 },
+      Premium = { Item = "ipgld31", Qty = 20 } },
+
+    { ReqMob = 25, ReqPvp = 0, ReqQuest = 1, ReqChip = 0, ReqOnline = 10,
+      Free    = { Item = "irtal01", Qty = 5  },
+      Premium = { Item = "irtal01", Qty = 20 } },
+
+    -- ... 18 more rows, up to tier 20 ...
+  },</code></pre>
+  <table>
+    <tr><th>Field</th><th>Meaning</th></tr>
+    <tr><td><code>ReqMob</code> / <code>ReqPvp</code> / <code>ReqQuest</code> / <code>ReqChip</code></td><td><strong>Cumulative</strong> season totals this tier asks for. Put <code>0</code> for any activity the tier should <em>not</em> require. A tier unlocks once the player meets <strong>every</strong> non-zero requirement.</td></tr>
+    <tr><td><code>ReqOnline</code></td><td>Cumulative <strong>minutes</strong> logged in this season (again <code>0</code> = not asked).</td></tr>
+    <tr><td><code>Free = { Item, Qty }</code></td><td>The reward anyone can claim. <code>Item</code> is a plain in-game item code in quotes; <code>Qty</code> is how many. The quantity is shown right on the cell in game (<code>&times;50</code>&hellip;).</td></tr>
+    <tr><td><code>Premium = { Item, Qty }</code></td><td>The premium-only reward, same shape. Give it better items or bigger quantities than the free track.</td></tr>
+  </table>
+  <ul>
+    <li><strong>Item codes are the plain in-game codes</strong> &mdash; the same short codes the loot, potion and Chip War files use (for example <code>"ipgld30"</code>, <code>"irtal01"</code>, <code>"iyyyy02"</code>). Leave <code>Item = ""</code> to make a track pay out nothing for that tier.</li>
+    <li><strong>Requirements are cumulative totals, not per-tier deltas.</strong> Tier 5&rsquo;s <code>ReqMob = 80</code> means 80 mobs <em>in the season</em>, which also covers the 60 tier 4 already wanted &mdash; list them so they only ever go up.</li>
+    <li><strong>Keep the quotes, commas and <code>{ }</code> brackets</strong> exactly where they are; only change the part after each <code>=</code>. Anything after <code>--</code> on a line is a note the server skips.</li>
+  </ul>
+
+  <h3 id="bp-ui">The in-game window</h3>
+  <p>A <strong>PASS</strong> button sits beside SHOP / BOSS on the bottom bar; pressing it (or <code>Esc</code> / the red <strong>ESC</strong> tab) opens and closes the window. The client also opens it by itself the first time a tier becomes claimable. What is on screen:</p>
+  <table>
+    <tr><th>Area</th><th>What it shows</th></tr>
+    <tr><td><strong>Read-out line</strong></td><td>The live season and current tier (<em>Season 10 / 20 &nbsp; Tier 1 / 20</em>) followed by all five activity totals &mdash; <code>Mob</code>, <code>PvP</code>, <code>Quest</code>, <code>Chip</code> and <code>Online</code> minutes.</td></tr>
+    <tr><td><strong>FREE row</strong></td><td>The ten tiers on the current page, free track. Blue <strong>FREE BATTLEPASS</strong> shield at the left.</td></tr>
+    <tr><td><strong>PREMIUM row</strong></td><td>The same ten tiers, premium track &mdash; only claimable by premium accounts. Gold <strong>PREMIUM BATTLEPASS</strong> shield at the left.</td></tr>
+    <tr><td><strong>Cell quantity</strong></td><td>Each reward cell shows its <code>&times;Qty</code> straight from the Lua file, so players see exactly how many they will receive.</td></tr>
+    <tr><td><strong>CLAIMED stamp</strong></td><td>Once a reward is taken the cell is stamped <strong>CLAIMED</strong> (gold on the free track, orange on premium) so it is obvious what is left.</td></tr>
+    <tr><td><strong>Cell colour</strong></td><td>A red cell means its requirements are <strong>not met yet</strong>; a teal cell means it is ready to claim. Click a ready cell to claim that tier&rsquo;s reward on that track.</td></tr>
+    <tr><td><strong>Ladder bar + Next line</strong></td><td>A tier-ladder progress bar (<em>Tier 1 / 20 unlocked</em>) and a <em>Next (Tier 2): Mob 12/25 &nbsp; Quest 0/1 &nbsp; Online 57/10m</em> line telling you exactly how far each requirement still is.</td></tr>
+    <tr><td><strong>Pagination</strong></td><td>Ten tiers per page; <strong>PREV</strong> / <strong>NEXT</strong> walk the 20-tier ladder (<em>Page 1 of 2</em>).</td></tr>
+    <tr><td><strong>? help tab</strong></td><td>Toggles a rules panel listing the current page&rsquo;s tiers and their requirements without leaving the window.</td></tr>
+  </table>
+  <div class="box info"><b>What the server actually enforces</b>The window is filled from the server&rsquo;s own state &mdash; the same season clock, activity toggles and tier requirements in <code>Battlepass.lua</code>. A claim is checked and paid out on the server, so the client can never show a reward the config does not really offer or let a non-premium account take the premium row.</div>
 </section>
 
 <section id="module-logs">
