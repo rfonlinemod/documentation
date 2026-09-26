@@ -128,6 +128,15 @@
     <a class="sub" href="#gc-whitelist">The player whitelist</a>
     <a class="sub" href="#gc-help">The %help command list</a>
     <a class="sub" href="#gc-rules">Rules &amp; limits</a>
+    <a href="#arrow-target">Group-Target Arrow</a>
+    <a class="sub" href="#at-what">What it does</a>
+    <a class="sub" href="#at-activate">Activate it</a>
+    <a class="sub" href="#at-config">The config file</a>
+    <a class="sub" href="#at-look">Tuning the look</a>
+    <a href="#zoom-max">Camera Zoom Max</a>
+    <a class="sub" href="#zm-what">What it does</a>
+    <a class="sub" href="#zm-activate">Activate it</a>
+    <a class="sub" href="#zm-config">The config file</a>
     <a href="#module-logs">Module Logs</a>
     <a class="sub" href="#ml-what">What it is</a>
     <a class="sub" href="#ml-use">Reading the logs</a>
@@ -175,6 +184,8 @@
     <tr><td><a href="#item-stack">Item Stack Limit (1M Stacks)</a></td><td><code>ItemStack\ItemStack.ini</code> (+ <code>ItemStack.lua</code>)</td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Raises the maximum stack of every stackable item from 99 to <strong>1,000,000</strong>; the config file is a restriction gate you use only to pull individual items back to a smaller cap (or <code>0</code> = non-stackable)</td></tr>
     <tr><td><a href="#battlepass">Battle Pass</a></td><td><code>Battlepass\Battlepass.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>A seasonal reward ladder of 20 tiers that players climb just by playing &mdash; killing mobs, PvP, quests, Chip Wars and time online &mdash; with a free track and a premium-only track, each tier paying out a set-quantity item you define in one plain-language Lua file</td></tr>
     <tr><td><a href="#gm-command">GM Command Whitelist</a></td><td><code>GMCommand\GMCommand.ini</code> + <code>GMCommand.lua</code></td><td><span class="badge server">Server</span></td><td>Grants a named list of ordinary players the full set of GM chat commands (type <code>%lv 50</code>, <code>%repo</code>, <code>%kick Name</code>&hellip;) from one editable Lua file &mdash; no GM account needed, plus an in-game <code>%help</code> manual of all 260 commands</td></tr>
+    <tr><td><a href="#arrow-target">Group-Target Arrow</a></td><td><code>RaceLeaderEffect\ArrowTarget.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Reskins the floating arrow a race leader / guild master / party leader puts over a marked target with <strong>Ctrl+click</strong> &mdash; size, colour, height, opacity and on/off, tuned per group type</td></tr>
+    <tr><td><a href="#zoom-max">Camera Zoom Max</a></td><td><code>ZoomMax\ZoomMax.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Raises how far each race&rsquo;s camera can zoom <strong>out</strong> (the mouse-wheel / Page-Down limit), so players can pull the view back farther than the stock 250 / 275 / 290</td></tr>
     <tr><td><a href="#module-logs">Module Logs</a></td><td>&mdash; (automatic)</td><td><span class="badge server">Server</span></td><td>Every feature module writes a plain-language log into one <code>ModulesLog</code> folder, with a single <em>_ALL PROBLEMS</em> file that lists anything that went wrong</td></tr>
   </table>
   <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
@@ -1926,6 +1937,124 @@ AutoTargetType = 3</code></pre>
     <li><strong>Old clients are still gated locally.</strong> The permission is server-side, but a player running an outdated <code>RF_Online.bin</code> (one from before this module) will find their <code>%</code> line never leaves the chat box. Make sure everyone using the feature has the current client build.</li>
   </ul>
   <p class="muted">With <code>Enable = 0</code> the whitelist is ignored completely and authority reverts to the stock GM-degree rules; real GM accounts keep working exactly as before, and <code>%help</code> remains available to them.</p>
+</section>
+
+<section id="arrow-target">
+  <div class="doc-head">
+    <h2>Group-Target Arrow</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+  <figure class="shot">
+    <img src="assets/img/arrow-target.png" alt="A giant red group-target arrow over a marked player, next to ArrowTarget.ini in an editor">
+    <figcaption>A <strong>race-target</strong> arrow placed with <span class="path">Ctrl + left-click</span> on the marked player&rsquo;s head, made deliberately large by <span class="path">[RACE_TARGET] Scale = 5.0</span> and lifted with <span class="path">Height = 10.0</span> in <span class="path">ArrowTarget.ini</span> (open on the right). Every member of that team sees the same arrow. With the neutral defaults (scale 1.0, height 0) the arrow keeps its normal stock size instead.</figcaption>
+  </figure>
+
+  <h3 id="at-what">What it does &mdash; and why you would use it</h3>
+  <p>When a <strong>race leader, guild master or party leader</strong> wants to point everyone at the same mob or player, they <strong>Ctrl+click</strong> a target. A glowing arrow then floats over that target&rsquo;s head for every member of the group to see. This module lets <em>you</em> control what that arrow looks like &mdash; its size, colour, how high it sits, how solid it is, and whether each kind of group arrow is shown at all.</p>
+  <p>It is a <strong>server setting</strong>: the Zone server reads <span class="path">ArrowTarget.ini</span> and pushes the look to every client as players enter the world and again whenever you save a change &mdash; so a player cannot spoof their own arrow. There is <strong>no client file</strong>.</p>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Server look</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\RaceLeaderEffect\ArrowTarget.ini</span></td><td>The master on/off plus a section for each group type (race / guild / party) setting size, colour, height and opacity.</td></tr>
+    <tr><td>Client half</td><td colspan="2">No client file. The server pushes the resolved look and the client draws the arrow with it. Both the Zone server and the game client must be the current build.</td></tr>
+  </table>
+  <div class="box info"><b>Ships neutral, not off</b>The file is present with <code>Enable = 1</code> but every value at its neutral default (white, scale 1.0, height 0, opacity 1.0), so dropping it in reproduces the stock arrow <em>exactly</em>. Change a value only when you want a different look. To hide all arrows, set <code>[General] Enable = 0</code>.</div>
+
+  <h3 id="at-activate">How to activate / customise it</h3>
+  <ol class="steps">
+    <li><strong>Open the file.</strong> <span class="path">.Server\Zoneserver\RF_Bin\Modules\RaceLeaderEffect\ArrowTarget.ini</span> sits beside <span class="path">RaceLeaderEffect.ini</span> in the same folder. Open it in Notepad.</li>
+    <li><strong>Set the master switch.</strong> <code>[General] Enable = 1</code> shows the arrows; <code>0</code> hides every group-target arrow.</li>
+    <li><strong>Tune one, some, or all group types.</strong> Edit <code>[RACE_TARGET]</code>, <code>[GUILD_TARGET]</code> and <code>[PARTY_TARGET]</code> independently &mdash; each has the same keys (see <a href="#at-config">the config table</a> and <a href="#at-look">tuning the look</a>).</li>
+    <li><strong>Save &mdash; nothing to restart.</strong> A running server hot-reloads the file and re-pushes the new look to everyone online within a second.</li>
+    <li><strong>Test it.</strong> As a leader, <strong>Ctrl+click</strong> a target and watch the arrow change. Note: only an actual race leader, guild master or party leader can place the mark &mdash; the server rejects the request from anyone else.</li>
+  </ol>
+  <div class="box warn"><b>Do not delete the file</b>Because <span class="path">ArrowTarget.ini</span> is a required sibling of the Race Leader Effect module, deleting it stops the Zone server from starting. To hide the arrows, set <code>[General] Enable = 0</code> instead of removing the file.</div>
+
+  <h3 id="at-config">The config file</h3>
+  <p>One file, four sections. <code>[General]</code> holds the master switch; the three group-type sections share the same keys.</p>
+  <table>
+    <tr><th>Key</th><th>Section(s)</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td><code>[General]</code></td><td>Master switch for <em>all</em> group-target arrows. <code>1</code> = show (subject to each type below), <code>0</code> = hide entirely.</td></tr>
+    <tr><td><code>Enable</code></td><td><code>[RACE_TARGET]</code> / <code>[GUILD_TARGET]</code> / <code>[PARTY_TARGET]</code></td><td>Show or hide just that one group type&rsquo;s arrow.</td></tr>
+    <tr><td><code>Scale</code></td><td>each type</td><td>Size multiplier on the arrow. <code>1.0</code> = native, <code>2.0</code> = twice as big.</td></tr>
+    <tr><td><code>ColorR / G / B</code></td><td>each type</td><td>Tint, 0&ndash;255 per channel. <code>255,255,255</code> (white) = no recolour, keeps the arrow&rsquo;s own baked colour.</td></tr>
+    <tr><td><code>Height</code></td><td>each type</td><td>Extra world-unit lift above the arrow&rsquo;s normal spot. <code>0.0</code> = native (it already floats above the head); larger = higher.</td></tr>
+    <tr><td><code>Opacity</code></td><td>each type</td><td><code>0.0</code> (invisible) to <code>1.0</code> (fully solid). <code>1.0</code> = native.</td></tr>
+  </table>
+
+  <h3 id="at-look">Tuning the look &mdash; examples</h3>
+  <p>A few ready-to-paste ideas. Change only the section you want; leave the others at their neutral defaults.</p>
+  <pre><code>; A big bright-red race-leader arrow that sits higher
+[RACE_TARGET]
+Enable = 1
+Scale = 2.0
+ColorR = 255
+ColorG = 40
+ColorB = 40
+Height = 30.0
+Opacity = 1.0
+
+; A faint party arrow, same size, no recolour (just see-through)
+[PARTY_TARGET]
+Enable = 1
+Scale = 1.0
+ColorR = 255
+ColorG = 255
+ColorB = 255
+Height = 0.0
+Opacity = 0.4</code></pre>
+  <ul>
+    <li><strong>Colour is a tint, not a paint.</strong> It multiplies the arrow texture, so <code>255,255,255</code> leaves it untouched; push a channel up / down to shade it.</li>
+    <li><strong>Opacity fades it, Enable removes it.</strong> Use <code>Opacity</code> for a subtle arrow and per-type <code>Enable = 0</code> to switch one group&rsquo;s arrow off while keeping the others.</li>
+    <li><strong>Height lifts the whole arrow up</strong> &mdash; handy if a tall hat or aura was hiding the arrow at its native spot.</li>
+  </ul>
+  <p class="muted">Left at its shipped defaults the arrow is identical to stock; with <code>[General] Enable = 0</code> no group-target arrow is drawn at all.</p>
+</section>
+
+<section id="zoom-max">
+  <div class="doc-head">
+    <h2>Camera Zoom Max</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="zm-what">What it does &mdash; and why you would use it</h3>
+  <p>The game caps how far each race&rsquo;s camera can pull <strong>back</strong> (zoom out) when a player scrolls the <strong>mouse wheel</strong> or holds <strong>Page Down</strong>. Those stock ceilings are <strong>250</strong> (Bellato), <strong>275</strong> (Cora) and <strong>290</strong> (Accretia) world units. This module lets you raise them so players get a wider, more top-down view &mdash; useful for spotting events, coordinating a war, or just surveying the map.</p>
+  <p>It is a <strong>server setting</strong>: the Zone server reads <span class="path">ZoomMax.ini</span> and pushes the per-race ceilings to every client on world entry and after each live edit, so a player cannot edit their own zoom limit. There is <strong>no client file</strong>.</p>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Server limits</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\ZoomMax\ZoomMax.ini</span></td><td>Master on/off plus a max zoom-out distance for each race.</td></tr>
+    <tr><td>Client half</td><td colspan="2">No client file. The server pushes the numbers and the client lifts its camera ceiling for both the mouse wheel and Page Up / Page Down. Both the Zone server and the game client must be the current build.</td></tr>
+  </table>
+  <div class="box info"><b>Only zoom-OUT is touched</b>This changes the <em>far</em> limit. How far you can zoom <em>in</em> (and the zoom <em>speed</em>) are unchanged. Zooming is symmetric otherwise: Page Up / wheel-up still zooms in, Page Down / wheel-down still zooms out &mdash; just, now farther.</div>
+
+  <h3 id="zm-activate">How to activate / extend it</h3>
+  <ol class="steps">
+    <li><strong>Open the file.</strong> <span class="path">.Server\Zoneserver\RF_Bin\Modules\ZoomMax\ZoomMax.ini</span> in Notepad.</li>
+    <li><strong>Turn it on.</strong> Set <code>[General] Enable = 1</code> to use your own ceilings (with <code>0</code> every player keeps the stock 250 / 275 / 290).</li>
+    <li><strong>Raise the numbers.</strong> Set <code>MaxZoomOutBellator</code> / <code>MaxZoomOutCora</code> / <code>MaxZoomOutAccretia</code> to the distance you want (whole world units, <code>10&ndash;5000</code>). For example <code>600</code> for a much wider view.</li>
+    <li><strong>Save &mdash; no restart.</strong> A running server hot-reloads and re-pushes to every online client; the new far limit applies to their next zoom.</li>
+    <li><strong>Test it.</strong> Log in and scroll the wheel down (or hold Page Down) &mdash; the camera now pulls back to your new ceiling instead of stopping at the stock one.</li>
+  </ol>
+  <div class="box warn"><b>Do not delete the file</b><code>ZoomMax.ini</code> is required when the Zone server starts &mdash; deleting it stops the server from booting. To go back to the stock camera limits, set <code>[General] Enable = 0</code> instead of removing the file.</div>
+
+  <h3 id="zm-config">The config file</h3>
+  <p>One file, one <code>[General]</code> section. Every value is in whole world units and is clamped to <code>10&ndash;5000</code> (a value out of range is reported in the <a href="#module-logs">Module Logs</a> and the nearest allowed number is used).</p>
+  <table>
+    <tr><th>Key</th><th>Stock default</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td><code>1</code> (at stock values)</td><td><code>1</code> = use the three ceilings below; <code>0</code> = restore the normal stock limits for every race.</td></tr>
+    <tr><td><code>MaxZoomOutBellator</code></td><td><code>250</code></td><td>Far zoom-out distance for Bellato (both male and female).</td></tr>
+    <tr><td><code>MaxZoomOutCora</code></td><td><code>275</code></td><td>Far zoom-out distance for Cora (both male and female).</td></tr>
+    <tr><td><code>MaxZoomOutAccretia</code></td><td><code>290</code></td><td>Far zoom-out distance for Accretia.</td></tr>
+  </table>
+  <div class="box info"><b>Ships at stock</b>The file is delivered with <code>Enable = 1</code> but the ceilings set to the stock 250 / 275 / 290, so installing it changes nothing until you raise a number. Leave a key out or at its default to keep that race behaving exactly like stock.</div>
+  <p class="muted">A larger number lets the camera sit farther from the character (see more ground, smaller figures); push it too high and the world can look distant and the character tiny &mdash; pick what is comfortable for your server.</p>
 </section>
 
 <section id="module-logs">
