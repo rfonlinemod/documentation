@@ -122,6 +122,12 @@
     <a class="sub" href="#bp-season">Seasons &amp; activities</a>
     <a class="sub" href="#bp-tiers">Write the tiers</a>
     <a class="sub" href="#bp-ui">The in-game window</a>
+    <a href="#gm-command">GM Command Whitelist</a>
+    <a class="sub" href="#gc-what">What it does</a>
+    <a class="sub" href="#gc-activate">Activate it</a>
+    <a class="sub" href="#gc-whitelist">The player whitelist</a>
+    <a class="sub" href="#gc-help">The %help command list</a>
+    <a class="sub" href="#gc-rules">Rules &amp; limits</a>
     <a href="#module-logs">Module Logs</a>
     <a class="sub" href="#ml-what">What it is</a>
     <a class="sub" href="#ml-use">Reading the logs</a>
@@ -168,6 +174,7 @@
     <tr><td><a href="#additional-settings">Additional Settings (TAB Auto-Target)</a></td><td><code>AdditionalSettings\AdditionalSettings.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Turns the <strong>TAB</strong> key into an auto-target that instantly grabs &mdash; and cycles &mdash; the nearest monster, enemy player or both within a range you set, honouring each player&rsquo;s in-game target filters</td></tr>
     <tr><td><a href="#item-stack">Item Stack Limit (1M Stacks)</a></td><td><code>ItemStack\ItemStack.ini</code> (+ <code>ItemStack.lua</code>)</td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Raises the maximum stack of every stackable item from 99 to <strong>1,000,000</strong>; the config file is a restriction gate you use only to pull individual items back to a smaller cap (or <code>0</code> = non-stackable)</td></tr>
     <tr><td><a href="#battlepass">Battle Pass</a></td><td><code>Battlepass\Battlepass.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>A seasonal reward ladder of 20 tiers that players climb just by playing &mdash; killing mobs, PvP, quests, Chip Wars and time online &mdash; with a free track and a premium-only track, each tier paying out a set-quantity item you define in one plain-language Lua file</td></tr>
+    <tr><td><a href="#gm-command">GM Command Whitelist</a></td><td><code>GMCommand\GMCommand.ini</code> + <code>GMCommand.lua</code></td><td><span class="badge server">Server</span></td><td>Grants a named list of ordinary players the full set of GM chat commands (type <code>%lv 50</code>, <code>%repo</code>, <code>%kick Name</code>&hellip;) from one editable Lua file &mdash; no GM account needed, plus an in-game <code>%help</code> manual of all 260 commands</td></tr>
     <tr><td><a href="#module-logs">Module Logs</a></td><td>&mdash; (automatic)</td><td><span class="badge server">Server</span></td><td>Every feature module writes a plain-language log into one <code>ModulesLog</code> folder, with a single <em>_ALL PROBLEMS</em> file that lists anything that went wrong</td></tr>
   </table>
   <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
@@ -1834,6 +1841,91 @@ AutoTargetType = 3</code></pre>
     <tr><td><strong>? help tab</strong></td><td>Toggles a rules panel listing the current page&rsquo;s tiers and their requirements without leaving the window.</td></tr>
   </table>
   <div class="box info"><b>What the server actually enforces</b>The window is filled from the server&rsquo;s own state &mdash; the same season clock, activity toggles and tier requirements in <code>Battlepass.lua</code>. A claim is checked and paid out on the server, so the client can never show a reward the config does not really offer or let a non-premium account take the premium row.</div>
+</section>
+
+<section id="gm-command">
+  <div class="doc-head">
+    <h2>GM Command Whitelist</h2>
+    <div class="badges">
+      <span class="badge server">Server-only</span>
+      <span class="badge on">Ships enabled</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="gc-what">What it does &mdash; and why you would use it</h3>
+  <p>The server has roughly 230 built-in <strong>GM commands</strong> &mdash; short words you type into normal chat with a <strong>%</strong> in front of them to do things like report your position (<code>%repo</code>), set your level (<code>%lv 50</code>), teleport to a player (<code>%gotochar Name</code>) or disconnect somebody (<code>%kick Name</code>). Out of the box they are reserved for accounts carrying a GM <em>degree</em>: an ordinary player who types one just gets <code>&gt;&gt; ERROR (authority)</code>.</p>
+  <p>That is all-or-nothing. This module gives you the middle ground: <strong>name the players you trust, and only those players get the commands</strong> &mdash; without creating a GM account, without touching the database, and with no idea required. It is the handy way to let a handful of mature players run events, test content, or help moderate while you are away.</p>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>On/off switch</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\GMCommand\GMCommand.ini</span></td><td>One key, <code>[General] Enable</code>. Required at boot &mdash; do not delete the file.</td></tr>
+    <tr><td>The list &amp; the manual</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\GMCommand\GMCommand.lua</span></td><td>Sits beside the ini and holds both tables: <code>GMCommand</code> (who is allowed) and <code>CommandList</code> (the 260-line command reference the in-game <code>%help</code> reads).</td></tr>
+    <tr><td>Client half</td><td colspan="2">None to install &mdash; the shipped <code>RF_Online.bin</code> already lets any player type a <code>%</code> line. The <strong>server</strong> alone decides whether it is honoured.</td></tr>
+  </table>
+  <div class="box info"><b>Every use is logged</b>A whitelisted player&rsquo;s command is written to the same cheat log a real GM&rsquo;s command is: <span class="path">.Server\Zoneserver\ZoneServerLog\ServiceLog\Cheat&lt;day&gt;.log</span>, one line per command as <code>[ CharacterName ] &gt;&gt; %lv 50</code>. The module itself also reports its state into <a href="#module-logs">Module Logs</a> &mdash; <em>GM Command Whitelist.log</em> tells you how many names and how many catalog entries it loaded.</div>
+
+  <h3 id="gc-activate">How to activate it</h3>
+  <ol class="steps">
+    <li>
+      <strong>Open the Lua file.</strong> Edit <span class="path">.Server\Zoneserver\RF_Bin\Modules\GMCommand\GMCommand.lua</span> in Notepad. It opens with a plain-English guide describing both tables.
+    </li>
+    <li>
+      <strong>Put in real names.</strong> Replace the placeholder lines in the <code>GMCommand = { ... }</code> block with the exact <em>character</em> names (the name on the character, not the account). See <a href="#gc-whitelist">The player whitelist</a>.
+    </li>
+    <li>
+      <strong>Check the switch.</strong> Unlike most modules, this one ships <strong>on</strong> (<code>Enable=1</code>), so the shipped placeholder list is already live. If you want nothing to happen until you name someone, leave the list with only commented-out lines and it behaves like stock.
+    </li>
+    <li>
+      <strong>Save &mdash; that is it.</strong> No restart: a running Zone server notices the edit on the next game tick (about a second) and reloads both tables. The <a href="#module-logs">module log</a> records the reload.
+    </li>
+    <li>
+      <strong>Revoke at any time.</strong> Delete a line (or put <code>--</code> in front of it) and save. That player loses command access immediately &mdash; but see the one caveat in <a href="#gc-rules">Rules &amp; limits</a>.
+    </li>
+  </ol>
+  <div class="box warn"><b>Do not delete either file</b><code>GMCommand.ini</code> and its sibling <code>GMCommand.lua</code> are both required when the Zone server starts &mdash; a missing file stops the server from booting. To turn the feature off, set <code>Enable=0</code> in the ini instead; the command catalog stays browsable for real GMs even while the whitelist is off.</div>
+
+  <h3 id="gc-whitelist">The player whitelist</h3>
+  <p>The first table in the file is the whole access list &mdash; one line per player:</p>
+  <pre><code>GMCommand = {
+  { PlayerName = "test" },
+  { PlayerName = "PlayerName2" },
+  { PlayerName = "PlayerName3" },
+}</code></pre>
+  <ul>
+    <li><code>PlayerName</code> &mdash; the character&rsquo;s exact name, in quotes. Matching ignores capital cases, so <code>test</code> also matches <code>Test</code>.</li>
+    <li>Add a line to grant, delete a line (or comment it with <code>--</code>) to revoke. Saving applies it live.</li>
+    <li>There is no limit to the number of names; the shipped file carries 10 placeholders for you to overwrite.</li>
+  </ul>
+  <p>Once listed, that player may type <strong>any</strong> command the server knows in ordinary chat with the <code>%</code> prefix. The whitelist only ever <em>adds</em> access: real GM accounts keep their normal degree-based rules untouched, and an unlisted player typing <code>%</code> still gets the plain <code>&gt;&gt; ERROR (authority)</code> reply that only they can see.</p>
+  <div class="box info"><b>Where to find a name</b>Character names are exactly as the player appears above their head / in your friend list. Ask the player to type <code>%repo</code> once added: it is harmless, and it answers with their map and coordinates, confirming the name matched.</div>
+
+  <h3 id="gc-help">The %help command list</h3>
+  <p>Nobody can memorise 230 commands, so the same Lua file carries a second table, <code>CommandList</code>, that documents all <strong>260</strong> accepted command names (every alias is its own row, so the list matches exactly what the server takes). Authorized users &mdash; whitelisted players <em>and</em> real GMs &mdash; can browse it inside the game:</p>
+  <table>
+    <tr><th>You type</th><th>You get</th></tr>
+    <tr><td><code>%help</code></td><td>The count of commands, then every command name listed in compact pages of private chat (only you see them).</td></tr>
+    <tr><td><code>%help loot</code></td><td>Every command whose name starts with <code>loot</code>, one line each: <code>%loba - Open the loot bag.</code> &mdash; syntax plus description.</td></tr>
+    <tr><td><code>%help kick</code></td><td>The same detail for a single command when you already know most of its name.</td></tr>
+  </table>
+  <p>Each catalog row is three plain fields, and you can edit any description, add your own notes, or drop lines you never want advertised &mdash; it hot-reloads exactly like the whitelist:</p>
+  <pre><code>{ Command = "kick", Syntax = "&lt;name&gt;", Description = "Disconnect a player." },</code></pre>
+  <ul>
+    <li><code>Command</code> &mdash; what the player types after the <code>%</code>.</li>
+    <li><code>Syntax</code> &mdash; the extra words the command needs; angle brackets like <code>&lt;name&gt;</code> mean a value you must supply, and an empty <code>""</code> means the command takes none.</li>
+    <li><code>Description</code> &mdash; a short English explanation of what it does.</li>
+  </ul>
+  <div class="box info"><b>The catalog grants nothing</b><code>CommandList</code> is reference text only. Access comes from the <code>GMCommand</code> table alone &mdash; adding a command row does not unlock it for anyone, and deleting a row does not stop a real GM from using it. It is also read while <code>Enable = 0</code>, so GMs keep the in-game manual even when the whitelist is switched off.</div>
+
+  <h3 id="gc-rules">Rules &amp; limits</h3>
+  <ul>
+    <li><strong>All or nothing, on purpose.</strong> A listed player gets <em>every</em> command, including the destructive ones &mdash; kick, ban-style punishment, wiping an inventory, spawning items, changing level. There is no per-command gate in this version, so only list people you would happily hand a GM account to.</li>
+    <li><strong>Revoke means delete the line.</strong> Removing a name stops their next command instantly. The one thing to remember: a whitelisted player can type <code>%change degree</code>, which raises their GM degree <em>for the rest of that session</em> so they stay powerful until they log out. If you ever cut someone off in a hurry, also kick them (<code>%kick Name</code> from another authorized account, or via the GameCP) so the session &mdash; and any raised degree &mdash; dies. The database is never rewritten, so they come back an ordinary player.</li>
+    <li><strong>It is chat, not a console.</strong> Commands are typed in the normal chat box with <code>%</code> in front, and argument parsing is exactly the stock GM parser&rsquo;s: the first word is the command, the next up to five words are its arguments, so values containing spaces are not possible.</li>
+    <li><strong>Some names overlap chat shortcuts.</strong> <code>#</code> in front of a line is the GM-whisper shortcut and <code>!</code> is the operator line, so the class-change command has to be written <code>%#</code> rather than plain <code>#</code>. The catalog entry for it says so.</li>
+    <li><strong>Nothing shows on the client.</strong> This is a server-only module: it takes no slot in the client feature-state packet and adds no button or window. Players only ever notice that their <code>%</code> lines work, and <code>%help</code>.</li>
+    <li><strong>Old clients are still gated locally.</strong> The permission is server-side, but a player running an outdated <code>RF_Online.bin</code> (one from before this module) will find their <code>%</code> line never leaves the chat box. Make sure everyone using the feature has the current client build.</li>
+  </ul>
+  <p class="muted">With <code>Enable = 0</code> the whitelist is ignored completely and authority reverts to the stock GM-degree rules; real GM accounts keep working exactly as before, and <code>%help</code> remains available to them.</p>
 </section>
 
 <section id="module-logs">
