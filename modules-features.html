@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Modules / Features &mdash; RF Online</title>
-<link rel="stylesheet" href="assets/style.css?v=3">
+<link rel="stylesheet" href="assets/style.css?v=4">
 </head>
 <body>
 <header class="site-header">
@@ -151,6 +151,11 @@
     <a class="sub" href="#dc-config">The config file</a>
     <a class="sub" href="#dc-feeds">The event feeds</a>
     <a class="sub" href="#dc-rp">Rich Presence</a>
+    <a href="#chip-block">Chip No-Entry (Chip Block)</a>
+    <a class="sub" href="#cb-what">What it does</a>
+    <a class="sub" href="#cb-activate">Activate it</a>
+    <a class="sub" href="#cb-config">The config file</a>
+    <a class="sub" href="#cb-how">How it blocks</a>
     <a href="#module-logs">Module Logs</a>
     <a class="sub" href="#ml-what">What it is</a>
     <a class="sub" href="#ml-use">Reading the logs</a>
@@ -202,6 +207,7 @@
     <tr><td><a href="#zoom-max">Camera Zoom Max</a></td><td><code>ZoomMax\ZoomMax.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Raises how far each race&rsquo;s camera can zoom <strong>out</strong> (the mouse-wheel / Page-Down limit), so players can pull the view back farther than the stock 250 / 275 / 290</td></tr>
     <tr><td><a href="#killfeed">PvP Kill Feed</a></td><td><code>KillFeed\KillFeed.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Shows a short on-screen banner (<strong>Killer &mdash; KILLED &mdash; Victim</strong> with race-coloured names and emblem artwork) to every player whenever someone is killed by an enemy race, plus a line in chat &mdash; size, colours and screen position all set from the server</td></tr>
     <tr><td><a href="#discord">Discord Relay &amp; Feeds</a></td><td><code>Discord\Discord.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Mirrors chosen in-game events &mdash; PvP kills, public chat, megaphone ads, pit-boss spawn/defeat and equipment upgrades &mdash; into your Discord channels as rich embeds through incoming webhooks (no bot), and drives each player&rsquo;s Discord <strong>Rich Presence</strong> card &mdash; all set from one server file</td></tr>
+    <tr><td><a href="#chip-block">Chip No-Entry (Chip Block)</a></td><td><code>ChipBlock\ChipBlock.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Stops players from walking inside a race chip (crystal / Holy Stone) &mdash; a keep-out circle around every live chip that both the client and the server refuse to enter, so nobody can hide where defenders cannot click them</td></tr>
     <tr><td><a href="#module-logs">Module Logs</a></td><td>&mdash; (automatic)</td><td><span class="badge server">Server</span></td><td>Every feature module writes a plain-language log into one <code>ModulesLog</code> folder, with a single <em>_ALL PROBLEMS</em> file that lists anything that went wrong</td></tr>
   </table>
   <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
@@ -2281,6 +2287,62 @@ Opacity = 0.4</code></pre>
     <li><strong>InviteUrl</strong> adds a clickable button to the card; leave it empty for no button.</li>
   </ul>
   <div class="box info"><b>The protection line is fixed</b>The &ldquo;DtZProtect&rdquo; anti-cheat text on the card is fixed in the server on purpose and cannot be edited here. Everything else on the card &mdash; name, logo, player count, uptime, button &mdash; is yours to set.</div>
+</section>
+
+<section id="chip-block">
+  <div class="doc-head">
+    <h2>Chip No-Entry (Chip Block)</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge off">Off by default</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <figure class="shot">
+    <video controls preload="metadata">
+      <source src="assets/img/chip-block-demo.mp4" type="video/mp4">
+      Your browser does not support embedded video.
+    </video>
+    <figcaption>Demo: with ChipBlock enabled, a player walks toward a live chip but is stopped at the keep-out boundary &mdash; they can no longer enter the crystal where defenders cannot reach them.</figcaption>
+  </figure>
+
+  <h3 id="cb-what">What it does &mdash; and why you would use it</h3>
+  <p>In a chip war a player can walk straight <em>into</em> a team&rsquo;s crystal &mdash; the &ldquo;chip&rdquo; (internally the Holy Stone) &mdash; and stand inside its model. From there the other team <strong>cannot click or attack them</strong>, so whoever camps inside the chip gets a free, unkillable hiding spot. This module closes that hole.</p>
+  <p>Turn it on and <strong>nobody can enter a chip any more</strong>. A keep-out circle is drawn around every live chip on every map; a player who walks into it simply slides up to the edge and stops. It is enforced in <strong>two layers</strong> (see <a href="#cb-how">How it blocks</a>): the game client refuses the step so it feels instant, and the Zone server independently rejects any position that would land inside, so a modified or lagging client cannot cheat it.</p>
+  <p>Like every module here it ships <strong>off by default</strong> and is driven from one plain-language Lua file that the server hot-reloads &mdash; no client file to edit, no restart.</p>
+
+  <h3 id="cb-activate">How to activate it</h3>
+  <ol class="steps">
+    <li><strong>Open the file.</strong> <span class="path">.Server\Zoneserver\RF_Bin\Modules\ChipBlock\ChipBlock.lua</span> in Notepad.</li>
+    <li><strong>Flip the switch.</strong> Change <code>Enable = false</code> to <code>Enable = true</code> (lowercase, exactly).</li>
+    <li><strong>Set the keep-out size.</strong> <code>Radius</code> is how far the circle reaches from the chip&rsquo;s centre in world units. The default <code>6.0</code> sits just outside the structure&rsquo;s walls; nudge it so the wall hugs the chip (a good range is roughly <code>4</code> to <code>12</code>).</li>
+    <li><strong>Save &mdash; no restart.</strong> A running zone re-reads the file within about a second and pushes the new radius out to every client.</li>
+    <li><strong>Test it.</strong> Walk a character at a chip &mdash; you should stop at the edge. Anyone standing inside when you switch it on is popped back out to the edge the next time they move.</li>
+  </ol>
+  <div class="box warn"><b>Do not delete the file</b><code>ChipBlock.lua</code> is required when the Zone server starts &mdash; removing it stops the server from booting. To turn the feature off, set <code>Enable = false</code> instead of deleting the file.</div>
+
+  <h3 id="cb-config">The config file</h3>
+  <p>Just two values, with plain-language comments written in the file itself.</p>
+  <pre><code>ChipBlock = {
+  Enable = false,   -- true = players cannot enter any chip; false = off (stock behaviour)
+  Radius = 6.0,     -- keep-out circle radius around each chip's centre, in world units
+}</code></pre>
+  <table>
+    <tr><th>Key</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td><code>false</code></td><td>Master switch. <code>true</code> turns the no-entry wall on for every live chip on every map; <code>false</code> leaves movement exactly as stock.</td></tr>
+    <tr><td><code>Radius</code></td><td><code>6.0</code></td><td>How far the keep-out circle reaches from the chip&rsquo;s centre, in world units. The server clamps it to a safe <code>1</code>&ndash;<code>200</code>; in practice about <code>4</code>&ndash;<code>12</code> hugs a chip. Bigger = players are stopped further out.</td></tr>
+  </table>
+  <div class="box info"><b>One number, both sides</b>You set <code>Radius</code> only here. The server sends it to every client as part of the normal feature-state push on world entry and after each live reload, so the client&rsquo;s walk-block and the server&rsquo;s authority always agree on the same circle &mdash; there is no matching client file to edit.</div>
+
+  <h3 id="cb-how">How it blocks (server + client)</h3>
+  <p>The keep-out is applied in two places so it feels smooth <em>and</em> cannot be cheated:</p>
+  <ul>
+    <li><span class="badge client">Client</span> On each movement step the client checks the player against every chip it already renders. If the next step would land inside a circle, it is pushed back out to the edge &mdash; so you visibly slide around the chip instead of clipping through it.</li>
+    <li><span class="badge server">Server</span> Independently, the Zone server re-checks every position a client reports (right where it already runs its fly / wall-hack checks) and clamps it out of the circle before accepting it. A hacked or desynced client cannot put itself inside a chip, because the authoritative server simply refuses that position.</li>
+  </ul>
+  <p>It targets <strong>all chips, all maps</strong> at once, and only crystals that are currently alive are treated as blocked &mdash; so a destroyed chip does not leave an invisible wall behind. There is nothing to configure per-chip.</p>
 </section>
 
 <section id="module-logs">

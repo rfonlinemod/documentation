@@ -265,6 +265,14 @@ td code { white-space: nowrap; }
   border-radius: 10px;
   background: var(--code-bg);
 }
+.shot video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--code-bg);
+}
 .shot figcaption {
   margin-top: 8px;
   color: var(--muted);
