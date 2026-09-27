@@ -59,6 +59,7 @@
     <a class="sub" href="#br-activate">Activate it</a>
     <a class="sub" href="#br-lua">Write the schedule</a>
     <a class="sub" href="#br-ui">The in-game window</a>
+    <a class="sub" href="#br-mapnames">Friendly map names</a>
     <a href="#election-manager">Election Manager</a>
     <a class="sub" href="#em-what">What it does</a>
     <a class="sub" href="#em-activate">Activate it</a>
@@ -143,6 +144,13 @@
     <a class="sub" href="#kf-config">The config file</a>
     <a class="sub" href="#kf-ui">Where it appears</a>
     <a class="sub" href="#kf-art">The banner artwork</a>
+    <a href="#discord">Discord Relay &amp; Feeds</a>
+    <a class="sub" href="#dc-what">What it does</a>
+    <a class="sub" href="#dc-webhook">Getting a webhook URL</a>
+    <a class="sub" href="#dc-activate">Activate it</a>
+    <a class="sub" href="#dc-config">The config file</a>
+    <a class="sub" href="#dc-feeds">The event feeds</a>
+    <a class="sub" href="#dc-rp">Rich Presence</a>
     <a href="#module-logs">Module Logs</a>
     <a class="sub" href="#ml-what">What it is</a>
     <a class="sub" href="#ml-use">Reading the logs</a>
@@ -193,6 +201,7 @@
     <tr><td><a href="#arrow-target">Group-Target Arrow</a></td><td><code>RaceLeaderEffect\ArrowTarget.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Reskins the floating arrow a race leader / guild master / party leader puts over a marked target with <strong>Ctrl+click</strong> &mdash; size, colour, height, opacity and on/off, tuned per group type</td></tr>
     <tr><td><a href="#zoom-max">Camera Zoom Max</a></td><td><code>ZoomMax\ZoomMax.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Raises how far each race&rsquo;s camera can zoom <strong>out</strong> (the mouse-wheel / Page-Down limit), so players can pull the view back farther than the stock 250 / 275 / 290</td></tr>
     <tr><td><a href="#killfeed">PvP Kill Feed</a></td><td><code>KillFeed\KillFeed.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Shows a short on-screen banner (<strong>Killer &mdash; KILLED &mdash; Victim</strong> with race-coloured names and emblem artwork) to every player whenever someone is killed by an enemy race, plus a line in chat &mdash; size, colours and screen position all set from the server</td></tr>
+    <tr><td><a href="#discord">Discord Relay &amp; Feeds</a></td><td><code>Discord\Discord.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Mirrors chosen in-game events &mdash; PvP kills, public chat, megaphone ads, pit-boss spawn/defeat and equipment upgrades &mdash; into your Discord channels as rich embeds through incoming webhooks (no bot), and drives each player&rsquo;s Discord <strong>Rich Presence</strong> card &mdash; all set from one server file</td></tr>
     <tr><td><a href="#module-logs">Module Logs</a></td><td>&mdash; (automatic)</td><td><span class="badge server">Server</span></td><td>Every feature module writes a plain-language log into one <code>ModulesLog</code> folder, with a single <em>_ALL PROBLEMS</em> file that lists anything that went wrong</td></tr>
   </table>
   <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
@@ -872,6 +881,29 @@ Map0 = Elan</code></pre>
     <li><strong>Row accents.</strong> A green tick on a row's left edge means Live, steel means Down &mdash; readable at a glance.</li>
     <li><strong>&ldquo;Spawning...&rdquo;</strong> appears for the moment between a countdown reaching zero and the boss actually coming up.</li>
   </ul>
+
+  <h3 id="br-mapnames">Friendly map names (<code>BossRespawnMap.lua</code>)</h3>
+  <p>By default the schedule window, the on-screen boss announcements and the <a href="#discord">Discord</a> boss feed all print the map&rsquo;s <strong>internal code</strong> &mdash; <code>NeutralAS2</code>, <code>Elan</code>, <code>Platform01</code>&hellip; &mdash; because that is the only map identifier the server keeps. This is readable to you but not to players. <span class="path">BossRespawnMap.lua</span> lets you give each map a <strong>friendly display name</strong> once, and every one of those three places then shows it:</p>
+  <pre><code>Before:  King Crook      NeutralAS2      00:00:44:16   Live
+After:   King Crook      Neutral Zone A-2 00:00:44:16   Live</code></pre>
+  <p>It is a <strong>display-only</strong> file: it changes nothing about <em>when</em> or <em>where</em> a boss spawns &mdash; the schedule still comes from <code>BossRespawn.lua</code> (or the INI). It only renames the map for players.</p>
+  <ol class="steps">
+    <li><strong>Open the file.</strong> <span class="path">.Server\Zoneserver\RF_Bin\Modules\BossRespawnManager\BossRespawnMap.lua</span> in Notepad.</li>
+    <li><strong>Turn it on.</strong> Set <code>Enable = true</code> at the top of the table. With <code>false</code> (or <code>0</code>) the whole file is ignored and the raw map code is shown again.</li>
+    <li><strong>Rename your maps.</strong> Each line is <code>["MapCode"] = "Name you want shown"</code>. The key must be the exact map code you already use in <code>BossRespawn.lua</code>&rsquo;s <code>Map = "..."</code> (the old INI <code>Map#</code> name); the value is free text.</li>
+    <li><strong>Save &mdash; no restart.</strong> A running zone hot-reloads it; the next announcement and the next time the schedule window is opened show the new names.</li>
+  </ol>
+  <pre><code>BossRespawnMap = {
+  Enable = true,                       -- false / 0 = show the raw map code again
+
+  ["NeutralA"]       = "Neutral Zone A",
+  ["NeutralAS2"]     = "Neutral Zone A-2",
+  ["Elan"]           = "Elan",
+  ["Platform01"]     = "Platform 01",
+  ["Mountain_Beast"] = "Mountain Beast",
+}</code></pre>
+  <div class="box info"><b>Name lookup order</b>For each map the server uses the first name it finds: <strong>1)</strong> <code>BossRespawnMap.lua</code> (when its <code>Enable = true</code>), <strong>2)</strong> the <code>[MapNames]</code> section of <code>BossRespawnManager.ini</code>, <strong>3)</strong> the raw map code. So the Lua file <em>overrides</em> the INI, and any map you leave out simply falls back to its code &mdash; nothing breaks.</div>
+  <div class="box warn"><b>Optional file</b>Unlike the schedule files, <code>BossRespawnMap.lua</code> is <em>not</em> required at boot &mdash; delete it and the module keeps working on the INI <code>[MapNames]</code> / raw codes. Keys are matched case-sensitively against the map code, so <code>NeutralAS2</code> and <code>neutralas2</code> are different entries.</div>
 </section>
 
 <section id="election-manager">
@@ -2149,6 +2181,106 @@ Opacity = 0.4</code></pre>
     <li><strong>Without it</strong> nothing breaks &mdash; the client draws a clean text-only banner (<em>Killer KILLED Victim</em>) in the race colours instead. All the size / position keys still apply.</li>
   </ul>
   <div class="box info"><b>Artwork is client-side, settings are server-side</b>The look and position are driven entirely by <code>KillFeed.ini</code> on the zone, so every player sees the same banner. The <code>.spr</code> file is only the picture it paints with &mdash; players who have it get the ribbon and emblems, players who do not get the text fallback, but always the same names, colours and placement you configured.</div>
+</section>
+
+<section id="discord">
+  <div class="doc-head">
+    <h2>Discord Relay &amp; Feeds</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge off">Needs webhook URLs</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="dc-what">What it does &mdash; and why you would use it</h3>
+  <p>This module <strong>mirrors selected in-game events straight into your Discord channels</strong> as tidy rich-embed messages, and drives each player&rsquo;s own Discord <strong>Rich Presence</strong> card (&ldquo;Playing &hellip;&rdquo; with your logo, the live online count and a session timer). It uses Discord <em>incoming webhooks</em> &mdash; a one-way HTTPS post &mdash; so there is <strong>no bot to host, no login, and players cannot influence it</strong>.</p>
+  <p>Five independent event feeds, each pointed at its own channel, plus Rich Presence:</p>
+  <ul>
+    <li><strong>Kill Feed</strong> &mdash; every genuine enemy-race PvP kill (the same event as the in-game <a href="#killfeed">PvP Kill Feed</a> banner), killer vs victim with their race colours.</li>
+    <li><strong>Chat</strong> &mdash; public chat lines (global / race / notice / map), channel-filtered. Whispers, party, guild and trade are <em>never</em> relayed.</li>
+    <li><strong>Megaphone</strong> &mdash; the in-game <a href="#megaphone">megaphone</a> ads players shout, sender and full text.</li>
+    <li><strong>Boss</strong> &mdash; a scheduled <a href="#boss-respawn">pit boss</a> spawning or being defeated (name, map, and the killer) &mdash; the map shows its <a href="#br-mapnames">friendly name</a> if you set one.</li>
+    <li><strong>Upgrade</strong> &mdash; equipment enhancement: a successful roll (player, item by its real name, new <code>+N</code>) or an item <strong>destroyed</strong> on a failed roll, filtered by a minimum level so you only see the notable hits.</li>
+  </ul>
+  <p>It is a <strong>server-only setting</strong>: the Zone server owns every value and makes every outbound call, and there is no client config file. (Rich Presence values are pushed from the server to each client, so you still set them only here.) A small <code>LogoURL</code> and <code>ServerName</code> you set once ride on every post.</p>
+
+  <h3 id="dc-webhook">Getting a webhook URL</h3>
+  <p>Each feed posts to a <strong>webhook URL</strong> you copy from Discord. Make one per channel you want to use:</p>
+  <ol class="steps">
+    <li>In Discord, open <strong>Server Settings &rarr; Integrations &rarr; Webhooks</strong>.</li>
+    <li>Click <strong>New Webhook</strong>, pick the channel (e.g. <code>#killfeed</code>), then <strong>Copy Webhook URL</strong>.</li>
+    <li>Paste that URL between the quotes for the matching feed in <code>Discord.lua</code>.</li>
+  </ol>
+  <div class="box warn"><b>A webhook URL is a secret</b>Anyone who has a webhook URL can post to that channel. Keep them in this config file only &mdash; do not paste them in public, screenshots or guides. A <strong>blank</strong> <code>Webhook = ""</code> simply means that feed is off, so leave any channel you do not use empty.</div>
+
+  <h3 id="dc-activate">How to activate it</h3>
+  <ol class="steps">
+    <li><strong>Open the file.</strong> <span class="path">.Server\Zoneserver\RF_Bin\Modules\Discord\Discord.lua</span> in Notepad.</li>
+    <li><strong>Make sure the master switch is on.</strong> <code>Enable = true</code> at the top (set it to <code>false</code> to silence the whole relay).</li>
+    <li><strong>Paste your webhook URLs</strong> into the feeds you want (see <a href="#dc-webhook">Getting a webhook URL</a>). A feed with a blank URL stays off even if its <code>Enable = true</code>.</li>
+    <li><strong>Save &mdash; no restart.</strong> A running zone re-reads the file within a second. Post volume is throttled so a busy server never trips Discord&rsquo;s rate limit.</li>
+    <li><strong>Test it.</strong> Trigger one event you enabled (a PvP kill, a megaphone, a boss spawn) and check the matching channel.</li>
+  </ol>
+  <div class="box warn"><b>Do not delete the file</b><code>Discord.lua</code> is required when the Zone server starts &mdash; deleting it stops the server from booting. To turn the relay off, set <code>Enable = false</code> (or just leave every <code>Webhook</code> blank) instead of removing the file.</div>
+
+  <h3 id="dc-config">The config file</h3>
+  <p>One Lua file, plain-language comments included. The global keys sit at the top; each feed is its own <code>{ Enable, Webhook }</code> block; Rich Presence is the <code>RichPresence</code> block. Every value is clamped to a safe range and a typing mistake is reported in the <a href="#module-logs">Module Logs</a>.</p>
+  <pre><code>Discord = {
+  Enable            = true,    -- master switch: false sends nothing at all
+  MinSendIntervalMs = 1500,    -- shortest ms between two posts (Discord allows ~30/min)
+  MaxQueue          = 100,     -- most queued posts kept if Discord is unreachable
+  LogoURL           = "",      -- optional image URL shown as a logo on every post
+  ServerName        = "RF ONLINE NEXT", -- footer / author line on every post
+
+  KillFeed  = { Enable = true, Webhook = "" },
+  Chat      = { Enable = true, Webhook = "", Channels = { "ALL", "RACE", "NOTICE" } },
+  Megaphone = { Enable = true, Webhook = "" },
+  Boss      = { Enable = true, Webhook = "" },
+  Upgrade   = { Enable = true, Webhook = "", MinLevel = 1 },
+
+  RichPresence = { ... }       -- see "Rich Presence" below
+}</code></pre>
+  <table>
+    <tr><th>Key</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td><code>true</code></td><td>Master switch for the whole relay. <code>false</code> = no feed posts anything, regardless of each feed&rsquo;s own flag.</td></tr>
+    <tr><td><code>MinSendIntervalMs</code></td><td><code>1500</code></td><td>Global anti-flood: the shortest time between two posts. Discord allows ~30 webhook calls/minute per channel, so keep this <strong>&ge; 1500</strong>.</td></tr>
+    <tr><td><code>MaxQueue</code></td><td><code>100</code></td><td>How many pending posts are kept if Discord is unreachable; the oldest are dropped. All sending runs on a background thread, so the game never stalls on Discord latency.</td></tr>
+    <tr><td><code>LogoURL</code></td><td><code>""</code></td><td>A publicly reachable image URL shown as a small logo beside the server name on every post. Empty = none.</td></tr>
+    <tr><td><code>ServerName</code></td><td><code>"RF ONLINE NEXT"</code></td><td>The name shown as the footer / author line on every webhook post (Rich Presence has its own separate name).</td></tr>
+  </table>
+
+  <h3 id="dc-feeds">The event feeds</h3>
+  <p>Each feed turns on with its own <code>Enable</code> <em>and</em> a non-empty <code>Webhook</code>. The <code>Boss</code> feed follows the same death-announcement blacklist as the in-game boss notice, and shows the map&rsquo;s friendly name when <a href="#br-mapnames">BossRespawnMap.lua</a> provides one. The <code>Upgrade</code> feed shows the item&rsquo;s real display name (not its internal code).</p>
+  <table>
+    <tr><th>Feed block</th><th>Keys</th><th>What it posts</th></tr>
+    <tr><td><code>KillFeed</code></td><td><code>Enable</code>, <code>Webhook</code></td><td>Enemy-race PvP kills &mdash; killer vs victim, each with its race colour.</td></tr>
+    <tr><td><code>Chat</code></td><td><code>Enable</code>, <code>Webhook</code>, <code>Channels</code></td><td>Public chat. <code>Channels</code> lists which in-game channels to relay (case-insensitive): <code>"ALL"</code> global shout, <code>"RACE"</code>, <code>"NOTICE"</code>, <code>"MAP"</code>. Private / party / guild / trade are always skipped.</td></tr>
+    <tr><td><code>Megaphone</code></td><td><code>Enable</code>, <code>Webhook</code></td><td>In-game megaphone ads &mdash; the sender and the full message text.</td></tr>
+    <tr><td><code>Boss</code></td><td><code>Enable</code>, <code>Webhook</code></td><td>Pit-boss spawn / defeat &mdash; boss name, map (friendly name if set) and the killer.</td></tr>
+    <tr><td><code>Upgrade</code></td><td><code>Enable</code>, <code>Webhook</code>, <code>MinLevel</code></td><td>Successful upgrades (player, item name, new <code>+N</code>) and items destroyed on a failed roll. <code>MinLevel</code> filters by tier: <code>1</code> = every upgrade, <code>5</code> = only the rare +5/+6/+7 hits (and losses of +5 gear); <code>0</code> also catches base (+0) losses.</td></tr>
+  </table>
+
+  <h3 id="dc-rp">Discord Rich Presence</h3>
+  <p>Rich Presence is <strong>per-player</strong> and drawn by each player&rsquo;s own Discord desktop app: while they run the game their Discord shows <em>&ldquo;Playing &lt;your app name&gt;&rdquo;</em> with your logo, the live online count and a session timer. The values are pushed from the server to every client on world entry, so you configure them <strong>only here</strong> &mdash; nothing is baked into the client. <code>AppID</code> and <code>LogoAsset</code> are public (not secret).</p>
+  <pre><code>RichPresence = {
+  Enable       = true,
+  AppID        = "",               -- Discord Application ID (discord.com/developers);
+                                   -- the app's NAME shows as "Playing &lt;name&gt;"
+  LogoAsset    = "rflogo",         -- art-asset key uploaded under Rich Presence &gt; Art Assets
+  ServerName   = "RF ONLINE PROTECTION", -- top line of the card
+  InviteUrl    = "",               -- a discord.gg invite -&gt; a clickable card button (empty = none)
+  ButtonLabel  = "Join our Discord", -- button caption (Discord caps it at 32 characters)
+  ShowPlayers  = true,             -- include the live online player count
+  ShowUptime   = true,             -- include the running timer (since the zone started)
+}</code></pre>
+  <ul>
+    <li><strong>AppID</strong> comes from your application at <span class="path">discord.com/developers</span>; the application&rsquo;s <em>name</em> is what shows as &ldquo;Playing &hellip;&rdquo;.</li>
+    <li><strong>LogoAsset</strong> is the key of an image you uploaded under <em>Rich Presence &rarr; Art Assets</em> on that application.</li>
+    <li><strong>InviteUrl</strong> adds a clickable button to the card; leave it empty for no button.</li>
+  </ul>
+  <div class="box info"><b>The protection line is fixed</b>The &ldquo;DtZProtect&rdquo; anti-cheat text on the card is fixed in the server on purpose and cannot be edited here. Everything else on the card &mdash; name, logo, player count, uptime, button &mdash; is yours to set.</div>
 </section>
 
 <section id="module-logs">
