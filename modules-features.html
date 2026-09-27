@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Modules / Features &mdash; RF Online</title>
-<link rel="stylesheet" href="assets/style.css?v=2">
+<link rel="stylesheet" href="assets/style.css?v=3">
 </head>
 <body>
 <header class="site-header">
@@ -137,6 +137,12 @@
     <a class="sub" href="#zm-what">What it does</a>
     <a class="sub" href="#zm-activate">Activate it</a>
     <a class="sub" href="#zm-config">The config file</a>
+    <a href="#killfeed">PvP Kill Feed</a>
+    <a class="sub" href="#kf-what">What it does</a>
+    <a class="sub" href="#kf-activate">Activate it</a>
+    <a class="sub" href="#kf-config">The config file</a>
+    <a class="sub" href="#kf-ui">Where it appears</a>
+    <a class="sub" href="#kf-art">The banner artwork</a>
     <a href="#module-logs">Module Logs</a>
     <a class="sub" href="#ml-what">What it is</a>
     <a class="sub" href="#ml-use">Reading the logs</a>
@@ -186,6 +192,7 @@
     <tr><td><a href="#gm-command">GM Command Whitelist</a></td><td><code>GMCommand\GMCommand.ini</code> + <code>GMCommand.lua</code></td><td><span class="badge server">Server</span></td><td>Grants a named list of ordinary players the full set of GM chat commands (type <code>%lv 50</code>, <code>%repo</code>, <code>%kick Name</code>&hellip;) from one editable Lua file &mdash; no GM account needed, plus an in-game <code>%help</code> manual of all 260 commands</td></tr>
     <tr><td><a href="#arrow-target">Group-Target Arrow</a></td><td><code>RaceLeaderEffect\ArrowTarget.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Reskins the floating arrow a race leader / guild master / party leader puts over a marked target with <strong>Ctrl+click</strong> &mdash; size, colour, height, opacity and on/off, tuned per group type</td></tr>
     <tr><td><a href="#zoom-max">Camera Zoom Max</a></td><td><code>ZoomMax\ZoomMax.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Raises how far each race&rsquo;s camera can zoom <strong>out</strong> (the mouse-wheel / Page-Down limit), so players can pull the view back farther than the stock 250 / 275 / 290</td></tr>
+    <tr><td><a href="#killfeed">PvP Kill Feed</a></td><td><code>KillFeed\KillFeed.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Shows a short on-screen banner (<strong>Killer &mdash; KILLED &mdash; Victim</strong> with race-coloured names and emblem artwork) to every player whenever someone is killed by an enemy race, plus a line in chat &mdash; size, colours and screen position all set from the server</td></tr>
     <tr><td><a href="#module-logs">Module Logs</a></td><td>&mdash; (automatic)</td><td><span class="badge server">Server</span></td><td>Every feature module writes a plain-language log into one <code>ModulesLog</code> folder, with a single <em>_ALL PROBLEMS</em> file that lists anything that went wrong</td></tr>
   </table>
   <p class="muted">Modules are documented here one at a time, as each one is tested. More will appear in this table once they are verified.</p>
@@ -2057,6 +2064,93 @@ Opacity = 0.4</code></pre>
   <p class="muted">A larger number lets the camera sit farther from the character (see more ground, smaller figures); push it too high and the world can look distant and the character tiny &mdash; pick what is comfortable for your server.</p>
 </section>
 
+<section id="killfeed">
+  <div class="doc-head">
+    <h2>PvP Kill Feed</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <figure class="shot">
+    <img src="assets/img/killfeed-banner.png" alt="The PvP Kill Feed banner shown in game: the killer's name, a KILLED ribbon and the victim's name, each tinted with its race colour, sitting under the race-chip HP bars">
+    <figcaption>A kill as every player sees it: the killer and victim names, each tinted with its race colour, flanking the <strong>KILLED</strong> ribbon and the race emblems. Here it is anchored under the Belato / Cora / Accretia chip HP bars, top-right.</figcaption>
+  </figure>
+
+  <h3 id="kf-what">What it does &mdash; and why you would use it</h3>
+  <p>The Kill Feed puts a short banner on <strong>every player&rsquo;s screen</strong> the moment one player kills a player of an <strong>enemy race</strong>:</p>
+  <pre><code>   KillerName   &#9876; KILLED &#9876;   VictimName</code></pre>
+  <p>Each name is tinted with its race colour (Bellato orange, Cora magenta, Accretia silver-white), the two are joined by a <strong>KILLED</strong> ribbon, and the killer&rsquo;s and victim&rsquo;s race emblems sit beside their names. A plain <em>&ldquo;X KILLED Y&rdquo;</em> line is written to the chat log as well, so the kill is still recorded even if a player had the banner hidden.</p>
+  <p>Use it to:</p>
+  <ul>
+    <li>Make PvP feel &mdash; every kill across the server is announced live, the way an esports stream shows a kill feed.</li>
+    <li>Call out standout players and build rivalries between the three races.</li>
+    <li>Give war and chip-battle participants instant feedback on who is on top.</li>
+  </ul>
+  <p>It is a <strong>server setting with a client half</strong>: the Zone server reads <span class="path">KillFeed.ini</span>, and on each kill it broadcasts the banner <em>and</em> the current look / position settings to every online client. Players cannot turn it on or off, or restyle it, from their own machine &mdash; what the zone sends is what they see.</p>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Server switch + look</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\KillFeed\KillFeed.ini</span></td><td>Master on/off, how long each banner holds, and every size / colour / position setting.</td></tr>
+    <tr><td>Client half</td><td colspan="2">No client file. The zone pushes each kill (with the current settings) to every client, which draws the banner. Both the Zone server and the game client must be the current build.</td></tr>
+    <tr><td>Optional artwork</td><td><span class="path">.Client\SpriteImage\common\PvpNotices.spr</span></td><td>The <strong>KILLED</strong> ribbon and the three race emblems. Leave it out and the banner falls back to plain coloured text.</td></tr>
+  </table>
+  <div class="box info"><b>Only genuine enemy-race PvP kills</b>The banner fires when a player is killed by a player of a different race. It does not fire on mob deaths, same-race kills, or the environment &mdash; it is a PvP highlight reel, not a combat log.</div>
+
+  <h3 id="kf-activate">How to activate it</h3>
+  <ol class="steps">
+    <li><strong>Open the file.</strong> <span class="path">.Server\Zoneserver\RF_Bin\Modules\KillFeed\KillFeed.ini</span> in Notepad.</li>
+    <li><strong>Turn it on.</strong> Set <code>[General] Enable = 1</code> (with <code>0</code> no kill banners are shown &mdash; the stock behaviour).</li>
+    <li><strong>Choose how long it stays.</strong> Set <code>[General] HoldSecs</code> to the number of seconds each banner is on screen before it fades (<code>1&ndash;60</code>; <code>5</code> is a good default).</li>
+    <li><strong>Save &mdash; no restart.</strong> A running server hot-reloads the file; because the settings ride along with every kill, your changes apply to the very next kill with no restart and no re-login.</li>
+    <li><strong>Test it.</strong> Have one character kill an enemy-race player &mdash; every client shows the banner and a chat line.</li>
+  </ol>
+  <div class="box warn"><b>Do not delete the file</b><code>KillFeed.ini</code> is required when the Zone server starts &mdash; deleting it stops the server from booting. To hide the banners, set <code>[General] Enable = 0</code> instead of removing the file.</div>
+
+  <h3 id="kf-config">The config file</h3>
+  <p>One file, two sections. <code>[General]</code> is the on/off switch and timing; <code>[UI]</code> is everything about how the banner looks and where it appears. Every value is clamped to a safe range &mdash; a number out of range is reported in the <a href="#module-logs">Module Logs</a> and the nearest allowed value is used.</p>
+  <h4><code>[General]</code></h4>
+  <table>
+    <tr><th>Key</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td><code>1</code></td><td><code>1</code> = broadcast a banner on every enemy-race PvP kill; <code>0</code> = off (stock behaviour).</td></tr>
+    <tr><td><code>HoldSecs</code></td><td><code>5</code></td><td>Seconds each banner stays on screen before fading (<code>1&ndash;60</code>).</td></tr>
+  </table>
+  <h4><code>[UI]</code> &mdash; look &amp; layout</h4>
+  <table>
+    <tr><th>Key</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td><code>MaxOnScreen</code></td><td><code>3</code></td><td>How many banners are stacked on screen at once (<code>1&ndash;10</code>); extra kills queue and appear as older ones fade.</td></tr>
+    <tr><td><code>BannerWidth</code> / <code>BannerHeight</code></td><td><code>128</code> / <code>16</code></td><td>Size of the <strong>KILLED</strong> ribbon artwork in pixels (source art is 256&times;32, so smaller scales it down).</td></tr>
+    <tr><td><code>EmblemSize</code></td><td><code>22</code></td><td>Size of each race emblem icon in pixels (source art is 24&times;24).</td></tr>
+    <tr><td><code>RowHeight</code></td><td><code>18</code></td><td>Full height of one banner row; the artwork is vertically centred in it.</td></tr>
+    <tr><td><code>NameScalePercent</code></td><td><code>75</code></td><td>Player-name size as a percent of the 16-pixel base font (<code>75</code> &asymp; 12px). Raise it if names look small next to the art, lower it otherwise.</td></tr>
+    <tr><td><code>EmblemNameGap</code> / <code>NameBannerGap</code> / <code>LineGap</code></td><td><code>4</code> / <code>6</code> / <code>6</code></td><td>Spacing in pixels: emblem&harr;name, name&harr;ribbon, and between stacked rows.</td></tr>
+    <tr><td><code>SegGap</code></td><td><code>12</code></td><td>Fallback text spacing, used only when the <code>PvpNotices.spr</code> artwork is missing.</td></tr>
+    <tr><td><code>WordColor</code></td><td><code>FFFFFF</code></td><td>Colour of the <strong>KILLED</strong> word, as 6-digit <code>RRGGBB</code> hex.</td></tr>
+    <tr><td><code>BellatoColor</code> / <code>CoraColor</code> / <code>AccretiaColor</code></td><td><code>FF8A1E</code> / <code>CC3CD6</code> / <code>EAEAF2</code></td><td>Name colour for each race, as <code>RRGGBB</code> hex. Defaults match the emblem colours baked into the artwork.</td></tr>
+  </table>
+
+  <h3 id="kf-ui">Where the banner appears</h3>
+  <p>Three keys in <code>[UI]</code> control position: <code>Anchor</code> picks a preset spot and <code>OffsetX</code> / <code>OffsetY</code> fine-tune it.</p>
+  <table>
+    <tr><th><code>Anchor</code></th><th>Where the banner sits</th></tr>
+    <tr><td><code>0</code> <span class="muted">(default)</span></td><td>Under the race-chip HP bars, right-aligned &mdash; tucked in below the Belato / Cora / Accretia bars at the top-right. <code>ChipGap</code> sets the vertical gap in pixels (a negative value pulls it up over the bars). When the chip HP HUD is hidden it falls back to the <code>OffsetY</code> pixel.</td></tr>
+    <tr><td><code>1</code></td><td>Top-centre of the screen, in the classic megaphone band.</td></tr>
+    <tr><td><code>2</code></td><td>A custom screen pixel given by <code>OffsetX</code> / <code>OffsetY</code>. <code>OffsetX = -1</code> means right-align to the screen edge; any other value is the absolute left pixel.</td></tr>
+  </table>
+  <p class="muted">Tuning tip: if the names look too big next to the artwork, lower <code>NameScalePercent</code>; if the ribbon / emblems look too small, raise <code>BannerWidth</code>, <code>BannerHeight</code> and <code>EmblemSize</code>. Save and the next kill shows the change instantly.</p>
+
+  <h3 id="kf-art">The banner artwork (optional)</h3>
+  <p>The <strong>KILLED</strong> ribbon and the three race emblems come from one small sprite file on the client:</p>
+  <pre><code>.Client\SpriteImage\common\PvpNotices.spr   (+ its .rep)</code></pre>
+  <ul>
+    <li><strong>With the artwork</strong> the banner shows the ribbon between the two names and each player&rsquo;s race emblem beside their name (as in the screenshot above).</li>
+    <li><strong>Without it</strong> nothing breaks &mdash; the client draws a clean text-only banner (<em>Killer KILLED Victim</em>) in the race colours instead. All the size / position keys still apply.</li>
+  </ul>
+  <div class="box info"><b>Artwork is client-side, settings are server-side</b>The look and position are driven entirely by <code>KillFeed.ini</code> on the zone, so every player sees the same banner. The <code>.spr</code> file is only the picture it paints with &mdash; players who have it get the ribbon and emblems, players who do not get the text fallback, but always the same names, colours and placement you configured.</div>
+</section>
+
 <section id="module-logs">
   <div class="doc-head">
     <h2>Module Logs</h2>
@@ -2087,5 +2181,44 @@ Opacity = 0.4</code></pre>
 <footer>
   RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
 </footer>
+<script>
+(function () {
+  var lb, lbImg, lbCap;
+  function build() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">&#10005;</button><img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lbImg = lb.querySelector('img');
+    lbCap = lb.querySelector('.lb-cap');
+    lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  function open(img) {
+    build();
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt || '';
+    var cap = img.parentNode ? img.parentNode.querySelector('figcaption') : null;
+    lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('figure.shot')) {
+      e.preventDefault();
+      open(t);
+    }
+  });
+})();
+</script>
 </body>
 </html>
