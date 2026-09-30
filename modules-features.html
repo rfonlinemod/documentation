@@ -164,6 +164,14 @@
     <a class="sub" href="#an-client">Client display knobs</a>
     <a class="sub" href="#an-table">The stat-table override</a>
     <a class="sub" href="#an-rules">Rules &amp; limits</a>
+    <a href="#store-system">Store System (Shops, Goods &amp; Spawns)</a>
+    <a class="sub" href="#ss-what">What it does</a>
+    <a class="sub" href="#ss-files">The 7 config files</a>
+    <a class="sub" href="#ss-activate">Activate it</a>
+    <a class="sub" href="#ss-catalogue">Store catalogue &amp; goods</a>
+    <a class="sub" href="#ss-locations">Merchant &amp; monster locations</a>
+    <a class="sub" href="#ss-client">Client look &amp; trade rules</a>
+    <a class="sub" href="#ss-rules">Rules &amp; limits</a>
     <a href="#module-logs">Module Logs</a>
     <a class="sub" href="#ml-what">What it is</a>
     <a class="sub" href="#ml-use">Reading the logs</a>
@@ -2509,6 +2517,148 @@ Opacity = 0.4</code></pre>
     <li><strong>Some files are informational.</strong> <code>DModStorage.lua</code> (data model) and <code>NetProtocol.lua</code> (wire family id, force-kept at <code>22</code>) describe compiled behaviour that a config file cannot rewire &mdash; changing their numbers without a matching rebuilt client / DB migration will not move the wire or field layout.</li>
     <li><strong>Keep exp thresholds monotonic.</strong> In <code>DtableScript.lua</code>, a species&rsquo; <code>NeedExp</code> must strictly increase with level, or the exp-to-level curve misbehaves.</li>
     <li><strong>Current binaries required.</strong> The deep stat-table override and the client push only work on the current Zone server exe plus a matching rebuilt <code>RF_Online.bin</code>. On an older binary the config is read but those effects will not appear.</li>
+  </ul>
+</section>
+
+<section id="store-system">
+  <div class="doc-head">
+    <h2>Store System (Shops, Goods &amp; Spawns)</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="ss-what">What it does &mdash; and why you would use it</h3>
+  <p>The <strong>Store System</strong> is the whole shop world: every merchant NPC, what each store sells, its name and price set, which races may trade there, buy / sell limits, the buffer &amp; bind NPCs, how a merchant looks on the client, where a merchant stands &mdash; and even which monster fills a spawn point on any map. All of it is normally baked into the shipped <code>StoreList.dat</code> / <code>Store.edf</code> data tables and the compiled server and client binaries.</p>
+  <p>This feature lifts all of that into a folder of plain-language <code>.lua</code> config files. There are <strong>seven</strong> files, each controlling one area and each with its own <code>Enable</code> switch. While a file&rsquo;s <code>Enable = false</code> the game behaves <strong>exactly</strong> as stock (every shipped default in these files <em>is</em> the current game value, so switching a file on without editing anything changes nothing). Flip a file to <code>Enable = true</code>, edit a row, save &mdash; and the running Zone server notices it in about half a second and applies just that change, with no restart and no recompiling.</p>
+  <div class="box info"><b>Server-side and client-side files</b>Most files tune the <span class="badge server">Server</span> (the live store records, trade maths, spawn slots). Several also reach the <span class="badge client">Client</span> (the shop / merchant name, the goods list, the merchant colour, radar marker and buffer badge) &mdash; the game client runs no Lua of its own, so the server reads those files and pushes the resolved values to every player&rsquo;s client automatically over the store message channels. Client-side effects only appear for a game client that was <strong>rebuilt with Store-System support</strong>; an unmodified client simply ignores the push and keeps its stock <code>Store.edf</code> display.</div>
+
+  <h3 id="ss-files">The 7 config files</h3>
+  <p>All seven live together in <span class="path">.Server\Zoneserver\RF_Bin\Modules\StoreSystem\</span>. They are independent &mdash; you can turn on any subset. Each is a single Lua table with an <code>Enable</code> line at the top.</p>
+  <table>
+    <tr><th>File</th><th>Side</th><th>What it governs</th></tr>
+    <tr><td><code>DataFoundation.lua</code></td><td><span class="badge server">Server</span></td><td>Which store codes the feature recognises (<code>EnabledStoreCodes</code> whitelist) and per-store race overrides (<code>RaceOverrides</code>: <code>{ Code, Race }</code>). The foundation the other files build on.</td></tr>
+    <tr><td><code>OwnershipCreation.lua</code></td><td><span class="badge server">Server</span></td><td>Limited-stock refresh interval, how often store state is saved, the instance-store list size and the daily-limit reset hour.</td></tr>
+    <tr><td><code>BroadcastVisibility.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Whether the store list is sent on entry, the store view range, and whether merchants show on the minimap radar.</td></tr>
+    <tr><td><code>TradePipeline.lua</code></td><td><span class="badge server">Server</span></td><td>The buy / sell rules: trade range, cross-race trade gate, buy-price divisor, sell-price permille, global discount, offers-per-transaction cap, NPC-link bypass, and the ticket / trap-boss / gold-box gates.</td></tr>
+    <tr><td><code>NpcObjects.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Buffer-store index range, the bind-NPC class and range, the client merchant <strong>name colour</strong>, the buffer <strong>badge</strong>, and the buffer <strong>aura</strong> effect file.</td></tr>
+    <tr><td><code>NpcTableScript.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>The <strong>authoritative store / goods table</strong> &mdash; one row per store with its name, trade kind, price set, NPC-class list and the full goods list. When on it replaces the shipped <code>StoreList.dat</code> records and re-pushes the client catalogue. Detailed <a href="#ss-catalogue">below</a>.</td></tr>
+    <tr><td><code>NpcLocationScript.lua</code></td><td><span class="badge server">Server</span></td><td>Location / spawn editor in two halves: <strong>(A) Grid</strong> moves any merchant to a new map / coordinates; <strong>(B) MonsterGrid</strong> overrides monster spawn points on every map (which monster, respawn timing / count, relocation, disable). Detailed <a href="#ss-locations">below</a>.</td></tr>
+  </table>
+
+  <h3 id="ss-activate">How to activate it</h3>
+  <ol class="steps">
+    <li><strong>Open the folder.</strong> Go to <span class="path">.Server\Zoneserver\RF_Bin\Modules\StoreSystem\</span> and open the file you want to tune in Notepad. Each file opens with a plain-English guide at the top.</li>
+    <li><strong>Flip that file&rsquo;s switch.</strong> Find the <code>Enable = false</code> line near the top of the table and change <code>false</code> to <code>true</code> (lowercase):
+      <pre><code>StoreNpcTableScript =
+{
+    Enable = true,   -- was false
+    Grid = { ... },
+    ...
+}</code></pre>
+      Saving applies it live &mdash; a running Zone server picks it up in about half a second, no restart.</li>
+    <li><strong>Change only the rows you care about.</strong> Every row already re-states the store&rsquo;s current value, so <code>Enable = true</code> with no edits is idempotent (nothing moves). Edit just the fields you want to change.</li>
+    <li><strong>Client effects need a rebuilt client.</strong> The shop / goods push, the merchant colour, radar marker and buffer badge only do something when players run a client rebuilt with Store-System support; a stock client ignores them and keeps its own <code>Store.edf</code> rows.</li>
+    <li><strong>Revert any time.</strong> Set a file back to <code>Enable = false</code> and save &mdash; that area returns byte-for-byte to stock instantly (and the client gets a reset push).</li>
+  </ol>
+  <div class="box warn"><b>Do not delete these files</b>Like every module, the StoreSystem files are <strong>required when the Zone server starts</strong> &mdash; a missing file stops it booting. To turn the feature off, set <code>Enable = false</code>, never remove the file. Also, because this feature overrides the live store records and pushes the catalogue to the client, it only fully works when you run the <strong>current</strong> Zone server executable plus a matching rebuilt <code>RF_Online.bin</code> client.</div>
+
+  <h3 id="ss-catalogue">Store catalogue &amp; goods (<code>NpcTableScript.lua</code>)</h3>
+  <p>This is the flagship file. It is one row per store in load order. While <code>Enable = true</code> the server patches each store&rsquo;s live in-memory record and rebuilds its goods from the row (so buying / selling follows this table with no restart), and ships the per-store catalogue to every client so the shop display agrees with the server.</p>
+  <p>It ships with <code>Enable = false</code> and a full snapshot of the live <code>StoreList</code> table. With no edits and <code>Enable = true</code>, gameplay is unchanged; you then edit a row, save, and the zone hot-reloads and re-applies just that store.</p>
+  <h4>The row format</h4>
+  <pre><code>Grid =
+{
+    { Index = 3, NpcCode = "03010", Name = "POTION", StoreTrade = 1, PriceSet = 1,
+      UpCode = -1, LimitInitTime = 0,
+      NpcClass1 = 1, NpcClass2 = 13, NpcClass3 = 2, NpcClass4 = 53, ..., NpcClass10 = 0,
+      Goods = { { Code = "ipbhp01", Limit = -1 }, { Code = "ipbhp02", Limit = -1 }, ... } },
+    ...
+}</code></pre>
+  <table>
+    <tr><th>Field</th><th>Meaning</th></tr>
+    <tr><td><code>Index</code></td><td><strong>REQUIRED.</strong> The store record&rsquo;s number in <code>StoreList.dat</code> (0-based). This is the authoritative key that matches the row to a live store.</td></tr>
+    <tr><td><code>NpcCode</code></td><td>OPTIONAL safety cross-check (e.g. <code>"03010"</code>). If set, the row only applies when the store matched by <code>Index</code> really has that code &mdash; so a wrong <code>Index</code> base silently does nothing instead of overwriting a neighbour shop.</td></tr>
+    <tr><td><code>Name</code></td><td>The shop / merchant display name pushed to the client. An empty <code>Name = ""</code> keeps the client&rsquo;s own name.</td></tr>
+    <tr><td><code>StoreTrade</code></td><td>The store trade kind. <code>-1</code> keeps the record value.</td></tr>
+    <tr><td><code>PriceSet</code> / <code>UpCode</code> / <code>LimitInitTime</code></td><td>Price set, item up-code (<code>-1</code> = keep the shipped value) and the limit-item init time.</td></tr>
+    <tr><td><code>NpcClass1..10</code></td><td>The ten NPC-class slots. <code>13</code> marks a <strong>BIND</strong> npc.</td></tr>
+    <tr><td><code>Goods</code></td><td>The store&rsquo;s offered items, each <code>{ Code = "..", Limit = n }</code>. <strong><code>Limit &ge; 0</code></strong> = a per-period <em>limit</em> item capped at <code>n</code> (max 16). <strong><code>Limit &lt; 0</code></strong> (usually <code>-1</code>) = a plain offered good. An empty <code>Goods = { }</code> means &ldquo;leave this store&rsquo;s items untouched&rdquo;.</td></tr>
+  </table>
+
+  <h3 id="ss-locations">Merchant &amp; monster locations (<code>NpcLocationScript.lua</code>)</h3>
+  <p>One file edits two halves of the world, both applied live on the game loop. With <code>Enable = false</code> nothing here changes the game: every merchant stands where its store dummy puts it and every monster respawn is byte-for-byte the shipped map data.</p>
+  <h4>(A) Grid &mdash; move a merchant</h4>
+  <p>One row per store NPC you want to relocate. A relocated merchant keeps its OWN shop (goods / race / limits unchanged) &mdash; only <em>where</em> it stands moves; buy / sell / bind still work on the new map and its minimap marker follows it.</p>
+  <pre><code>Grid =
+{
+    { Index = 0, NpcCode = "03000", MapCode = "NeutralB", X = -4990.0, Y = 575.0, Z = 6546.0, Angle = 9 },
+    ...
+}</code></pre>
+  <table>
+    <tr><th>Field</th><th>Meaning</th></tr>
+    <tr><td><code>Index</code></td><td><strong>REQUIRED.</strong> The store record&rsquo;s number (same key as the catalogue).</td></tr>
+    <tr><td><code>NpcCode</code></td><td>OPTIONAL cross-check &mdash; the row only applies when the store matched by <code>Index</code> really has this code.</td></tr>
+    <tr><td><code>MapCode</code></td><td>OPTIONAL target map code. Empty / omitted = stay on the merchant&rsquo;s current map (a same-map move).</td></tr>
+    <tr><td><code>X, Y, Z</code></td><td>Destination coordinates. At least one must be present for the row to do anything; omitted axes default to <code>0.0</code>.</td></tr>
+    <tr><td><code>Angle</code></td><td>OPTIONAL facing in degrees. <code>-1</code> / omitted = leave native.</td></tr>
+  </table>
+  <h4>(B) MonsterGrid &mdash; change what spawns</h4>
+  <p>One row per spawn slot, identified by <code>(MapCode, Block, Slot)</code>. Every override below is optional (omit = leave the native value).</p>
+  <pre><code>MonsterGrid =
+{
+    { MapCode = "NeutralC", MonCode = "00002", NewMonCode = "02A02",
+      Block = 0, Slot = 0, RegenTime = 15000, RegenLimNum = 13, RegenProp = 100,
+      RegenMinNum = 0, StdKill = 0, RegenMaxNum = 0 },
+    ...
+}</code></pre>
+  <table>
+    <tr><th>Field</th><th>Meaning</th></tr>
+    <tr><td><code>MapCode</code> / <code>Block</code> / <code>Slot</code></td><td><strong>REQUIRED identity.</strong> The slot&rsquo;s home map, its <code>_mon_block</code> index (0..199) and the <code>_mon_active</code> index within it (0..299).</td></tr>
+    <tr><td><code>MonCode</code></td><td>OPTIONAL <strong>identity cross-check</strong>: the monster the slot <em>currently</em> holds. If set, the row only applies when that slot really holds this monster.</td></tr>
+    <tr><td><code>NewMonCode</code></td><td>The field that actually <strong>changes which monster spawns here</strong> (a monster record code). Empty / omitted = keep the current monster.</td></tr>
+    <tr><td><code>TargetMapCode</code> / <code>X, Y, Z</code> / <code>DummyCode</code></td><td>Relocate the whole spawn to another map, give an explicit spawn point, or point at a named spawn-area dummy.</td></tr>
+    <tr><td><code>RegenTime</code></td><td>Respawn interval in milliseconds.</td></tr>
+    <tr><td><code>RegenMaxNum</code> / <code>RegenMinNum</code> / <code>RegenLimNum</code> / <code>RegenProp</code> / <code>StdKill</code></td><td>Respawn count / probability (0..100 per pass) and standard-kill controls. Timing / count edits take effect at the next respawn.</td></tr>
+    <tr><td><code>Disable</code></td><td><code>1</code> = kill this slot (its monsters never respawn).</td></tr>
+  </table>
+  <div class="box warn"><b>Changing a monster: use <code>NewMonCode</code>, not <code>MonCode</code></b>A very common mistake: editing <code>MonCode</code> to the monster you <em>want</em>. <code>MonCode</code> is only a <strong>cross-check of what is there now</strong> &mdash; if you change it to a different code, the check fails (<em>current monster &ne; MonCode</em>) and the whole row is <strong>skipped</strong>, so the spawn stays as it was. To swap the monster, leave <code>MonCode</code> at its current value (here <code>"00002"</code> young flem) and put the new one in <code>NewMonCode</code> (here <code>"02A02"</code> Anabola). Every monster row now ships with an empty <code>NewMonCode = ""</code> so you just fill it in.</div>
+
+  <h3 id="ss-client">Client look &amp; trade rules</h3>
+  <p><code>NpcObjects.lua</code> controls how merchants appear on a rebuilt client, and <code>TradePipeline.lua</code> the buy / sell maths. Every value below is the shipped default (so <code>Enable = true</code> with no edits = stock).</p>
+  <h4><code>NpcObjects.lua</code> &mdash; merchant look &amp; buffer NPCs</h4>
+  <table>
+    <tr><th>Key</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td><code>BufferStoreIndexLo</code> / <code>Hi</code></td><td>156 / 185</td><td>The inclusive store-index range treated as buffer stores.</td></tr>
+    <tr><td><code>BindNpcClass</code> / <code>BindRange</code></td><td>13 / 100.0</td><td>The class number that marks a bind NPC (matches <code>NpcClass</code> 13) and its bind range in world units.</td></tr>
+    <tr><td><code>MerchantNameColor</code></td><td><code>0xFFFFFFFF</code></td><td>Merchant name colour as an <strong>AARRGGBB decimal</strong>. <code>4294967295</code> (<code>0xFFFFFFFF</code>) = keep the stock colour.</td></tr>
+    <tr><td><code>ShowBufferBadge</code></td><td>true</td><td>Draw the buffer badge on buffer NPCs.</td></tr>
+    <tr><td><code>BufferAuraEffect</code></td><td><code>.\Chef\Eff\npc\GOLDAGE_NPC.EFF</code></td><td>The aura effect file shown on a buffer NPC.</td></tr>
+  </table>
+  <h4><code>TradePipeline.lua</code> &mdash; buy / sell rules</h4>
+  <table>
+    <tr><th>Key</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td><code>TradeRange</code></td><td>100.0</td><td>How close (world units) a player must be to trade with a merchant.</td></tr>
+    <tr><td><code>AllowCrossRaceTrade</code></td><td>false</td><td>Whether players of a different race may trade at the store.</td></tr>
+    <tr><td><code>BuyPriceDivisor</code></td><td>2</td><td>Divisor applied to the buy price.</td></tr>
+    <tr><td><code>SellPricePermille</code></td><td>5000</td><td>Sell price in thousandths (5000 = 5.0&times; base ratio).</td></tr>
+    <tr><td><code>GlobalDiscountPermille</code></td><td>0</td><td>A global discount in thousandths applied to every store.</td></tr>
+    <tr><td><code>MaxOffersPerTransaction</code></td><td>100</td><td>Cap on the number of offers in a single buy / sell transaction.</td></tr>
+    <tr><td><code>NPCLinkBypassRange</code></td><td>true</td><td>Whether clicking an NPC link bypasses the range check.</td></tr>
+    <tr><td><code>EnableTicketGate</code> / <code>TrapBossGate</code> / <code>GoldBoxLimit</code></td><td>true</td><td>Individual gates for ticket / trap-boss / gold-box store behaviour.</td></tr>
+  </table>
+
+  <h3 id="ss-rules">Rules &amp; limits</h3>
+  <ul>
+    <li><strong>Off = stock.</strong> Every shipped default reproduces the current game; with all seven files at <code>Enable = false</code> the deployed state is behaviourally identical to an untouched server. Turn on only the areas you intend to change.</li>
+    <li><strong>Match by <code>Index</code>, guard with <code>NpcCode</code>.</strong> Store rows are keyed by their <code>Index</code> in <code>StoreList.dat</code>; keep each row&rsquo;s <code>NpcCode</code> so a wrong <code>Index</code> base results in 0 rows patched (safe) instead of overwriting the wrong shop.</li>
+    <li><strong>Goods limit cap is 16.</strong> Per-period <em>limit</em> items (<code>Limit &ge; 0</code>) go into a list holding at most 16; everything else is a plain good. An empty <code>Goods = { }</code> leaves the store&rsquo;s items untouched.</li>
+    <li><strong>Monster edits use <code>NewMonCode</code>.</strong> <code>MonCode</code> is only an identity cross-check &mdash; to change a spawn, set <code>NewMonCode</code> and leave <code>MonCode</code> at the current monster. Timing / count edits apply at the next respawn.</li>
+    <li><strong>Malformed rows are skipped, never crash.</strong> Any row that cannot be resolved (bad index, unknown code, no coordinates) is logged and skipped; it never blocks map loading.</li>
+    <li><strong>Current binaries required.</strong> The live record patch and the client push only work on the current Zone server exe plus a matching rebuilt <code>RF_Online.bin</code>. On an older binary the config is read but those effects will not appear.</li>
   </ul>
 </section>
 
