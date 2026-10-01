@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quest System (Classic &amp;amp; Daily) &mdash; RF Online</title>
+<link rel="stylesheet" href="../assets/style.css?v=4">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="../index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="../index.html">Home</a>
+    <a href="../server-client.html">Server &amp; Client</a>
+    <a href="../modules-features.html" class="active">Modules / Features</a>
+    <a class="discord" href="https://discord.gg/czbhwUNPse" target="_blank" rel="noopener">&#128172; Discord</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Modules">
+    <a href="../modules-features.html#overview">How modules work</a>
+    <a href="additional-settings.html">Additional Settings (Auto-Target)</a>
+    <a href="animus.html">Animus (Summon Companion System)</a>
+    <a href="autoloot.html">Auto Loot</a>
+    <a href="battlepass.html">Battle Pass</a>
+    <a href="boss-respawn.html">Boss Respawn Schedule</a>
+    <a href="box-stack.html">Box Stack</a>
+    <a href="zoom-max.html">Camera Zoom Max</a>
+    <a href="chat-log.html">Chat Log</a>
+    <a href="chip-hp.html">Chip HP Bars</a>
+    <a href="chip-block.html">Chip No-Entry (Chip Block)</a>
+    <a href="chip-war.html">Chip War Control Panel</a>
+    <a href="discord.html">Discord Relay &amp; Feeds</a>
+    <a href="election-manager.html">Election Manager</a>
+    <a href="gm-command.html">GM Command Whitelist</a>
+    <a href="arrow-target.html">Group-Target Arrow</a>
+    <a href="item-stack.html">Item Stack Limit (1M)</a>
+    <a href="item-upgrade.html">Item Upgrade &amp; Jade</a>
+    <a href="megaphone.html">Megaphone</a>
+    <a href="module-logs.html">Module Logs</a>
+    <a href="npc-buffer.html">NPC Buffer</a>
+    <a href="potion-manager.html">Potion Effects</a>
+    <a href="potion-lua.html">Potion Lua Overrides</a>
+    <a href="killfeed.html">PvP Kill Feed</a>
+    <a href="quest-monster.html">Quest Monster Marks</a>
+    <a class="active" href="quest-system.html">Quest System (Classic &amp; Daily)</a>
+    <a href="race-leader-effect.html">Race Leader Effect</a>
+    <a href="share-pvp.html">Share PvP</a>
+    <a href="skill-desc.html">Skill Additional Description</a>
+    <a href="store-system.html">Store System (Shops, Goods &amp; Spawns)</a>
+    <a href="welcome-window.html">Welcome Window</a>
+    <span class="side-title">On this page</span>
+    <a class="sub" href="#qs-what">What it does — and why you would use it</a>
+    <a class="sub" href="#qs-files">The two files</a>
+    <a class="sub" href="#qs-activate">How to activate it</a>
+    <a class="sub" href="#qs-classic">Classic quests — the six sections of QuestScript.lua</a>
+    <a class="sub" href="#qs-daily">Daily quests (DailyQuest.lua)</a>
+    <a class="sub" href="#qs-acts">Daily objective types (the shortcut table)</a>
+    <a class="sub" href="#qs-rules">Rules &amp; limits</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Quest System (Classic &amp;amp; Daily)</h1>
+    <p class="page-sub"><a href="../modules-features.html">&larr; All modules</a></p>
+
+<section id="quest-system">
+  <div class="doc-head">
+    <h2>Quest System (Classic &amp; Daily)</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="qs-what">What it does &mdash; and why you would use it</h3>
+  <p>The quest world is normally baked into shipped data tables (the server&rsquo;s <code>Quest.dat</code> / <code>Quest*Event.dat</code> and the client&rsquo;s <code>Quest.edf</code>) and the compiled binaries. This feature lifts all of it into <strong>two plain-language <code>.lua</code> files</strong> you edit in Notepad &mdash; no recompiling, no restart:</p>
+  <ul>
+    <li><strong><code>QuestScript.lua</code> &mdash; the classic NPC quest system.</strong> The whole quest line: every quest record (level gate, objectives, rewards, links, fails), every trigger / &ldquo;happen event&rdquo; that starts or advances a quest, plus the runtime switches, per-player caps and client display toggles. It is organised into <strong>six independently-switched sections</strong>, so you can override just the quest definitions, or just the trigger behaviour, or just the caps.</li>
+    <li><strong><code>DailyQuest.lua</code> &mdash; a self-contained Daily Quest board.</strong> Repeatable quests defined end-to-end (their own code, window text, objectives, reset model, availability window, completion cap and reward). These live in <em>neither</em> <code>Quest.edf</code> nor <code>Quest.dat</code>: a dedicated server tracker owns accept / progress / turn-in / persistence, and players open a dedicated <strong>Daily Quests</strong> window with the <code>/daily</code> chat command (or the amber DAILY button on the bottom bar).</li>
+  </ul>
+  <p>Every shipped value in both files <em>is</em> the current game value, so leaving a switch at <code>Enable = false</code> (or turning it on without editing anything) changes <strong>nothing</strong> &mdash; byte-for-byte stock. Flip a switch to <code>true</code>, edit a row, save, and the running Zone server notices it in about half a second and re-applies just that change.</p>
+  <div class="box info"><b>Server-side, with a client push</b>Only the Zone server reads these Lua files &mdash; the game client runs no Lua of its own. For the classic tables the server patches its in-memory quest records and re-ships them to every player&rsquo;s client over the <code>system_msg</code> channels (index 54 for the quest table, 55 / 56 for the daily board). The client-side display and the Daily Quests window only appear for a client <strong>rebuilt with Quest-System support</strong>; a stock client keeps its own <code>Quest.edf</code> display and simply ignores the push.</div>
+
+  <h3 id="qs-files">The two files</h3>
+  <p>Both live together in <span class="path">.Server\Zoneserver\RF_Bin\Modules\Quest\</span>. They are watched and hot-reloaded as one module.</p>
+  <table>
+    <tr><th>File</th><th>Side</th><th>What it governs</th></tr>
+    <tr><td><code>QuestScript.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>The classic NPC quest system in six sections: <strong>QuestTable</strong> (definitions), <strong>QuestEventTable</strong> (trigger / happen events), <strong>TriggerSettings</strong>, <strong>PlayerStateSettings</strong>, <strong>RuntimeLoopSettings</strong>, <strong>ClientSettings</strong>. Each section has its own <code>Enable</code>.</td></tr>
+    <tr><td><code>DailyQuest.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>The self-contained daily-quest engine: one master <code>Enable</code> plus a <code>Quests</code> list, each authored end-to-end. Progress is driven automatically from in-game events (mob kill, item buy, quest finish, &hellip;) &mdash; no NPC dialog involved.</td></tr>
+  </table>
+
+  <h3 id="qs-activate">How to activate it</h3>
+  <ol class="steps">
+    <li><strong>Open the folder.</strong> Go to <span class="path">.Server\Zoneserver\RF_Bin\Modules\Quest\</span> and open the file you want to tune in Notepad. Each opens with a plain-English guide at the top.</li>
+    <li><strong>Flip the switch you need.</strong> In <code>QuestScript.lua</code> each of the six sections has its own <code>Enable = false</code> line near the top of that section; in <code>DailyQuest.lua</code> there is one master <code>Enable</code> plus a per-quest <code>Enable</code>. Change <code>false</code> to <code>true</code> (lowercase). Saving applies it live &mdash; no restart.</li>
+    <li><strong>Edit only the rows you care about.</strong> Every shipped row already re-states the current value, so <code>Enable = true</code> with no edits is idempotent (nothing moves).</li>
+    <li><strong>Client effects need a rebuilt client.</strong> The re-pushed tables and the Daily Quests window only do something on a client rebuilt with Quest-System support; a stock client ignores them.</li>
+    <li><strong>Revert any time.</strong> Set a section (or the whole file) back to <code>Enable = false</code> and save &mdash; that area returns to stock instantly.</li>
+  </ol>
+  <div class="box warn"><b>Do not delete these files, and do not delete a column</b>Like every module, both files are <strong>required when the Zone server starts</strong> &mdash; a missing file stops it booting; to turn the feature off set <code>Enable = false</code>, never remove the file. In <code>QuestScript.lua</code> the rows mirror the raw <code>.dat</code> records: <strong>do not delete a column from a row</strong> &mdash; an omitted column is read as its default and would overwrite a field that is otherwise preserved.</div>
+
+  <h3 id="qs-classic">Classic quests &mdash; the six sections of <code>QuestScript.lua</code></h3>
+  <p>One global <code>QuestSystemScript</code> table holding six sections. Turn on only the sections you intend to change; each is independent.</p>
+  <h4>1. <code>QuestTable</code> &mdash; the quest definitions</h4>
+  <p>One row per quest (mirrors <code>Quest.dat</code>). When on, the zone patches its in-memory quest records <em>and</em> ships every row to each client (index 54, chunked). Rows are keyed by <code>Index</code> (the record number) and verified against <code>Code</code> before any patch lands, so a wrong <code>Index</code> silently does nothing instead of overwriting a neighbour quest. The operationally important fields:</p>
+  <table>
+    <tr><th>Field</th><th>Meaning</th></tr>
+    <tr><td><code>Index</code> / <code>Code</code></td><td><strong>Key + guard.</strong> <code>Index</code> is the record number in <code>Quest.dat</code>; <code>Code</code> (e.g. <code>"Q070000"</code>) must match the record at that index or the row is skipped.</td></tr>
+    <tr><td><code>LimLv</code> / <code>MaxLevel</code></td><td>Level gate to accept / the level above which the quest stops counting. <code>-1</code> = none.</td></tr>
+    <tr><td><code>QuestType</code> / <code>QuestRepeat</code> / <code>RepeatTime</code></td><td>Quest category, whether it is repeatable, and the repeat interval.</td></tr>
+    <tr><td><code>Actions</code> (up to 3)</td><td>The quest objectives. Each <code>{ ActType, Sub, Sub2, Area, ReqAct, SetCntPro, LinkQuestItem, Order }</code> &mdash; the act type, its target code, required count (<code>ReqAct</code>) and percent-progress (<code>SetCntPro</code>).</td></tr>
+    <tr><td><code>Rewards</code> (up to 6)</td><td>Items granted on completion, each <code>{ ConsITCode, ConsITCnt, LinkQuestIdx }</code>.</td></tr>
+    <tr><td><code>ConsExp</code> / <code>ConsGold</code> / <code>ConsDalant</code> / <code>ConsContribution</code> / <code>Conspvppoint</code></td><td>The non-item reward amounts (exp, gold, dalant, contribution, PvP point).</td></tr>
+    <tr><td><code>Masteries</code> / <code>Skill</code> / <code>Force</code></td><td>Mastery / skill / force rewards.</td></tr>
+    <tr><td><code>LinkQuests</code> / <code>LinkQuestGroupID</code></td><td>Quests this one chains into (up to 5) and its link group.</td></tr>
+    <tr><td><code>Fails</code> / <code>FailCheck</code> / <code>FailBriefCode</code></td><td>Fail conditions and the fail-message text code.</td></tr>
+    <tr><td><code>ViewportType</code> / <code>ViewportCode</code> / <code>Store_trade</code> / <code>ViewportExpText</code></td><td>Minimap / viewport marker and the quest-window text binding.</td></tr>
+  </table>
+  <h4>2. <code>QuestEventTable</code> &mdash; the triggers (&ldquo;Quest Happen Event&rdquo;)</h4>
+  <p>One <code>Files</code> entry per happen <em>type</em> (Dummy, LvUp, Promote, Grade, Mastery, GainItem, KillOtherRace, LvLimit, NPC, &hellip;), each holding one row per event (mirrors <code>Quest*Event.dat</code>). When on it patches the zone&rsquo;s happen-event records. This is where a quest <em>starts</em> and where progress / completion / link triggers live: each row has <code>Nodes</code>, and each node carries an acceptance probability (<code>AcePProNum</code> / <code>AcePProDen</code>), a set of <code>Conds</code> (<code>{ Type, SubType, Val }</code>) and the <code>LinkQuests</code> it can fire.</p>
+  <h4>3. <code>TriggerSettings</code> &mdash; runtime switches for the matcher</h4>
+  <table>
+    <tr><th>Key</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td><code>EnableHappenEvent</code></td><td>true</td><td>Master switch for the happen-event matcher. <code>false</code> = no quest ever auto-fires.</td></tr>
+    <tr><td><code>EnableLvUp</code> / <code>EnablePromote</code> / <code>EnableGrade</code> / <code>EnableMastery</code> / <code>EnableGainItem</code> / <code>EnableKillOtherRace</code> / <code>EnableLvLimit</code> / <code>EnableNPC</code> / <code>EnableDummy</code></td><td>true</td><td>Per-happen-type gates &mdash; allow or block that event type from firing quests.</td></tr>
+    <tr><td><code>AcceptProbPercent</code></td><td>100</td><td>Global clamp on the per-node acceptance probability (<code>AcePProNum</code> / <code>AcePProDen</code>).</td></tr>
+  </table>
+  <h4>4. <code>PlayerStateSettings</code> &mdash; what is saved / how it is capped</h4>
+  <table>
+    <tr><th>Key</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td><code>MaxActiveQuestSlots</code></td><td>30</td><td>Active-quest cap (cannot exceed the compiled 30); a new quest beyond it is refused.</td></tr>
+    <tr><td><code>MaxHistoryKeep</code></td><td>70</td><td>Completed-quest history retention cap (cannot exceed the compiled 70).</td></tr>
+    <tr><td><code>SaveProgressOnTick</code></td><td>true</td><td>Write slot progress back to the DB every loop tick.</td></tr>
+    <tr><td><code>AutoDeleteMissingSlot</code></td><td>true</td><td>Drop a slot whose quest record no longer exists in the table.</td></tr>
+    <tr><td><code>AllowGiveup</code></td><td>true</td><td>Master allow for giving up a quest.</td></tr>
+    <tr><td><code>RepeatCompletedQuests</code></td><td>true</td><td>Allow repeatable quests to restart after completion.</td></tr>
+  </table>
+  <h4>5. <code>RuntimeLoopSettings</code> &mdash; the quest loop cadence</h4>
+  <table>
+    <tr><th>Key</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td><code>TimeoutCheckIntervalMs</code></td><td>10000</td><td>How often each player runs the quest timeout / fail pass (native 10000 ms).</td></tr>
+    <tr><td><code>PassSecStep</code></td><td>10</td><td>Seconds added to the elapsed-time counter per tick when the interval elapses (native 10).</td></tr>
+  </table>
+  <h4>6. <code>ClientSettings</code> &mdash; client display toggles</h4>
+  <table>
+    <tr><th>Key</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td><code>ShowQuestBoard</code></td><td>true</td><td>Client quest board window enabled.</td></tr>
+    <tr><td><code>ShowTracker</code></td><td>true</td><td>On-screen active-quest tracker.</td></tr>
+    <tr><td><code>ShowLevelLimit</code></td><td>true</td><td>Dim / grey quests the player cannot yet take by level.</td></tr>
+    <tr><td><code>AutoOpenOnAccept</code></td><td>false</td><td>Open the quest window when a quest is accepted.</td></tr>
+  </table>
+
+  <h3 id="qs-daily">Daily quests (<code>DailyQuest.lua</code>)</h3>
+  <p>A standalone engine. Global defaults sit at the top of the <code>DailyQuestScript</code> table; each daily is one entry in <code>Quests</code>.</p>
+  <table>
+    <tr><th>Global key</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td>true</td><td>Master switch. <code>false</code> = feature off entirely (no tracker, no pushes, empty board).</td></tr>
+    <tr><td><code>TimeZoneOffsetHours</code></td><td>8</td><td>The Zone server&rsquo;s global clock base (PH = GMT+8). <strong>All</strong> date / time maths use it.</td></tr>
+    <tr><td><code>DefaultIntervalSec</code> / <code>DefaultResetHour</code> / <code>DefaultResetMinute</code> / <code>DefaultMaxPerPeriod</code></td><td>86400 / 0 / 0 / 1</td><td>Fallbacks a quest inherits when it does not set its own reset fields.</td></tr>
+  </table>
+  <p>Per-quest fields (only <code>Code</code> and <code>Q</code> are required): <code>Level</code> (min to accept), the window text <code>Title</code> / <code>Brief</code> / <code>Instruction</code> / <code>Details</code> / <code>CompleteText</code> / <code>FailText</code> (pushed to the client <em>verbatim</em>), the objectives <code>Q</code>, the reset model, an optional availability window, and the <code>Reward</code>.</p>
+  <h4>Objectives (<code>Q</code>)</h4>
+  <p>All listed objectives must be met (AND), up to 3. Two accepted shapes &mdash; a flat single objective, or a list of them, each with an optional <code>Text</code> line:</p>
+  <pre><code>-- flat, single objective:
+Q = { "KillMon", "00002", 15 }
+
+-- list of objectives, each with its own display text:
+Q = {
+    { "KillMon", "00002", 10, Text = "Slay %target (%cur/%need)" },
+    { "CollectItem", "1001", 3 },
+}</code></pre>
+  <p>The first item is a shortcut <em>name</em> from the <a href="#qs-acts">objective-type table</a> below (or a quoted raw act-code number). <code>target</code> is a number or quoted string (<code>-1</code> / omitted = match-any); <code>required</code> is a positive integer. The <code>Text</code> tokens <code>%target</code> <code>%cur</code> <code>%need</code> <code>%race</code> <code>%item</code> <code>%level</code> are substituted by the client at render time; omit <code>Text</code> to use the shortcut&rsquo;s default template.</p>
+  <h4>Reset model, window and reward</h4>
+  <table>
+    <tr><th>Field</th><th>Meaning</th></tr>
+    <tr><td><code>Reset</code></td><td><code>"Rolling"</code> (re-opens <code>IntervalSec</code> after each completion) | <code>"Daily"</code> (re-opens at <code>ResetHour</code>:<code>ResetMinute</code> each day) | <code>"Weekly"</code> (re-opens at <code>ResetDayOfWeek</code>, 0=Sun..6=Sat, at that time).</td></tr>
+    <tr><td><code>MaxPerPeriod</code></td><td>Completions allowed inside one period before it locks until the next boundary (1 = classic once-a-day).</td></tr>
+    <tr><td><code>StartDate</code>/<code>StartTime</code> / <code>EndDate</code>/<code>EndTime</code></td><td>Optional availability window (PH time, dates <code>YYYY-MM-DD</code>, times <code>HH:MM</code>). Outside it the board still lists the quest but <strong>Accept</strong> is refused. Absent = always offerable.</td></tr>
+    <tr><td><code>Reward</code></td><td>Server-authoritative, granted on turn-in: <code>{ Exp, Gold, PvPPoint, Contribution, Dalant, Items = { { Code="..", Count=n }, ... } }</code> &mdash; up to 6 items; <code>Code</code> is the item&rsquo;s DT index code as a string (same code Battle Pass uses).</td></tr>
+  </table>
+  <p>Persistence is automatic: each character&rsquo;s accepted state, progress, per-period count and cooldown live in their own <code>DF_tbl_DailyQuest</code> table (created on demand), so the board survives relog / restart with no manual schema change.</p>
+
+  <h3 id="qs-acts">Daily objective types (the shortcut table)</h3>
+  <p>A daily objective names one of these shortcut strings; the zone maps it to the game event that already feeds quest progress. Codes 39 and 51 have no attributable event site in this build and are <strong>not</strong> accepted.</p>
+  <table>
+    <tr><th>Shortcut</th><th>Act</th><th>Target arg</th><th>Default text</th></tr>
+    <tr><td><code>KillMon</code></td><td>3</td><td>monster code</td><td>Kill %target x%cur/%need</td></tr>
+    <tr><td><code>KillRace</code></td><td>2</td><td>other-race player code</td><td>Kill %target x%cur/%need</td></tr>
+    <tr><td><code>GetQuestItem</code></td><td>4</td><td>item code</td><td>Collect %target x%cur/%need</td></tr>
+    <tr><td><code>MineOre</code></td><td>12</td><td>ore code</td><td>Mine %target x%cur/%need</td></tr>
+    <tr><td><code>GatherRes</code></td><td>13</td><td>resource code</td><td>Gather %target x%cur/%need</td></tr>
+    <tr><td><code>PlaceStruct</code></td><td>16</td><td>trap / structure code</td><td>Place %target x%cur/%need</td></tr>
+    <tr><td><code>FASQ</code></td><td>30</td><td>quest code (string)</td><td>Complete quest %target</td></tr>
+    <tr><td><code>PIFANPC</code></td><td>31</td><td>item code (<code>-1</code> = any)</td><td>Buy %target x%cur/%need</td></tr>
+    <tr><td><code>GIFC</code></td><td>32</td><td>item code (<code>-1</code> = any)</td><td>Combine %target x%cur/%need</td></tr>
+    <tr><td><code>ReachLevel</code></td><td>33</td><td>target level (threshold)</td><td>Reach level %need</td></tr>
+    <tr><td><code>Contribute</code></td><td>34</td><td><code>-1</code> (points accumulate)</td><td>Contribute %cur/%need points</td></tr>
+    <tr><td><code>PvPPoints</code></td><td>35</td><td><code>-1</code></td><td>Earn %cur/%need PvP points</td></tr>
+    <tr><td><code>KillMobs</code></td><td>36</td><td><code>-1</code> (any non-boss mob)</td><td>Kill %cur/%need monsters</td></tr>
+    <tr><td><code>KillBosses</code></td><td>37</td><td><code>-1</code> (any pit boss)</td><td>Kill %cur/%need bosses</td></tr>
+    <tr><td><code>KillTerminal</code></td><td>38</td><td><code>-1</code> (enemy terminal chip)</td><td>Destroy %cur/%need terminals</td></tr>
+    <tr><td><code>UseNuke</code></td><td>40</td><td><code>-1</code> (any nuclear launch)</td><td>Launch %cur/%need nukes</td></tr>
+    <tr><td><code>NukeKill</code></td><td>41</td><td><code>-1</code> (kills by nuke)</td><td>Kill %cur/%need with nukes</td></tr>
+    <tr><td><code>KillEnemyRace</code></td><td>42</td><td>race code (<code>-1</code> = any)</td><td>Kill %target x%cur/%need</td></tr>
+    <tr><td><code>KillRaceBoss</code></td><td>43</td><td><code>-1</code> (enemy race boss)</td><td>Kill %cur/%need race bosses</td></tr>
+    <tr><td><code>GoldPoints</code></td><td>44</td><td><code>-1</code> (gold accumulate)</td><td>Earn %cur/%need gold</td></tr>
+    <tr><td><code>ProcessPoints</code></td><td>45</td><td><code>-1</code> (mining / process)</td><td>Process %cur/%need points</td></tr>
+    <tr><td><code>HuntPoints</code></td><td>46</td><td><code>-1</code> (hunt / kill points)</td><td>Hunt %cur/%need points</td></tr>
+    <tr><td><code>TempPvP</code></td><td>47</td><td><code>-1</code> (temp PvP points)</td><td>Earn %cur/%need temp PvP</td></tr>
+    <tr><td><code>CollectItem</code></td><td>48</td><td>item code (<code>-1</code> = any ground / loot)</td><td>Collect %target x%cur/%need</td></tr>
+    <tr><td><code>VisitMap</code></td><td>49</td><td>map code (<code>-1</code> = any) on entry</td><td>Visit %target x%cur/%need</td></tr>
+    <tr><td><code>WinOccupy</code></td><td>50</td><td><code>-1</code> (holy-stone occupation win)</td><td>Win %cur/%need occupations</td></tr>
+  </table>
+  <p>For <code>KillMon</code>, <code>%target</code> resolves to the monster&rsquo;s readable name (the client looks up the mob whose MeshID equals the code), so keep the numeric mob code in the args and write <code>Text = "Slay %target (%cur/%need)"</code> &mdash; the player sees &ldquo;Slay Young Flym (0/10)&rdquo;. For every other act there is no single-field name lookup, so <code>%target</code> falls back to the raw code.</p>
+
+  <h3 id="qs-rules">Rules &amp; limits</h3>
+  <ul>
+    <li><strong>Off = stock.</strong> Every shipped default reproduces the current game; with all six <code>QuestScript.lua</code> sections and the <code>DailyQuest.lua</code> master switch at <code>Enable = false</code>, the deployed state is behaviourally identical to an untouched server.</li>
+    <li><strong>Never delete a column.</strong> In <code>QuestScript.lua</code> an omitted column is read as its default and overwrites a field that would otherwise be preserved &mdash; edit values, keep every column.</li>
+    <li><strong>Match by <code>Index</code>, guard with <code>Code</code>.</strong> Classic rows are keyed by their record <code>Index</code> and cross-checked against <code>Code</code>; a wrong index results in 0 rows patched (safe) instead of overwriting the wrong quest.</li>
+    <li><strong>Daily codes are reserved.</strong> Every <code>DailyQuest.lua</code> <code>Code</code> MUST start with <code>"DQ"</code> (e.g. <code>"DQ0001"</code>); an entry without the prefix is skipped with a PROBLEM log, so dailies can never collide with a native quest code.</li>
+    <li><strong>Fixed caps.</strong> Classic: up to 3 objectives, up to 6 reward items, up to 5 link quests; <code>MaxActiveQuestSlots</code> cannot exceed 30 and <code>MaxHistoryKeep</code> cannot exceed 70. Daily: up to 3 objectives (AND), up to 6 reward items; act codes 39 and 51 are not accepted.</li>
+    <li><strong>PH clock for all dailies.</strong> Date / time maths use the Zone server&rsquo;s global clock at <code>TimeZoneOffsetHours</code> (default GMT+8); set the reset hours and availability windows in that wall-clock.</li>
+    <li><strong>Current binaries required.</strong> The live record patch and the client push only work on the current Zone server exe plus a matching rebuilt <code>RF_Online.bin</code>. On an older binary the config is read but those effects will not appear.</li>
+    <li><strong>See also</strong> the <a href="quest-monster.html">Quest Monster Marks</a> client feature for the yellow markers over quest-target monsters.</li>
+  </ul>
+</section>
+
+<nav class="pn" style="display:flex;justify-content:space-between;gap:12px;margin:22px 0 4px;"><a class="nav-prev" href="quest-monster.html">&larr; Previous: Quest Monster Marks</a><a class="nav-next" href="race-leader-effect.html">Next: Race Leader Effect &rarr;</a></nav>
+  </main>
+</div>
+
+<footer>
+  RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
+</footer>
+<script>
+(function () {
+  var lb, lbImg, lbCap;
+  function build() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">&#10005;</button><img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lbImg = lb.querySelector('img');
+    lbCap = lb.querySelector('.lb-cap');
+    lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  function open(img) {
+    build();
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt || '';
+    var cap = img.parentNode ? img.parentNode.querySelector('figcaption') : null;
+    lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('figure.shot')) {
+      e.preventDefault();
+      open(t);
+    }
+  });
+})();
+</script>
+</body>
+</html>

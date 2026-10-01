@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Potion Effects &mdash; RF Online</title>
+<link rel="stylesheet" href="../assets/style.css?v=4">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="../index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="../index.html">Home</a>
+    <a href="../server-client.html">Server &amp; Client</a>
+    <a href="../modules-features.html" class="active">Modules / Features</a>
+    <a class="discord" href="https://discord.gg/czbhwUNPse" target="_blank" rel="noopener">&#128172; Discord</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Modules">
+    <a href="../modules-features.html#overview">How modules work</a>
+    <a href="additional-settings.html">Additional Settings (Auto-Target)</a>
+    <a href="animus.html">Animus (Summon Companion System)</a>
+    <a href="autoloot.html">Auto Loot</a>
+    <a href="battlepass.html">Battle Pass</a>
+    <a href="boss-respawn.html">Boss Respawn Schedule</a>
+    <a href="box-stack.html">Box Stack</a>
+    <a href="zoom-max.html">Camera Zoom Max</a>
+    <a href="chat-log.html">Chat Log</a>
+    <a href="chip-hp.html">Chip HP Bars</a>
+    <a href="chip-block.html">Chip No-Entry (Chip Block)</a>
+    <a href="chip-war.html">Chip War Control Panel</a>
+    <a href="discord.html">Discord Relay &amp; Feeds</a>
+    <a href="election-manager.html">Election Manager</a>
+    <a href="gm-command.html">GM Command Whitelist</a>
+    <a href="arrow-target.html">Group-Target Arrow</a>
+    <a href="item-stack.html">Item Stack Limit (1M)</a>
+    <a href="item-upgrade.html">Item Upgrade &amp; Jade</a>
+    <a href="megaphone.html">Megaphone</a>
+    <a href="module-logs.html">Module Logs</a>
+    <a href="npc-buffer.html">NPC Buffer</a>
+    <a class="active" href="potion-manager.html">Potion Effects</a>
+    <a href="potion-lua.html">Potion Lua Overrides</a>
+    <a href="killfeed.html">PvP Kill Feed</a>
+    <a href="quest-monster.html">Quest Monster Marks</a>
+    <a href="quest-system.html">Quest System (Classic &amp; Daily)</a>
+    <a href="race-leader-effect.html">Race Leader Effect</a>
+    <a href="share-pvp.html">Share PvP</a>
+    <a href="skill-desc.html">Skill Additional Description</a>
+    <a href="store-system.html">Store System (Shops, Goods &amp; Spawns)</a>
+    <a href="welcome-window.html">Welcome Window</a>
+    <span class="side-title">On this page</span>
+    <a class="sub" href="#pm-what">What it does — and why you would use it</a>
+    <a class="sub" href="#pm-activate">How to activate it</a>
+    <a class="sub" href="#pm-effects">The effect list</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Potion Effects</h1>
+    <p class="page-sub"><a href="../modules-features.html">&larr; All modules</a></p>
+
+<section id="potion-manager">
+  <div class="doc-head">
+    <h2>Potion Effects</h2>
+    <div class="badges">
+      <span class="badge server">Server-only</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="pm-what">What it does &mdash; and why you would use it</h3>
+  <p>Potion Effects lets a potion grant a <strong>custom reward when it is drunk</strong> &mdash; money, points, cash, premium time, a megaphone broadcast, a spawned monster, or a temporary Skill / Force / Class-skill buff. Stock potions can only run the built-in effect scripts; this module opens up a new range of effect types (160&ndash;173) you can attach to any potion. It also adds an <strong>endless potion</strong> that is never consumed.</p>
+  <p>Use it to:</p>
+  <ul>
+    <li>Sell or reward &ldquo;buff potions&rdquo; that apply a real Skill / Force / Class-skill buff for a set time.</li>
+    <li>Hand out money, points, cash or premium days from a single drinkable item.</li>
+    <li>Make event or VIP potions that never run out (endless).</li>
+    <li>Let players broadcast a megaphone message or summon a monster from an item.</li>
+  </ul>
+  <div class="box info"><b>Every effect announces itself</b>When a potion effect is applied, the drinker gets a system message describing it &mdash; for example <code>Gold Capsule: +4000 Dalant</code>, or for a buff <code>&hellip;: Skill buff "Concession" (AF004) applied - Lv 7, 1080s</code>. Players always see what the potion did.</div>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Server switch</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\PotionManager\PotionManager.ini</span></td><td>Turns the extended effects and the endless potion on or off. One <code>Enable</code> key.</td></tr>
+    <tr><td>Potion script</td><td>The potion's own effect script (data table)</td><td>Says <strong>which</strong> effect a potion runs and its value &mdash; see <a href="#pm-effects">The effect list</a>.</td></tr>
+    <tr><td>Client half</td><td colspan="2">None &mdash; this is server-only. Players see no toggle and no client file is involved.</td></tr>
+  </table>
+
+  <h3 id="pm-activate">How to activate it</h3>
+  <ol class="steps">
+    <li>
+      <strong>Turn the feature on (server).</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\PotionManager\PotionManager.ini</span> in Notepad and change the <code>Enable</code> line under <code>[General]</code>:
+      <pre><code>[General]
+Enable = 1</code></pre>
+      Save the file. A running Zone server reloads it immediately; if it is not running yet it simply starts with the feature on.
+    </li>
+    <li>
+      <strong>Give a potion an effect.</strong> In that potion's effect script set three fields: <code>TempEffectType</code> to one of 160&ndash;173 (from the list below), <code>TempParamCode</code> to <code>-1</code>, and <code>TempValue1</code> to the reward amount, monster index or buff level the effect needs.
+    </li>
+    <li>
+      <strong>(Optional) Make it endless.</strong> Set the potion's <code>KindClt</code> to <code>255</code> in its PotionItem script (server side) and drinking it no longer consumes it.
+    </li>
+    <li>
+      <strong>Test it.</strong> Start the servers, log in, drink the potion &mdash; the reward is granted once and a system message describes it.
+    </li>
+  </ol>
+  <div class="box warn"><b>Do not delete the .ini</b>Like every module file, <code>PotionManager.ini</code> is required when the Zone server starts &mdash; deleting it stops the server from booting. To go back to stock behaviour, set <code>Enable = 0</code> instead. With it off, a potion whose effect type is 160&ndash;173 does nothing, exactly as stock.</div>
+  <div class="box info"><b>Prefer not to edit item scripts?</b>The <a href="potion-lua.html">Potion Lua Overrides</a> module below gives the same effects from a single text list keyed by the potion's item code &mdash; no data-table editing, and it takes priority over the potion's own script.</div>
+
+  <h3 id="pm-effects">The effect list</h3>
+  <p>Set <code>TempEffectType</code> to one of these. <code>TempValue1</code> is the amount, index or level named in the last column.</p>
+  <table>
+    <tr><th>Type</th><th>Reward</th><th><code>TempValue1</code> means</th></tr>
+    <tr><td>160</td><td>Dalant</td><td>amount</td></tr>
+    <tr><td>161</td><td>Gold</td><td>amount</td></tr>
+    <tr><td>162</td><td>Certain Point</td><td>amount (PvP cash bag; needs level 39 + 2nd class)</td></tr>
+    <tr><td>163</td><td>PvP Point</td><td>amount (needs level 40 + 2nd class)</td></tr>
+    <tr><td>164</td><td>Processing Point</td><td>amount (Action Point System action 0 must be live)</td></tr>
+    <tr><td>165</td><td>Hunter Point</td><td>amount (Action Point System action 1 must be live)</td></tr>
+    <tr><td>166</td><td>Gold Point</td><td>amount (Action Point System action 2 must be live)</td></tr>
+    <tr><td>167</td><td>Monster spawn</td><td>monster index from the monster script (spawns 1)</td></tr>
+    <tr><td>168</td><td>Cash</td><td>amount (in-session; saving it needs the cash DB backend)</td></tr>
+    <tr><td>169</td><td>Premium days</td><td>days (extends billing remain-time; needs the billing backend)</td></tr>
+    <tr><td>170</td><td>VIP megaphone</td><td>a server-wide global announcement (the same prominent notice the GM greeting uses) showing the drinker's character name + the potion's own name; value 1&ndash;4 is still accepted but no longer limits the scope</td></tr>
+    <tr><td>171</td><td>Skill buff</td><td>applies the Skill record's continuous buff (buff level 1&ndash;7)</td></tr>
+    <tr><td>172</td><td>Force buff</td><td>applies the Force record's continuous buff (buff level 1&ndash;7)</td></tr>
+    <tr><td>173</td><td>Class-skill buff</td><td>applies the ClassSkill record's continuous buff (buff level 1&ndash;7)</td></tr>
+  </table>
+  <ul>
+    <li><strong>Buffs (171&ndash;173).</strong> These apply the record's temporary buff &mdash; its strength and duration come from the record's own per-level data. Only records that actually have a continuous buff (a <code>ContEffectType</code> of 0 or 1) do anything; anything else is a safe no-op and the potion is not consumed. Here the value is the record's <em>index</em>; the Potion Lua module lets you name it by <em>code</em> instead.</li>
+    <li><strong>Reward goes to the drinker, once.</strong> The effect is applied to the player who drinks the potion.</li>
+    <li><strong>Backend-dependent rewards.</strong> Cash (168) and premium days (169) last for the session unless the matching cash / billing database backend is running; points (164&ndash;166) need their Action Point System action to be live.</li>
+  </ul>
+</section>
+
+<nav class="pn" style="display:flex;justify-content:space-between;gap:12px;margin:22px 0 4px;"><a class="nav-prev" href="npc-buffer.html">&larr; Previous: NPC Buffer</a><a class="nav-next" href="potion-lua.html">Next: Potion Lua Overrides &rarr;</a></nav>
+  </main>
+</div>
+
+<footer>
+  RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
+</footer>
+<script>
+(function () {
+  var lb, lbImg, lbCap;
+  function build() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">&#10005;</button><img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lbImg = lb.querySelector('img');
+    lbCap = lb.querySelector('.lb-cap');
+    lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  function open(img) {
+    build();
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt || '';
+    var cap = img.parentNode ? img.parentNode.querySelector('figcaption') : null;
+    lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('figure.shot')) {
+      e.preventDefault();
+      open(t);
+    }
+  });
+})();
+</script>
+</body>
+</html>

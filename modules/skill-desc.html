@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skill Additional Description &mdash; RF Online</title>
+<link rel="stylesheet" href="../assets/style.css?v=4">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="../index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="../index.html">Home</a>
+    <a href="../server-client.html">Server &amp; Client</a>
+    <a href="../modules-features.html" class="active">Modules / Features</a>
+    <a class="discord" href="https://discord.gg/czbhwUNPse" target="_blank" rel="noopener">&#128172; Discord</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Modules">
+    <a href="../modules-features.html#overview">How modules work</a>
+    <a href="additional-settings.html">Additional Settings (Auto-Target)</a>
+    <a href="animus.html">Animus (Summon Companion System)</a>
+    <a href="autoloot.html">Auto Loot</a>
+    <a href="battlepass.html">Battle Pass</a>
+    <a href="boss-respawn.html">Boss Respawn Schedule</a>
+    <a href="box-stack.html">Box Stack</a>
+    <a href="zoom-max.html">Camera Zoom Max</a>
+    <a href="chat-log.html">Chat Log</a>
+    <a href="chip-hp.html">Chip HP Bars</a>
+    <a href="chip-block.html">Chip No-Entry (Chip Block)</a>
+    <a href="chip-war.html">Chip War Control Panel</a>
+    <a href="discord.html">Discord Relay &amp; Feeds</a>
+    <a href="election-manager.html">Election Manager</a>
+    <a href="gm-command.html">GM Command Whitelist</a>
+    <a href="arrow-target.html">Group-Target Arrow</a>
+    <a href="item-stack.html">Item Stack Limit (1M)</a>
+    <a href="item-upgrade.html">Item Upgrade &amp; Jade</a>
+    <a href="megaphone.html">Megaphone</a>
+    <a href="module-logs.html">Module Logs</a>
+    <a href="npc-buffer.html">NPC Buffer</a>
+    <a href="potion-manager.html">Potion Effects</a>
+    <a href="potion-lua.html">Potion Lua Overrides</a>
+    <a href="killfeed.html">PvP Kill Feed</a>
+    <a href="quest-monster.html">Quest Monster Marks</a>
+    <a href="quest-system.html">Quest System (Classic &amp; Daily)</a>
+    <a href="race-leader-effect.html">Race Leader Effect</a>
+    <a href="share-pvp.html">Share PvP</a>
+    <a class="active" href="skill-desc.html">Skill Additional Description</a>
+    <a href="store-system.html">Store System (Shops, Goods &amp; Spawns)</a>
+    <a href="welcome-window.html">Welcome Window</a>
+    <span class="side-title">On this page</span>
+    <a class="sub" href="#sd-what">What it does — and why you would use it</a>
+    <a class="sub" href="#sd-activate">How to activate it</a>
+    <a class="sub" href="#sd-lua">Editing the text</a>
+    <a class="sub" href="#sd-rules">How the default text is built</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Skill Additional Description</h1>
+    <p class="page-sub"><a href="../modules-features.html">&larr; All modules</a></p>
+
+<section id="skill-desc">
+  <div class="doc-head">
+    <h2>Skill Additional Description</h2>
+    <div class="badges">
+      <span class="badge server">Server-only</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="sd-what">What it does &mdash; and why you would use it</h3>
+  <p>Stock RF Online tooltips give you only the old <code>[Description]</code> &mdash; a single vague sentence like &ldquo;Saps the target's strength, temporarily reducing attack power&rdquo; that never tells you <em>how much</em>, or <em>what it actually changes</em>. This module adds a second block, <strong><code>[Additional Description]</code></strong>, under the original text on every <strong>skill, class-skill and force</strong> tooltip, spelling out the ability's real effect &mdash; per level, straight from the numbers the server actually applies.</p>
+  <figure class="shot">
+    <img src="../assets/img/skill-desc-extnd-tooltip.png" alt="A force tooltip in game showing the stock Description followed by an Additional Description block listing the exact per-level effect numbers">
+    <figcaption>With the module on, hovering a force shows the stock <code>[Description]</code> and, beneath it, the new <code>[Additional Description]</code> block &mdash; here the exact <em>-13% ATK Power</em> lines the server really applies. The original description is never removed.</figcaption>
+  </figure>
+  <p>Use it to:</p>
+  <ul>
+    <li>Give players the honest numbers behind every ability instead of guessing from flavor text.</li>
+    <li>Show continuous buffs / debuffs (attack, defense, range, delay, EXP&hellip;), inflicted states (Silence, Stun, Immobilize, Prevents Running&hellip;) and one-shot effects (buff removal, HP&rarr;FP conversion, DP gain) as plain lines.</li>
+    <li>Fine-tune the wording for any single ability without recompiling &mdash; the text lives in one editable Lua file.</li>
+  </ul>
+  <div class="box info"><b>Server-authoritative</b>The native client has no Lua interpreter, so the server computes the finished tooltip text and pushes it to the player's client &mdash; a player cannot tamper with the numbers locally. The matching tooltip receiver is already compiled into the distributed game client, so there is nothing for you to configure on each player's machine.</div>
+
+  <h3 id="sd-activate">How to activate it</h3>
+  <p>This module uses a <strong>two-step switch</strong> &mdash; both halves must be on before players see anything.</p>
+  <ol class="steps">
+    <li>
+      <strong>Open the boot gate.</strong> Edit <span class="path">.Server\Zoneserver\RF_Bin\Modules\SkillDescExtnd\SkillDescExtnd.ini</span> and set <code>Enable = 1</code>:
+      <pre><code>[General]
+Enable = 1</code></pre>
+      This lets the module run. On its own it still shows nothing &mdash; the actual on/off for players lives in the Lua.
+    </li>
+    <li>
+      <strong>Let the Lua be generated.</strong> If there is no <code>SkillDescExtnd.lua</code> beside the INI, the server writes one automatically on next boot &mdash; a complete list of every skill, class-skill and force, each pre-filled with an accurate effect line for levels 1&hellip;7 and a <code>-- [DTIndex] EN: &hellip; | KO: &hellip;</code> comment naming the ability. It ships with <code>Enable = false</code>.
+    </li>
+    <li>
+      <strong>Turn the effect on.</strong> Open <span class="path">&hellip;\Modules\SkillDescExtnd\SkillDescExtnd.lua</span> and flip the top switch to <code>true</code>:
+      <pre><code>SkillDescExtnd = {
+  Enable = true,</code></pre>
+      Save. A running server hot-reloads the file and re-pushes the tooltips to everyone online &mdash; no restart, no client rebuild.
+    </li>
+  </ol>
+  <div class="box warn"><b>Do not delete the .ini</b><code>SkillDescExtnd.ini</code> is required when the Zone server starts &mdash; a missing module file aborts boot. To go back to plain stock tooltips, set the INI's <code>Enable = 0</code> (or the Lua's <code>Enable = false</code>); never delete the file. The <code>.lua</code>, by contrast, <em>is</em> safe to delete &mdash; the server just regenerates a fresh default one.</div>
+
+  <h3 id="sd-lua">Editing the text</h3>
+  <p>The generated Lua is the <strong>source of truth</strong>. Everything in it is plain text you can rewrite; save and it reloads live. Under each of the three type tables (<code>Skill</code>, <code>Force</code>, <code>ClassSkill</code>) an entry is keyed by the ability's DTIndex and holds up to seven strings &mdash; one per level. <code>&lt;br&gt;</code> starts a new line inside the tooltip.</p>
+  <pre><code>  -- [100692905] EN: Accurate  |  KO: Accuracy
+  [100692905] = {
+    "Atk/Per +31",                       -- level 1
+    "Atk/Per +35",                       -- level 2
+    ...                                  -- up to level 7
+  },</code></pre>
+  <ul>
+    <li><strong>Rename freely.</strong> Change any string to whatever reads best for your server; the server pushes your text verbatim.</li>
+    <li><strong>Multi-line entries.</strong> Put <code>&lt;br&gt;</code> inside a string to break it across lines in the tooltip.</li>
+    <li><strong>Find an ability fast.</strong> Each block is preceded by a comment with its numeric DTIndex and both the English and Korean display name, so you can locate the right entry without a lookup table.</li>
+    <li><strong>Blank means no line.</strong> An empty string (or a missing level) simply shows no additional line for that level.</li>
+  </ul>
+
+  <h3 id="sd-rules">How the default text is built</h3>
+  <p>The generator reads each ability's real effect parameters from the <code>Skill.dat</code> / <code>Force.dat</code> / <code>ClassSkill.dat</code> tables and turns them into words. Two independent effect systems feed the block:</p>
+  <ul>
+    <li><strong>Continuous effects</strong> &mdash; the buff / debuff that persists while the ability is active. These come in three kinds: a <em>rate</em> (a percent change to a stat such as attack, defense, range, delay, EXP&hellip;), a <em>plus</em> (a flat change to a stat), and a <em>state</em> (an inflicted condition such as Silence, Stun, Immobilize, Prevents Running, Cannot Be Hit&hellip;). Each is labelled with the stat it really touches.</li>
+    <li><strong>Instant (one-shot) effects</strong> &mdash; what the cast does the moment it lands, such as removing one or all skill / force buffs or debuffs, converting a percentage of your HP into FP, stunning, or raising DP.</li>
+  </ul>
+  <ul>
+    <li><strong>Per level.</strong> A skill's numbers change with its level, so each of the seven strings is generated from that level's own value.</li>
+    <li><strong>Labels come from the engine, not flavor.</strong> The stat / state names are derived from the exact code path that applies the effect, so they match what actually happens in combat.</li>
+    <li><strong>A few are best-effort.</strong> A small number of states the server never gates on (or that only monster AI reads) are labelled from the ability's clear intent; if one reads wrong for your server, just edit that line in the Lua &mdash; it is the source of truth.</li>
+    <li><strong>Regenerating.</strong> Delete the <code>.lua</code> and restart the Zone server to rebuild the default text from the current data tables (you will need to flip <code>Enable = true</code> again).</li>
+  </ul>
+  <p class="muted">With either switch off, tooltips are exactly stock: the original <code>[Description]</code> only, no additional block.</p>
+</section>
+
+<nav class="pn" style="display:flex;justify-content:space-between;gap:12px;margin:22px 0 4px;"><a class="nav-prev" href="share-pvp.html">&larr; Previous: Share PvP</a><a class="nav-next" href="store-system.html">Next: Store System (Shops, Goods &amp; Spawns) &rarr;</a></nav>
+  </main>
+</div>
+
+<footer>
+  RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
+</footer>
+<script>
+(function () {
+  var lb, lbImg, lbCap;
+  function build() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">&#10005;</button><img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lbImg = lb.querySelector('img');
+    lbCap = lb.querySelector('.lb-cap');
+    lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  function open(img) {
+    build();
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt || '';
+    var cap = img.parentNode ? img.parentNode.querySelector('figcaption') : null;
+    lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('figure.shot')) {
+      e.preventDefault();
+      open(t);
+    }
+  });
+})();
+</script>
+</body>
+</html>

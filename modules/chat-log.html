@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chat Log &mdash; RF Online</title>
+<link rel="stylesheet" href="../assets/style.css?v=4">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="../index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="../index.html">Home</a>
+    <a href="../server-client.html">Server &amp; Client</a>
+    <a href="../modules-features.html" class="active">Modules / Features</a>
+    <a class="discord" href="https://discord.gg/czbhwUNPse" target="_blank" rel="noopener">&#128172; Discord</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Modules">
+    <a href="../modules-features.html#overview">How modules work</a>
+    <a href="additional-settings.html">Additional Settings (Auto-Target)</a>
+    <a href="animus.html">Animus (Summon Companion System)</a>
+    <a href="autoloot.html">Auto Loot</a>
+    <a href="battlepass.html">Battle Pass</a>
+    <a href="boss-respawn.html">Boss Respawn Schedule</a>
+    <a href="box-stack.html">Box Stack</a>
+    <a href="zoom-max.html">Camera Zoom Max</a>
+    <a class="active" href="chat-log.html">Chat Log</a>
+    <a href="chip-hp.html">Chip HP Bars</a>
+    <a href="chip-block.html">Chip No-Entry (Chip Block)</a>
+    <a href="chip-war.html">Chip War Control Panel</a>
+    <a href="discord.html">Discord Relay &amp; Feeds</a>
+    <a href="election-manager.html">Election Manager</a>
+    <a href="gm-command.html">GM Command Whitelist</a>
+    <a href="arrow-target.html">Group-Target Arrow</a>
+    <a href="item-stack.html">Item Stack Limit (1M)</a>
+    <a href="item-upgrade.html">Item Upgrade &amp; Jade</a>
+    <a href="megaphone.html">Megaphone</a>
+    <a href="module-logs.html">Module Logs</a>
+    <a href="npc-buffer.html">NPC Buffer</a>
+    <a href="potion-manager.html">Potion Effects</a>
+    <a href="potion-lua.html">Potion Lua Overrides</a>
+    <a href="killfeed.html">PvP Kill Feed</a>
+    <a href="quest-monster.html">Quest Monster Marks</a>
+    <a href="quest-system.html">Quest System (Classic &amp; Daily)</a>
+    <a href="race-leader-effect.html">Race Leader Effect</a>
+    <a href="share-pvp.html">Share PvP</a>
+    <a href="skill-desc.html">Skill Additional Description</a>
+    <a href="store-system.html">Store System (Shops, Goods &amp; Spawns)</a>
+    <a href="welcome-window.html">Welcome Window</a>
+    <span class="side-title">On this page</span>
+    <a class="sub" href="#cl-what">What it does — and why you would use it</a>
+    <a class="sub" href="#cl-activate">How to activate it</a>
+    <a class="sub" href="#cl-format">The log file — what each line means</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Chat Log</h1>
+    <p class="page-sub"><a href="../modules-features.html">&larr; All modules</a></p>
+
+<section id="chat-log">
+  <div class="doc-head">
+    <h2>Chat Log</h2>
+    <div class="badges">
+      <span class="badge server">Server-only</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="cl-what">What it does &mdash; and why you would use it</h3>
+  <p>Chat Log writes <strong>every in-game player chat line</strong> to a plain text file on the server, timestamped and tagged with its channel and the sender's character name. It is your factual record of what was actually said in the world.</p>
+  <p>Use it to:</p>
+  <ul>
+    <li>Settle player disputes and abuse reports with a written record.</li>
+    <li>Keep an audit trail of GM and staff conduct.</li>
+    <li>Spot spam, scams or harassment as patterns over time.</li>
+  </ul>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Server switch</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\ChatLog.ini</span></td><td>Turns logging on or off. One <code>Enable</code> key.</td></tr>
+    <tr><td>Log file</td><td><span class="path">.Server\Zoneserver\RF_Bin\ModulesLog\ChatLog.log</span></td><td>Created automatically beside the Zone server .exe; appended to, never overwritten.</td></tr>
+  </table>
+  <div class="box info"><b>Server-only</b>Nothing changes on the player's game client and no client file is involved. The log is written by the Zone server into its own <code>ModulesLog</code> folder &mdash; it never touches the client's <code>NetLog</code>.</div>
+
+  <h3 id="cl-activate">How to activate it</h3>
+  <ol class="steps">
+    <li>
+      <strong>Turn the feature on (server).</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\ChatLog.ini</span> in Notepad and change the <code>Enable</code> line under <code>[General]</code>:
+      <pre><code>[General]
+Enable = 1</code></pre>
+      Save the file. A running Zone server reloads it immediately and starts writing from the next chat line; if the server is not running yet it simply starts with logging on.
+    </li>
+    <li>
+      <strong>Nothing to do on the client.</strong> Players see no difference &mdash; chat behaves exactly as before, it is only also recorded.
+    </li>
+    <li>
+      <strong>Read the log.</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\ModulesLog\ChatLog.log</span> in Notepad any time. The <code>ModulesLog</code> folder is created the first time a line is logged.
+    </li>
+  </ol>
+  <div class="box warn"><b>Do not delete the .ini</b>Like every module file, <code>ChatLog.ini</code> is required when the Zone server starts &mdash; deleting it stops the server from booting. To stop logging, set <code>Enable = 0</code> instead; no further lines are written.</div>
+
+  <h3 id="cl-format">The log file &mdash; what each line means</h3>
+  <p>Each chat line becomes one line in the file:</p>
+  <pre><code>[2026-09-16 20:14:03] [ALL] checkquest: hello everyone
+[2026-09-16 20:14:11] [PARTY] checkquest: group up at the gate
+[2026-09-16 20:14:26] [WHISPER] checkquest -&gt; BellatoHero: trade?
+[2026-09-16 20:15:02] [GUILD] BellatoHero: war at nine</code></pre>
+  <ul>
+    <li><strong>Date and time</strong> as <code>[YYYY-MM-DD HH:MM:SS]</code>, using the server PC's clock.</li>
+    <li><strong>Channel</strong> in the second brackets &mdash; for example <code>ALL</code>, <code>RACE</code>, <code>PARTY</code>, <code>MAP</code>, <code>GUILD</code>, <code>WHISPER</code>, <code>NOTICE</code>, <code>RACEBOSS</code>.</li>
+    <li><strong>Sender</strong> character name before the colon.</li>
+    <li><strong>Whispers</strong> also record who received them, written as <code>sender -&gt; recipient</code>.</li>
+    <li>The text after the colon is exactly what was broadcast &mdash; the log hooks the chat after the server validates it, so rejected lines are not recorded.</li>
+  </ul>
+  <h4>Looking after the file</h4>
+  <ul>
+    <li>The file is <strong>appended to and never truncated</strong>, so it grows for as long as logging is on. Archive or move old copies yourself during a quiet period; switch logging off first (<code>Enable = 0</code>) if you want a clean cut.</li>
+    <li>Writing is best-effort: if the disk is full or the file is locked, a line is skipped rather than chat being blocked or corrupted. Players never notice a logging failure.</li>
+  </ul>
+</section>
+
+<nav class="pn" style="display:flex;justify-content:space-between;gap:12px;margin:22px 0 4px;"><a class="nav-prev" href="zoom-max.html">&larr; Previous: Camera Zoom Max</a><a class="nav-next" href="chip-hp.html">Next: Chip HP Bars &rarr;</a></nav>
+  </main>
+</div>
+
+<footer>
+  RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
+</footer>
+<script>
+(function () {
+  var lb, lbImg, lbCap;
+  function build() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">&#10005;</button><img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lbImg = lb.querySelector('img');
+    lbCap = lb.querySelector('.lb-cap');
+    lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  function open(img) {
+    build();
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt || '';
+    var cap = img.parentNode ? img.parentNode.querySelector('figcaption') : null;
+    lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('figure.shot')) {
+      e.preventDefault();
+      open(t);
+    }
+  });
+})();
+</script>
+</body>
+</html>

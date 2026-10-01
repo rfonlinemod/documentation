@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Potion Lua Overrides &mdash; RF Online</title>
+<link rel="stylesheet" href="../assets/style.css?v=4">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="../index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="../index.html">Home</a>
+    <a href="../server-client.html">Server &amp; Client</a>
+    <a href="../modules-features.html" class="active">Modules / Features</a>
+    <a class="discord" href="https://discord.gg/czbhwUNPse" target="_blank" rel="noopener">&#128172; Discord</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Modules">
+    <a href="../modules-features.html#overview">How modules work</a>
+    <a href="additional-settings.html">Additional Settings (Auto-Target)</a>
+    <a href="animus.html">Animus (Summon Companion System)</a>
+    <a href="autoloot.html">Auto Loot</a>
+    <a href="battlepass.html">Battle Pass</a>
+    <a href="boss-respawn.html">Boss Respawn Schedule</a>
+    <a href="box-stack.html">Box Stack</a>
+    <a href="zoom-max.html">Camera Zoom Max</a>
+    <a href="chat-log.html">Chat Log</a>
+    <a href="chip-hp.html">Chip HP Bars</a>
+    <a href="chip-block.html">Chip No-Entry (Chip Block)</a>
+    <a href="chip-war.html">Chip War Control Panel</a>
+    <a href="discord.html">Discord Relay &amp; Feeds</a>
+    <a href="election-manager.html">Election Manager</a>
+    <a href="gm-command.html">GM Command Whitelist</a>
+    <a href="arrow-target.html">Group-Target Arrow</a>
+    <a href="item-stack.html">Item Stack Limit (1M)</a>
+    <a href="item-upgrade.html">Item Upgrade &amp; Jade</a>
+    <a href="megaphone.html">Megaphone</a>
+    <a href="module-logs.html">Module Logs</a>
+    <a href="npc-buffer.html">NPC Buffer</a>
+    <a href="potion-manager.html">Potion Effects</a>
+    <a class="active" href="potion-lua.html">Potion Lua Overrides</a>
+    <a href="killfeed.html">PvP Kill Feed</a>
+    <a href="quest-monster.html">Quest Monster Marks</a>
+    <a href="quest-system.html">Quest System (Classic &amp; Daily)</a>
+    <a href="race-leader-effect.html">Race Leader Effect</a>
+    <a href="share-pvp.html">Share PvP</a>
+    <a href="skill-desc.html">Skill Additional Description</a>
+    <a href="store-system.html">Store System (Shops, Goods &amp; Spawns)</a>
+    <a href="welcome-window.html">Welcome Window</a>
+    <span class="side-title">On this page</span>
+    <a class="sub" href="#pl-what">What it does — and why you would use it</a>
+    <a class="sub" href="#pl-activate">How to activate it</a>
+    <a class="sub" href="#pl-config">How to write the overrides</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Potion Lua Overrides</h1>
+    <p class="page-sub"><a href="../modules-features.html">&larr; All modules</a></p>
+
+<section id="potion-lua">
+  <div class="doc-head">
+    <h2>Potion Lua Overrides</h2>
+    <div class="badges">
+      <span class="badge server">Server-only</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="pl-what">What it does &mdash; and why you would use it</h3>
+  <p>Potion Lua Overrides lets you change what a <strong>specific potion</strong> does from <strong>one plain text list</strong>, keyed by the potion's item code &mdash; instead of editing that potion's effect script in the data tables. When a potion's item code is in the list, it uses <strong>your</strong> effect and its normal script is skipped. Potions you do not list behave exactly as before.</p>
+  <p>Use it to:</p>
+  <ul>
+    <li>Turn an ordinary potion into a reward or buff potion without touching item data.</li>
+    <li>Apply a named Skill / Force / Class-skill buff by its <strong>code</strong> (for example <code>AF004</code>) at a chosen level.</li>
+    <li>Set up event potions quickly and change them live while the server runs.</li>
+  </ul>
+  <div class="box info"><b>It reuses the Potion Effects rewards</b>The overrides run the same 160&ndash;173 effects (and the same system messages) as the <a href="potion-manager.html">Potion Effects</a> module &mdash; this module is simply a per-item-code way to trigger them, and it <strong>wins</strong> over the potion's own script. It runs on its own switch, so you do not have to enable Potion Effects to use it.</div>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Server switch</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\PotionLua\PotionLua.ini</span></td><td>Turns the overrides on or off. One <code>Enable</code> key.</td></tr>
+    <tr><td>Override list</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\PotionLua\PotionLua.lua</span></td><td>The list of item codes and the effect each one gets.</td></tr>
+    <tr><td>Client half</td><td colspan="2">None &mdash; server-only. No client file, no toggle, no rebuild.</td></tr>
+  </table>
+
+  <h3 id="pl-activate">How to activate it</h3>
+  <ol class="steps">
+    <li>
+      <strong>Turn the feature on (server).</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\PotionLua\PotionLua.ini</span> in Notepad and set:
+      <pre><code>[General]
+Enable = 1</code></pre>
+      Save the file.
+    </li>
+    <li>
+      <strong>List your potions.</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\PotionLua\PotionLua.lua</span> and add one line per potion you want to override. See <a href="#pl-config">Write the overrides</a>. Save it.
+    </li>
+    <li>
+      <strong>Test it.</strong> Start the servers, log in and drink one of the listed potions &mdash; it applies your effect and shows the system message. Both files reload live, so you can edit and re-drink without a restart.
+    </li>
+  </ol>
+  <div class="box warn"><b>Do not delete either file</b>The Zone server needs both <code>PotionLua.ini</code> and <code>PotionLua.lua</code> at startup &mdash; deleting either stops it from booting. To switch the overrides off, set <code>Enable = 0</code> in the <code>.ini</code>; every potion then uses its normal script again.</div>
+
+  <h3 id="pl-config">How to write the overrides</h3>
+  <p>Each line in <code>PotionLua.lua</code> maps one potion item code to an effect:</p>
+  <pre><code>PotionLua = {
+  ["ipgld30"] = { effect = 160, value = 1000 },               -- +1000 Dalant
+  ["ipgld39"] = { effect = 169, value = 7 },                  -- +7 premium days
+  ["ipgld41"] = { effect = 171, value = "AF004", level = 7 }, -- apply Skill AF004's buff at level 7
+  ["ipgld42"] = { effect = 172, value = "8000",  level = 7 }, -- apply Force 8000's buff at level 7
+  ["ipgld43"] = { effect = 173, value = "7F018", level = 7 }, -- apply ClassSkill 7F018's buff at level 7
+}</code></pre>
+  <table>
+    <tr><th>Part</th><th>What it is</th></tr>
+    <tr><td><code>["itemcode"]</code></td><td>The potion's item code (from the item table), as a quoted string.</td></tr>
+    <tr><td><code>effect</code></td><td>The effect type, 160&ndash;173 &mdash; the same list as <a href="potion-manager.html#pm-effects">The effect list</a>.</td></tr>
+    <tr><td><code>value</code></td><td>The reward amount; for 171/172/173 it is the Skill / Force / ClassSkill <strong>code</strong> as a quoted string (a plain number is read as a record index instead).</td></tr>
+    <tr><td><code>level</code></td><td>Optional. For 171/172/173 it is the buff level 1&ndash;7 (default 7), which sets the buff's strength and duration from the record's per-level data.</td></tr>
+  </table>
+  <ul>
+    <li><strong>Only listed codes change.</strong> Any potion whose code is not a key here behaves exactly as stock.</li>
+    <li><strong>Overrides win.</strong> When a code is listed and the module is on, your effect is applied and the potion's own script is skipped.</li>
+    <li><strong>Buff codes must be real.</strong> For 171/172/173 use a code that exists in the Skill / Force / ClassSkill data and actually has a continuous buff, or nothing is applied (and the potion is not consumed).</li>
+    <li><strong>Live editing.</strong> Saving either file is picked up on the next game tick &mdash; no restart.</li>
+  </ul>
+</section>
+
+<nav class="pn" style="display:flex;justify-content:space-between;gap:12px;margin:22px 0 4px;"><a class="nav-prev" href="potion-manager.html">&larr; Previous: Potion Effects</a><a class="nav-next" href="killfeed.html">Next: PvP Kill Feed &rarr;</a></nav>
+  </main>
+</div>
+
+<footer>
+  RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
+</footer>
+<script>
+(function () {
+  var lb, lbImg, lbCap;
+  function build() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">&#10005;</button><img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lbImg = lb.querySelector('img');
+    lbCap = lb.querySelector('.lb-cap');
+    lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  function open(img) {
+    build();
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt || '';
+    var cap = img.parentNode ? img.parentNode.querySelector('figcaption') : null;
+    lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('figure.shot')) {
+      e.preventDefault();
+      open(t);
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -167,10 +167,43 @@ PWD=</code></pre>
     <li>If the Account server runs on another PC: type that PC's IP address, e.g. <code>AccountAddress = 192.168.1.50</code>.</li>
   </ul>
   <h3>4.3 <span class="path">.Server\Zoneserver\WorldInfo\WorldInfo.ini</span></h3>
+  <pre><code>[System]
+WorldName = RF ONLINE
+ServerType = 0
+BillingCode = 32
+BillOper = 0
+FreeServer = 1
+HistoryPath = C:\History
+NationCode = PH
+
+; --- Listen ports: all optional. They ship commented out (a leading ; is a
+;     note the server ignores), so the default shown after each key is already
+;     used. Uncomment and change one ONLY on a real clash, then match its peer.
+;AccountPort = 29000   ; outbound to the Account server (see 4.2 AccountAddress)
+;GatePort    = 27780   ; the port a player's client dials once inside the world
+;PortMode    = 0       ; 0 = if GatePort is busy take the next free port; 1 = fail
+;WebPort     = 27555   ; web panel / GameCP line
+;BillingPort = 27556   ; billing line
+
+[Connection]
+MasterServerIP = 127.0.0.1   ; the IP your ZoneServerSD.bin licence is bound to (step 5)
+
+[ServerMode]
+BuyCashItemByGold = false
+ReleaseType = Release
+CompanyType = Publishing
+
+[Rule]
+CrystalHPMultiple = 1.0
+
+[GUILD CREATE EVENT]
+Enable = FALSE</code></pre>
   <ul>
     <li><code>WorldName</code> under <code>[System]</code> is the name players see in their world list. Change it only if you want a different server name &mdash; it must never be empty or the Zone server refuses to start.</li>
-    <li>The port lines (<code>AccountPort</code>, <code>GatePort</code>, <code>WebPort</code>, <code>BillingPort</code>) are correct as shipped. <strong>Do not edit them</strong> unless you truly need to move a port: a wrong number stops the server at startup with a popup naming the bad line.</li>
-    <li><code>NationCode = PH</code> picks the English item-name column. Leave it <code>PH</code>; it does not change billing or region.</li>
+    <li>The listen ports ship <strong>commented out</strong>, so the defaults above already apply. Leave them alone unless a port genuinely collides: then uncomment just that one line, pick a free number, and update the matching peer's setting too. Note <code>GatePort</code> (27780) is the port the game client connects to <em>after</em> it has logged in and is entering the world.</li>
+    <li><code>NationCode = PH</code> selects the English item-name column to match the client. Leave it <code>PH</code>; it does not change billing or region.</li>
+    <li><strong>The line that trips people up is <code>MasterServerIP</code></strong> under <code>[Connection]</code>. The Zone server licence (<code>ZoneServerSD.bin</code>, step 5) is signed for one exact IP; the server reads it from here and <em>refuses to boot</em> if the value is missing, malformed, or different from the licence. Use <code>127.0.0.1</code> for a local test, or the server's real IPv4 for a public one, and issue the matching licence with <code>LicenseGen.exe &lt;days&gt; &lt;that IP&gt;</code>.</li>
+    <li>Everything under <code>[ServerMode]</code>, <code>[Rule]</code> and <code>[GUILD CREATE EVENT]</code> is pre-set for you &mdash; leave it as shipped.</li>
   </ul>
   <h3>4.4 <span class="path">.AccountLogin\RF_Bin\Initialize\AccountSystem.ini</span></h3>
   <pre><code>[Database]

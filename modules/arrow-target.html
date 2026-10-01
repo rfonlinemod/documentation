@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Group-Target Arrow &mdash; RF Online</title>
+<link rel="stylesheet" href="../assets/style.css?v=4">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="../index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="../index.html">Home</a>
+    <a href="../server-client.html">Server &amp; Client</a>
+    <a href="../modules-features.html" class="active">Modules / Features</a>
+    <a class="discord" href="https://discord.gg/czbhwUNPse" target="_blank" rel="noopener">&#128172; Discord</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Modules">
+    <a href="../modules-features.html#overview">How modules work</a>
+    <a href="additional-settings.html">Additional Settings (Auto-Target)</a>
+    <a href="animus.html">Animus (Summon Companion System)</a>
+    <a href="autoloot.html">Auto Loot</a>
+    <a href="battlepass.html">Battle Pass</a>
+    <a href="boss-respawn.html">Boss Respawn Schedule</a>
+    <a href="box-stack.html">Box Stack</a>
+    <a href="zoom-max.html">Camera Zoom Max</a>
+    <a href="chat-log.html">Chat Log</a>
+    <a href="chip-hp.html">Chip HP Bars</a>
+    <a href="chip-block.html">Chip No-Entry (Chip Block)</a>
+    <a href="chip-war.html">Chip War Control Panel</a>
+    <a href="discord.html">Discord Relay &amp; Feeds</a>
+    <a href="election-manager.html">Election Manager</a>
+    <a href="gm-command.html">GM Command Whitelist</a>
+    <a class="active" href="arrow-target.html">Group-Target Arrow</a>
+    <a href="item-stack.html">Item Stack Limit (1M)</a>
+    <a href="item-upgrade.html">Item Upgrade &amp; Jade</a>
+    <a href="megaphone.html">Megaphone</a>
+    <a href="module-logs.html">Module Logs</a>
+    <a href="npc-buffer.html">NPC Buffer</a>
+    <a href="potion-manager.html">Potion Effects</a>
+    <a href="potion-lua.html">Potion Lua Overrides</a>
+    <a href="killfeed.html">PvP Kill Feed</a>
+    <a href="quest-monster.html">Quest Monster Marks</a>
+    <a href="quest-system.html">Quest System (Classic &amp; Daily)</a>
+    <a href="race-leader-effect.html">Race Leader Effect</a>
+    <a href="share-pvp.html">Share PvP</a>
+    <a href="skill-desc.html">Skill Additional Description</a>
+    <a href="store-system.html">Store System (Shops, Goods &amp; Spawns)</a>
+    <a href="welcome-window.html">Welcome Window</a>
+    <span class="side-title">On this page</span>
+    <a class="sub" href="#at-what">What it does — and why you would use it</a>
+    <a class="sub" href="#at-activate">How to activate / customise it</a>
+    <a class="sub" href="#at-config">The config file</a>
+    <a class="sub" href="#at-look">Tuning the look — examples</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Group-Target Arrow</h1>
+    <p class="page-sub"><a href="../modules-features.html">&larr; All modules</a></p>
+
+<section id="arrow-target">
+  <div class="doc-head">
+    <h2>Group-Target Arrow</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+  <figure class="shot">
+    <img src="../assets/img/arrow-target.png" alt="A giant red group-target arrow over a marked player, next to ArrowTarget.ini in an editor">
+    <figcaption>A <strong>race-target</strong> arrow placed with <span class="path">Ctrl + left-click</span> on the marked player&rsquo;s head, made deliberately large by <span class="path">[RACE_TARGET] Scale = 5.0</span> and lifted with <span class="path">Height = 10.0</span> in <span class="path">ArrowTarget.ini</span> (open on the right). Every member of that team sees the same arrow. With the neutral defaults (scale 1.0, height 0) the arrow keeps its normal stock size instead.</figcaption>
+  </figure>
+
+  <h3 id="at-what">What it does &mdash; and why you would use it</h3>
+  <p>When a <strong>race leader, guild master or party leader</strong> wants to point everyone at the same mob or player, they <strong>Ctrl+click</strong> a target. A glowing arrow then floats over that target&rsquo;s head for every member of the group to see. This module lets <em>you</em> control what that arrow looks like &mdash; its size, colour, how high it sits, how solid it is, and whether each kind of group arrow is shown at all.</p>
+  <p>It is a <strong>server setting</strong>: the Zone server reads <span class="path">ArrowTarget.ini</span> and pushes the look to every client as players enter the world and again whenever you save a change &mdash; so a player cannot spoof their own arrow. There is <strong>no client file</strong>.</p>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Server look</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\RaceLeaderEffect\ArrowTarget.ini</span></td><td>The master on/off plus a section for each group type (race / guild / party) setting size, colour, height and opacity.</td></tr>
+    <tr><td>Client half</td><td colspan="2">No client file. The server pushes the resolved look and the client draws the arrow with it. Both the Zone server and the game client must be the current build.</td></tr>
+  </table>
+  <div class="box info"><b>Ships neutral, not off</b>The file is present with <code>Enable = 1</code> but every value at its neutral default (white, scale 1.0, height 0, opacity 1.0), so dropping it in reproduces the stock arrow <em>exactly</em>. Change a value only when you want a different look. To hide all arrows, set <code>[General] Enable = 0</code>.</div>
+
+  <h3 id="at-activate">How to activate / customise it</h3>
+  <ol class="steps">
+    <li><strong>Open the file.</strong> <span class="path">.Server\Zoneserver\RF_Bin\Modules\RaceLeaderEffect\ArrowTarget.ini</span> sits beside <span class="path">RaceLeaderEffect.ini</span> in the same folder. Open it in Notepad.</li>
+    <li><strong>Set the master switch.</strong> <code>[General] Enable = 1</code> shows the arrows; <code>0</code> hides every group-target arrow.</li>
+    <li><strong>Tune one, some, or all group types.</strong> Edit <code>[RACE_TARGET]</code>, <code>[GUILD_TARGET]</code> and <code>[PARTY_TARGET]</code> independently &mdash; each has the same keys (see <a href="#at-config">the config table</a> and <a href="#at-look">tuning the look</a>).</li>
+    <li><strong>Save &mdash; nothing to restart.</strong> A running server hot-reloads the file and re-pushes the new look to everyone online within a second.</li>
+    <li><strong>Test it.</strong> As a leader, <strong>Ctrl+click</strong> a target and watch the arrow change. Note: only an actual race leader, guild master or party leader can place the mark &mdash; the server rejects the request from anyone else.</li>
+  </ol>
+  <div class="box warn"><b>Do not delete the file</b>Because <span class="path">ArrowTarget.ini</span> is a required sibling of the Race Leader Effect module, deleting it stops the Zone server from starting. To hide the arrows, set <code>[General] Enable = 0</code> instead of removing the file.</div>
+
+  <h3 id="at-config">The config file</h3>
+  <p>One file, four sections. <code>[General]</code> holds the master switch; the three group-type sections share the same keys.</p>
+  <table>
+    <tr><th>Key</th><th>Section(s)</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td><code>[General]</code></td><td>Master switch for <em>all</em> group-target arrows. <code>1</code> = show (subject to each type below), <code>0</code> = hide entirely.</td></tr>
+    <tr><td><code>Enable</code></td><td><code>[RACE_TARGET]</code> / <code>[GUILD_TARGET]</code> / <code>[PARTY_TARGET]</code></td><td>Show or hide just that one group type&rsquo;s arrow.</td></tr>
+    <tr><td><code>Scale</code></td><td>each type</td><td>Size multiplier on the arrow. <code>1.0</code> = native, <code>2.0</code> = twice as big.</td></tr>
+    <tr><td><code>ColorR / G / B</code></td><td>each type</td><td>Tint, 0&ndash;255 per channel. <code>255,255,255</code> (white) = no recolour, keeps the arrow&rsquo;s own baked colour.</td></tr>
+    <tr><td><code>Height</code></td><td>each type</td><td>Extra world-unit lift above the arrow&rsquo;s normal spot. <code>0.0</code> = native (it already floats above the head); larger = higher.</td></tr>
+    <tr><td><code>Opacity</code></td><td>each type</td><td><code>0.0</code> (invisible) to <code>1.0</code> (fully solid). <code>1.0</code> = native.</td></tr>
+  </table>
+
+  <h3 id="at-look">Tuning the look &mdash; examples</h3>
+  <p>A few ready-to-paste ideas. Change only the section you want; leave the others at their neutral defaults.</p>
+  <pre><code>; A big bright-red race-leader arrow that sits higher
+[RACE_TARGET]
+Enable = 1
+Scale = 2.0
+ColorR = 255
+ColorG = 40
+ColorB = 40
+Height = 30.0
+Opacity = 1.0
+
+; A faint party arrow, same size, no recolour (just see-through)
+[PARTY_TARGET]
+Enable = 1
+Scale = 1.0
+ColorR = 255
+ColorG = 255
+ColorB = 255
+Height = 0.0
+Opacity = 0.4</code></pre>
+  <ul>
+    <li><strong>Colour is a tint, not a paint.</strong> It multiplies the arrow texture, so <code>255,255,255</code> leaves it untouched; push a channel up / down to shade it.</li>
+    <li><strong>Opacity fades it, Enable removes it.</strong> Use <code>Opacity</code> for a subtle arrow and per-type <code>Enable = 0</code> to switch one group&rsquo;s arrow off while keeping the others.</li>
+    <li><strong>Height lifts the whole arrow up</strong> &mdash; handy if a tall hat or aura was hiding the arrow at its native spot.</li>
+  </ul>
+  <p class="muted">Left at its shipped defaults the arrow is identical to stock; with <code>[General] Enable = 0</code> no group-target arrow is drawn at all.</p>
+</section>
+
+<nav class="pn" style="display:flex;justify-content:space-between;gap:12px;margin:22px 0 4px;"><a class="nav-prev" href="gm-command.html">&larr; Previous: GM Command Whitelist</a><a class="nav-next" href="item-stack.html">Next: Item Stack Limit (1M) &rarr;</a></nav>
+  </main>
+</div>
+
+<footer>
+  RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
+</footer>
+<script>
+(function () {
+  var lb, lbImg, lbCap;
+  function build() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">&#10005;</button><img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lbImg = lb.querySelector('img');
+    lbCap = lb.querySelector('.lb-cap');
+    lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  function open(img) {
+    build();
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt || '';
+    var cap = img.parentNode ? img.parentNode.querySelector('figcaption') : null;
+    lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('figure.shot')) {
+      e.preventDefault();
+      open(t);
+    }
+  });
+})();
+</script>
+</body>
+</html>

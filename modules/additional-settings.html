@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Additional Settings (Auto-Target) &mdash; RF Online</title>
+<link rel="stylesheet" href="../assets/style.css?v=4">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="../index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="../index.html">Home</a>
+    <a href="../server-client.html">Server &amp; Client</a>
+    <a href="../modules-features.html" class="active">Modules / Features</a>
+    <a class="discord" href="https://discord.gg/czbhwUNPse" target="_blank" rel="noopener">&#128172; Discord</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Modules">
+    <a href="../modules-features.html#overview">How modules work</a>
+    <a class="active" href="additional-settings.html">Additional Settings (Auto-Target)</a>
+    <a href="animus.html">Animus (Summon Companion System)</a>
+    <a href="autoloot.html">Auto Loot</a>
+    <a href="battlepass.html">Battle Pass</a>
+    <a href="boss-respawn.html">Boss Respawn Schedule</a>
+    <a href="box-stack.html">Box Stack</a>
+    <a href="zoom-max.html">Camera Zoom Max</a>
+    <a href="chat-log.html">Chat Log</a>
+    <a href="chip-hp.html">Chip HP Bars</a>
+    <a href="chip-block.html">Chip No-Entry (Chip Block)</a>
+    <a href="chip-war.html">Chip War Control Panel</a>
+    <a href="discord.html">Discord Relay &amp; Feeds</a>
+    <a href="election-manager.html">Election Manager</a>
+    <a href="gm-command.html">GM Command Whitelist</a>
+    <a href="arrow-target.html">Group-Target Arrow</a>
+    <a href="item-stack.html">Item Stack Limit (1M)</a>
+    <a href="item-upgrade.html">Item Upgrade &amp; Jade</a>
+    <a href="megaphone.html">Megaphone</a>
+    <a href="module-logs.html">Module Logs</a>
+    <a href="npc-buffer.html">NPC Buffer</a>
+    <a href="potion-manager.html">Potion Effects</a>
+    <a href="potion-lua.html">Potion Lua Overrides</a>
+    <a href="killfeed.html">PvP Kill Feed</a>
+    <a href="quest-monster.html">Quest Monster Marks</a>
+    <a href="quest-system.html">Quest System (Classic &amp; Daily)</a>
+    <a href="race-leader-effect.html">Race Leader Effect</a>
+    <a href="share-pvp.html">Share PvP</a>
+    <a href="skill-desc.html">Skill Additional Description</a>
+    <a href="store-system.html">Store System (Shops, Goods &amp; Spawns)</a>
+    <a href="welcome-window.html">Welcome Window</a>
+    <span class="side-title">On this page</span>
+    <a class="sub" href="#as-what">What it does — and why you would use it</a>
+    <a class="sub" href="#as-activate">How to activate it</a>
+    <a class="sub" href="#as-config">The config file</a>
+    <a class="sub" href="#as-type">Choosing what TAB targets (AutoTargetType)</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Additional Settings (Auto-Target)</h1>
+    <p class="page-sub"><a href="../modules-features.html">&larr; All modules</a></p>
+
+<section id="additional-settings">
+  <div class="doc-head">
+    <h2>Additional Settings (TAB Auto-Target)</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="as-what">What it does &mdash; and why you would use it</h3>
+  <p>Additional Settings is the server&rsquo;s bag of extra client switches that have no file of their own. Its first entry is <strong>TAB auto-target</strong>: with it on, a player taps <strong>TAB</strong> to instantly target &mdash; and taps again to <em>cycle</em> &mdash; the nearest eligible target within a range you set, instead of fumbling to click a mob in a crowded field.</p>
+  <p>You choose <em>how far</em> TAB reaches and <em>what</em> it may target (monsters, enemy players, both, or just whatever each player&rsquo;s own in-game Options allow). The server resolves the settings and pushes them to every client as they enter the world &mdash; <strong>there is no client file to edit</strong>.</p>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Server switch</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\AdditionalSettings\AdditionalSettings.ini</span> (+ <span class="path">AdditionalSettings.lua</span>)</td><td>Turns TAB auto-target on and sets the reach and what may be targeted.</td></tr>
+    <tr><td>Client half</td><td colspan="2">No client file. The server pushes the resolved settings to each client, which re-binds <strong>TAB</strong> accordingly. When the module is off, <strong>TAB</strong> keeps its stock rotate-to-next-target behaviour.</td></tr>
+  </table>
+  <div class="box info"><b>Off by default</b>The module ships <code>Enable = 0</code>, so <strong>TAB</strong> is unchanged until you turn it on. Because the client re-binds <strong>TAB</strong> when the feature is pushed, <strong>both the Zone server and the game client must be the current build</strong> for it to work.</div>
+
+  <h3 id="as-activate">How to activate it</h3>
+  <ol class="steps">
+    <li><strong>Turn it on.</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\AdditionalSettings\AdditionalSettings.ini</span> in Notepad:
+      <pre><code>[AdditionalSettings]
+Enable = 1
+AutoTargetRange = 500
+AutoTargetType = 3</code></pre>
+      Save it &mdash; a running server hot-reloads and re-pushes to every online client.</li>
+    <li><strong>Set the reach.</strong> <code>AutoTargetRange</code> is the maximum distance, in world units, TAB will grab a target from (larger reaches further across the map; clamped <code>1..2000</code>).</li>
+    <li><strong>Choose what TAB cycles.</strong> Set <code>AutoTargetType</code> from <a href="#as-type">the legend below</a> &mdash; monsters, enemy players, both, or defer to each player&rsquo;s own Options.</li>
+    <li><strong>Nothing to do on the client.</strong> Eligible clients re-bind <strong>TAB</strong> automatically on the push.</li>
+    <li><strong>Test it.</strong> Stand near a few mobs (or players) and tap <strong>TAB</strong> &mdash; the first tap targets the nearest match, and each further tap advances to the next one and wraps around.</li>
+  </ol>
+  <div class="box warn"><b>Do not delete the file</b>Like every module, <code>AdditionalSettings.ini</code> is required when the Zone server starts &mdash; deleting it stops the server from booting. To turn the feature off, set <code>Enable = 0</code>. (The companion <code>AdditionalSettings.lua</code> is optional and may be absent.)</div>
+
+  <h3 id="as-config">The config file</h3>
+  <p>One file, <span class="path">Modules\AdditionalSettings\AdditionalSettings.ini</span>, with an optional <span class="path">AdditionalSettings.lua</span> beside it &mdash; a value set in the Lua wins over the .ini. Both hot-reload live.</p>
+  <table>
+    <tr><th>Key</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td>Master switch for TAB auto-target. <code>1</code> = on, <code>0</code> = off (stock <strong>TAB</strong>).</td></tr>
+    <tr><td><code>AutoTargetRange</code></td><td>How far (world units) TAB reaches for the nearest target. Clamped <code>1..2000</code>.</td></tr>
+    <tr><td><code>AutoTargetType</code></td><td><em>What</em> TAB cycles between &mdash; see the legend below. Clamped <code>0..3</code>, default <code>3</code>.</td></tr>
+  </table>
+
+  <h3 id="as-type">Choosing what TAB targets (AutoTargetType)</h3>
+  <table>
+    <tr><th>Value</th><th>Targets</th></tr>
+    <tr><td><code>0</code></td><td><strong>Monsters only.</strong></td></tr>
+    <tr><td><code>1</code></td><td><strong>Other-race players only</strong> &mdash; enemy players, not your own race.</td></tr>
+    <tr><td><code>2</code></td><td><strong>Monsters + other-race players.</strong></td></tr>
+    <tr><td><code>3</code></td><td><strong>Default &mdash; defer to the in-game Options.</strong> TAB cycles whatever each player&rsquo;s own <em>Options &rarr; Targeting</em> &ldquo;check target&rdquo; boxes allow (Monster / Bellato / Cora / Accretia); own-race players are targetable only if that player has ticked their own race.</td></tr>
+  </table>
+  <ul>
+    <li><strong>The Options filters always apply.</strong> Whatever type you set, a candidate is only chosen if the player&rsquo;s matching in-game race / monster target filter is on &mdash; the module never grabs something the player has filtered out.</li>
+    <li><strong>Dead and allied mobs are skipped.</strong> TAB never targets a corpse or a friendly / allied creature.</li>
+    <li><strong>It cycles, it does not re-pick.</strong> The first tap picks the nearest match; each further tap advances to the next-nearest and wraps back round, so you can walk a target list with repeated taps. A fresh tap fires instantly and hammering the key is rate-limited, so it cannot flood the server.</li>
+  </ul>
+  <p class="muted">With <code>Enable = 0</code> the settings are ignored entirely and <strong>TAB</strong> behaves exactly as stock RF Online.</p>
+</section>
+
+<nav class="pn" style="display:flex;justify-content:space-between;gap:12px;margin:22px 0 4px;"><a class="nav-next" href="animus.html">Next: Animus (Summon Companion System) &rarr;</a></nav>
+  </main>
+</div>
+
+<footer>
+  RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
+</footer>
+<script>
+(function () {
+  var lb, lbImg, lbCap;
+  function build() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">&#10005;</button><img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lbImg = lb.querySelector('img');
+    lbCap = lb.querySelector('.lb-cap');
+    lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  function open(img) {
+    build();
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt || '';
+    var cap = img.parentNode ? img.parentNode.querySelector('figcaption') : null;
+    lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('figure.shot')) {
+      e.preventDefault();
+      open(t);
+    }
+  });
+})();
+</script>
+</body>
+</html>

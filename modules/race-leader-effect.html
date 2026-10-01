@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Race Leader Effect &mdash; RF Online</title>
+<link rel="stylesheet" href="../assets/style.css?v=4">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="../index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="../index.html">Home</a>
+    <a href="../server-client.html">Server &amp; Client</a>
+    <a href="../modules-features.html" class="active">Modules / Features</a>
+    <a class="discord" href="https://discord.gg/czbhwUNPse" target="_blank" rel="noopener">&#128172; Discord</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Modules">
+    <a href="../modules-features.html#overview">How modules work</a>
+    <a href="additional-settings.html">Additional Settings (Auto-Target)</a>
+    <a href="animus.html">Animus (Summon Companion System)</a>
+    <a href="autoloot.html">Auto Loot</a>
+    <a href="battlepass.html">Battle Pass</a>
+    <a href="boss-respawn.html">Boss Respawn Schedule</a>
+    <a href="box-stack.html">Box Stack</a>
+    <a href="zoom-max.html">Camera Zoom Max</a>
+    <a href="chat-log.html">Chat Log</a>
+    <a href="chip-hp.html">Chip HP Bars</a>
+    <a href="chip-block.html">Chip No-Entry (Chip Block)</a>
+    <a href="chip-war.html">Chip War Control Panel</a>
+    <a href="discord.html">Discord Relay &amp; Feeds</a>
+    <a href="election-manager.html">Election Manager</a>
+    <a href="gm-command.html">GM Command Whitelist</a>
+    <a href="arrow-target.html">Group-Target Arrow</a>
+    <a href="item-stack.html">Item Stack Limit (1M)</a>
+    <a href="item-upgrade.html">Item Upgrade &amp; Jade</a>
+    <a href="megaphone.html">Megaphone</a>
+    <a href="module-logs.html">Module Logs</a>
+    <a href="npc-buffer.html">NPC Buffer</a>
+    <a href="potion-manager.html">Potion Effects</a>
+    <a href="potion-lua.html">Potion Lua Overrides</a>
+    <a href="killfeed.html">PvP Kill Feed</a>
+    <a href="quest-monster.html">Quest Monster Marks</a>
+    <a href="quest-system.html">Quest System (Classic &amp; Daily)</a>
+    <a class="active" href="race-leader-effect.html">Race Leader Effect</a>
+    <a href="share-pvp.html">Share PvP</a>
+    <a href="skill-desc.html">Skill Additional Description</a>
+    <a href="store-system.html">Store System (Shops, Goods &amp; Spawns)</a>
+    <a href="welcome-window.html">Welcome Window</a>
+    <span class="side-title">On this page</span>
+    <a class="sub" href="#rle-what">What it does — and why you would use it</a>
+    <a class="sub" href="#rle-activate">How to activate it</a>
+    <a class="sub" href="#rle-aura">The aura visuals</a>
+    <a class="sub" href="#rle-bonus">The stat bonuses</a>
+    <a class="sub" href="#rle-view">How far the aura can be seen</a>
+    <a class="sub" href="#rle-badge">The overhead nameplate badges</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Race Leader Effect</h1>
+    <p class="page-sub"><a href="../modules-features.html">&larr; All modules</a></p>
+
+<section id="race-leader-effect">
+  <div class="doc-head">
+    <h2>Race Leader Effect</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client-visible</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <figure class="shot">
+    <img src="../assets/img/race-leader-effect.png" alt="In-game screenshot of a Cora race leader named testaura wearing the RACE LEADER nameplate and a bright winged light aura, with two more distant auras visible across the plaza marked by red arrows">
+    <figcaption>A race leader in game: the elected president wears a <strong>RACE&nbsp;LEADER</strong> nameplate and a bright winged aura, and council members wear the same aura. This one file controls both that <em>look</em> and the <em>stat bonus</em> they receive while in office.</figcaption>
+  </figure>
+
+  <h3 id="rle-what">What it does &mdash; and why you would use it</h3>
+  <p>When a player is elected <strong>race leader</strong> (the president / patriarch) or joins the <strong>council</strong> (the eight sub-leaders), the game can give them two things: a glowing world <strong>aura</strong> that marks them out, and a <strong>percent stat bonus</strong> to Attack, Defence and HP for as long as they hold office. This module lets you tune both from a single text file, separately for each race and each rank.</p>
+  <ul>
+    <li><strong>The aura (what players see).</strong> The size, height and transparency of the wings, the ground ring and the ground burst, plus whether the tall light beam is shown &mdash; per race, and different for the leader vs the council.</li>
+    <li><strong>The bonus (what the server applies).</strong> How much Attack / Defence / HP a leader or council member gains while in office &mdash; again per race and per rank.</li>
+    <li><strong>Server-authoritative.</strong> The Zone server reads this file and pushes the look to every player's client, so players cannot edit their own aura &mdash; there is no client-side copy to tamper with.</li>
+  </ul>
+  <div class="box info"><b>One file, two halves</b>The aura is <span class="badge client">Client</span> (it changes what players see) and the bonus is <span class="badge server">Server</span> (it changes combat numbers), but they live in the <em>same</em> <code>RaceLeaderEffect.ini</code> and share one <code>Enable</code> switch.</div>
+
+  <h3 id="rle-activate">How to activate it</h3>
+  <ol class="steps">
+    <li><strong>Open the module file.</strong> Edit <span class="path">.Server\Zoneserver\RF_Bin\Modules\RaceLeaderEffect\RaceLeaderEffect.ini</span> in Notepad.</li>
+    <li>
+      <strong>Turn it on.</strong> Under <code>[General]</code>, set:
+      <pre><code>[General]
+Enable = 1</code></pre>
+      With <code>Enable = 0</code> the feature is inert: leaders keep the stock aura look (no tall beam) and get <strong>no</strong> stat bonus.
+    </li>
+    <li><strong>Tune the aura and the bonus.</strong> Edit the per-race sections described in <a href="#rle-aura">The aura visuals</a> and <a href="#rle-bonus">The stat bonuses</a> below, then save.</li>
+    <li><strong>It applies live.</strong> A running server re-reads the file about twice a second and pushes the new aura to everyone already in the world &mdash; no restart and no re-login needed. The stat bonus updates on the leader's next stat refresh.</li>
+  </ol>
+  <div class="box warn"><b>Do not delete the file</b>Like every module, a missing <code>RaceLeaderEffect.ini</code> stops the Zone server from starting. To turn the feature off, set <code>Enable = 0</code> and leave the file in place.</div>
+
+  <h3 id="rle-aura">The aura visuals</h3>
+  <p>There are six aura sections &mdash; one per race, one for the leader and one for the council:</p>
+  <table>
+    <tr><th>Section</th><th>Who it is for</th></tr>
+    <tr><td><code>[BELLATO_LEADER]</code> / <code>[CORA_LEADER]</code> / <code>[ACCRETIA_LEADER]</code></td><td>The rank-0 race leader (president / patriarch).</td></tr>
+    <tr><td><code>[BELLATO_SUB]</code> / <code>[CORA_SUB]</code> / <code>[ACCRETIA_SUB]</code></td><td>The council &mdash; the eight sub-leaders (vice presidents).</td></tr>
+  </table>
+  <p>Each section has the same keys, grouped by the four parts of the aura:</p>
+  <table>
+    <tr><th>Part</th><th>On screen</th><th>Keys</th></tr>
+    <tr><td><strong>Wings</strong></td><td>The energy wings / crystal spikes around the body.</td><td><code>WingScale</code>, <code>WingHeight</code>, <code>WingOpacity</code></td></tr>
+    <tr><td><strong>Ring</strong></td><td>The glowing ring on the ground.</td><td><code>RingScale</code>, <code>RingHeight</code>, <code>RingOpacity</code></td></tr>
+    <tr><td><strong>Base</strong></td><td>The ground burst and foot sparks at the feet.</td><td><code>BaseScale</code>, <code>BaseHeight</code>, <code>BaseOpacity</code></td></tr>
+    <tr><td><strong>Beam</strong></td><td>The tall vertical light pillar.</td><td><code>BeamOn</code> (0 / 1), <code>BeamScale</code>, <code>BeamHeight</code>, <code>BeamOpacity</code></td></tr>
+  </table>
+  <p>What the three value types mean (they repeat for every part):</p>
+  <ul>
+    <li><strong>Scale</strong> &mdash; size multiplier. <code>1.0</code> = the stock size, <code>2.0</code> = twice as big, <code>0.5</code> = half.</li>
+    <li><strong>Height</strong> &mdash; how far to lift the part, as a fraction of the character's height. <code>0.0</code> = stock, <code>0.5</code> = up by half a head.</li>
+    <li><strong>Opacity</strong> &mdash; transparency, <code>0.0</code> (invisible) to <code>1.0</code> (solid). Anything above <code>1.0</code> is treated as fully solid.</li>
+    <li><strong>BeamOn</strong> &mdash; <code>1</code> shows the tall pillar, <code>0</code> hides it.</li>
+  </ul>
+  <p>Example &mdash; make the Cora leader's wings a little bigger, raise them, and turn the tall beam on:</p>
+  <pre><code>[CORA_LEADER]
+WingScale = 1.5
+WingHeight = 0.2
+WingOpacity = 1.0
+RingScale = 1.0
+RingHeight = 0.0
+RingOpacity = 1.0
+BaseScale = 1.0
+BaseHeight = 0.0
+BaseOpacity = 1.0
+BeamOn = 1
+BeamScale = 1.0
+BeamHeight = 0.0
+BeamOpacity = 1.0</code></pre>
+
+  <h3 id="rle-bonus">The stat bonuses</h3>
+  <p>Below the aura sections are the bonus sections &mdash; one per race <em>per office slot</em>. Slot <code>0</code> is the race leader; slots <code>1</code>&ndash;<code>8</code> are the eight council seats.</p>
+  <pre><code>[CORA_0]        ; the Cora race leader
+Attack = 10
+Defence = 10
+HP = 10
+
+[CORA_1]        ; a Cora council seat
+Attack = 5
+Defence = 5
+HP = 5</code></pre>
+  <table>
+    <tr><th>Key</th><th>Meaning</th></tr>
+    <tr><td><code>Attack</code> / <code>Defence</code> / <code>HP</code></td><td>A <strong>percent</strong> bonus (so <code>10</code> = +10%). Applied automatically while the player holds that office, and removed the moment they lose it.</td></tr>
+  </table>
+  <div class="box info"><b>Percent, not flat</b>These are percentages of the character's base stat, so they scale with the player. Set <code>0</code> for any slot to give that office no bonus while still showing its aura.</div>
+
+  <h3 id="rle-view">How far the aura can be seen</h3>
+  <p>The aura is deliberately bright, so left unchecked it acts as a beacon that reveals where a race leader is standing from all across the map &mdash; an easy way for enemies to find and target them. By default the game only draws <strong>another player's</strong> aura while they are close by (roughly the distance your own camera pulls out to); your <em>own</em> aura is always shown. You can now change that range &mdash; or remove the limit entirely &mdash; with one key under <code>[General]</code>:</p>
+  <table>
+    <tr><th>Key</th><th>Meaning</th></tr>
+    <tr><td><code>AuraViewDistance</code></td><td>How far (in world units) you can see <em>other</em> players' auras. <code>0</code> (the default) turns the limit off completely, so auras stay visible all across the map; any positive number stops drawing them beyond that distance. Around <code>50</code> matches the old built-in range.</td></tr>
+  </table>
+  <pre><code>[General]
+Enable = 1
+AuraViewDistance = 0        ; 0 = visible map-wide; e.g. 80 = only within 80 units</code></pre>
+  <div class="box info"><b>Show everywhere, or keep it subtle</b>Set <code>AuraViewDistance = 0</code> to let everyone admire the leaders from anywhere; put it back toward <code>50</code> if you want the old anti-spot behaviour where a distant leader's aura stops drawing until they walk closer. It is pushed live to every client, so a leader's aura reappears for nearby players as they move, with no re-login.</div>
+
+  <h3 id="rle-badge">The overhead nameplate badges</h3>
+  <p>Above every office-holder's name floats a golden <strong>badge</strong> that announces their rank. It used to read <strong>RACE&nbsp;LEADER</strong> for everyone; now the wording matches the exact office, and you can turn each one on or off and resize the whole plate from <code>[General]</code>. The badge follows the same <code>Enable</code> switch as the aura, and shows for the president and the eight council seats (a plain guild master gets no badge).</p>
+  <table>
+    <tr><th>Office (slot)</th><th>Badge text</th><th>On/off key</th></tr>
+    <tr><td>Race leader / president (slot 0)</td><td><code>RACE LEADER</code></td><td><code>BadgeRaceLeader</code></td></tr>
+    <tr><td>Consul (slots 1 &amp; 5)</td><td><code>CONSUL</code></td><td><code>BadgeConsul</code></td></tr>
+    <tr><td>Strike team (slots 2 &amp; 6)</td><td><code>STRIKE TEAM</code></td><td><code>BadgeStrikeTeam</code></td></tr>
+    <tr><td>Defense team (slots 3 &amp; 7)</td><td><code>DEFENSE TEAM</code></td><td><code>BadgeDefenseTeam</code></td></tr>
+    <tr><td>Support team (slots 4 &amp; 8)</td><td><code>SUPPORT TEAM</code></td><td><code>BadgeSupportTeam</code></td></tr>
+  </table>
+  <p>The two overall badge switches (each office row above also has its own <code>1</code>/<code>0</code>):</p>
+  <pre><code>[General]
+BadgeEnable = 1             ; master switch: 0 hides every badge, 1 shows them
+BadgeScale = 1.0            ; overall size of the plate (1.0 = stock, 1.5 = bigger)</code></pre>
+  <ul>
+    <li><strong>BadgeEnable</strong> &mdash; one switch for all badges. <code>1</code> shows them, <code>0</code> hides every office badge at once.</li>
+    <li><strong>BadgeScale</strong> &mdash; grows or shrinks the whole plate (background, border and position). <code>1.0</code> is the stock size.</li>
+    <li><strong>Per-office keys</strong> &mdash; the <code>BadgeRaceLeader</code> / <code>BadgeConsul</code> / <code>BadgeStrikeTeam</code> / <code>BadgeDefenseTeam</code> / <code>BadgeSupportTeam</code> lines each take <code>1</code> or <code>0</code>, so you can show the president and consul but hide the team leads, for example.</li>
+  </ul>
+  <div class="box warn"><b>Needs the matching client</b>The badge text, per-office toggles and scale are drawn by the game client that ships with this kit, and pushed live from the server's <code>RaceLeaderEffect.ini</code>. A player on an <em>older</em> <code>RF_Online.bin</code> will keep showing the old single <strong>RACE LEADER</strong> plate. Redeploy both the server exe and the client after changing these keys.</div>
+</section>
+
+<nav class="pn" style="display:flex;justify-content:space-between;gap:12px;margin:22px 0 4px;"><a class="nav-prev" href="quest-system.html">&larr; Previous: Quest System (Classic &amp; Daily)</a><a class="nav-next" href="share-pvp.html">Next: Share PvP &rarr;</a></nav>
+  </main>
+</div>
+
+<footer>
+  RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
+</footer>
+<script>
+(function () {
+  var lb, lbImg, lbCap;
+  function build() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">&#10005;</button><img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lbImg = lb.querySelector('img');
+    lbCap = lb.querySelector('.lb-cap');
+    lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  function open(img) {
+    build();
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt || '';
+    var cap = img.parentNode ? img.parentNode.querySelector('figcaption') : null;
+    lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('figure.shot')) {
+      e.preventDefault();
+      open(t);
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boss Respawn Schedule &mdash; RF Online</title>
+<link rel="stylesheet" href="../assets/style.css?v=4">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="../index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="../index.html">Home</a>
+    <a href="../server-client.html">Server &amp; Client</a>
+    <a href="../modules-features.html" class="active">Modules / Features</a>
+    <a class="discord" href="https://discord.gg/czbhwUNPse" target="_blank" rel="noopener">&#128172; Discord</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Modules">
+    <a href="../modules-features.html#overview">How modules work</a>
+    <a href="additional-settings.html">Additional Settings (Auto-Target)</a>
+    <a href="animus.html">Animus (Summon Companion System)</a>
+    <a href="autoloot.html">Auto Loot</a>
+    <a href="battlepass.html">Battle Pass</a>
+    <a class="active" href="boss-respawn.html">Boss Respawn Schedule</a>
+    <a href="box-stack.html">Box Stack</a>
+    <a href="zoom-max.html">Camera Zoom Max</a>
+    <a href="chat-log.html">Chat Log</a>
+    <a href="chip-hp.html">Chip HP Bars</a>
+    <a href="chip-block.html">Chip No-Entry (Chip Block)</a>
+    <a href="chip-war.html">Chip War Control Panel</a>
+    <a href="discord.html">Discord Relay &amp; Feeds</a>
+    <a href="election-manager.html">Election Manager</a>
+    <a href="gm-command.html">GM Command Whitelist</a>
+    <a href="arrow-target.html">Group-Target Arrow</a>
+    <a href="item-stack.html">Item Stack Limit (1M)</a>
+    <a href="item-upgrade.html">Item Upgrade &amp; Jade</a>
+    <a href="megaphone.html">Megaphone</a>
+    <a href="module-logs.html">Module Logs</a>
+    <a href="npc-buffer.html">NPC Buffer</a>
+    <a href="potion-manager.html">Potion Effects</a>
+    <a href="potion-lua.html">Potion Lua Overrides</a>
+    <a href="killfeed.html">PvP Kill Feed</a>
+    <a href="quest-monster.html">Quest Monster Marks</a>
+    <a href="quest-system.html">Quest System (Classic &amp; Daily)</a>
+    <a href="race-leader-effect.html">Race Leader Effect</a>
+    <a href="share-pvp.html">Share PvP</a>
+    <a href="skill-desc.html">Skill Additional Description</a>
+    <a href="store-system.html">Store System (Shops, Goods &amp; Spawns)</a>
+    <a href="welcome-window.html">Welcome Window</a>
+    <span class="side-title">On this page</span>
+    <a class="sub" href="#br-what">What it does — and why you would use it</a>
+    <a class="sub" href="#br-activate">How to activate it</a>
+    <a class="sub" href="#br-lua">How to write the schedule</a>
+    <a class="sub" href="#br-ui">The in-game schedule window</a>
+    <a class="sub" href="#br-mapnames">Friendly map names (BossRespawnMap.lua)</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Boss Respawn Schedule</h1>
+    <p class="page-sub"><a href="../modules-features.html">&larr; All modules</a></p>
+
+<section id="boss-respawn">
+  <div class="doc-head">
+    <h2>Boss Respawn Schedule</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <figure class="shot">
+    <img src="../assets/img/boss-respawn-schedule.png" alt="The Boss Respawn Schedule window open in game showing two pit bosses with countdown timers and Live status, and the BOSS button beside SHOP on the bottom bar">
+    <figcaption>The in-game Boss Respawn Schedule window: one row per managed pit boss with its map, a live DD:HH:MM:SS countdown and a Live / Down status &mdash; opened from the new <strong>BOSS</strong> button beside SHOP on the bottom bar.</figcaption>
+  </figure>
+
+  <h3 id="br-what">What it does &mdash; and why you would use it</h3>
+  <p>Stock RF Online respawns pit bosses on each map's random monster regen &mdash; no fixed time, no announcement, no way to tell players when the next fight is. This module <strong>takes the pit bosses off the random regen</strong> and respawns them <strong>exactly on the times you write down</strong>:</p>
+  <ul>
+    <li><strong>Weekly slots</strong> &mdash; recurring spawns like &ldquo;every Friday at 21:30&rdquo;.</li>
+    <li><strong>One-off events</strong> &mdash; exact date-and-time spawns like &ldquo;2026-12-25 20:00&rdquo; for a Christmas boss; each fires once and is remembered, so a server restart never spawns it twice.</li>
+    <li><strong>Auto-despawn</strong> &mdash; optionally kill the boss N minutes after spawn if nobody did, so stale bosses never clutter the map.</li>
+    <li><strong>Zone announcements</strong> &mdash; tell every player when a boss spawns and when it dies; the defeat line names the player who landed the killing blow and their race.</li>
+    <li><strong>Exactly one instance</strong> &mdash; every stock respawn path (the random regen <em>and</em> the boot-time boss schedule) is suppressed for managed bosses, so a slot spawns one boss &mdash; never a duplicate standing on top of it.</li>
+    <li><strong>An in-game schedule window</strong> &mdash; a <strong>BOSS</strong> button beside SHOP opens a panel listing every managed boss with an accurate countdown, so players never have to ask &ldquo;when is Rock Jaw?&rdquo;.</li>
+  </ul>
+  <pre><code>Notice : [Boss] Rock Jaw has appeared in Elan.
+Notice : [Boss] Rock Jaw has been defeated in Elan by Artemis (Bellato).</code></pre>
+  <p class="muted">The defeat line credits the player the kill itself is credited to (the loot taker), with one of the three race names. When no player is credited &mdash; a guard tower finished the boss, for example &mdash; the line stays anonymous.</p>
+  <figure class="shot">
+    <img src="../assets/img/boss-respawn-defeat-announce.png" alt="In-game screenshot with the defeat notice banner across the top reading [Boss] Taraven has been defeated in Elan by checkquest, and the matching chat line with the killer race at the bottom left, both highlighted with red annotations">
+    <figcaption>The defeat announcement as players see it: the notice banner across the top of the screen <em>and</em> the matching line in the chat log (red arrow and box added here to point at them). The killer's name and race ride on both.</figcaption>
+  </figure>
+  <p>The schedule lives in <strong>one plain-text Lua file written for non-programmers</strong>. The old Odin-style <code>BossRespawnManager.ini</code> plus per-map <code>.ini</code> files still work exactly as before when the Lua file is switched off.</p>
+  <div class="box info"><b>One master switch</b>When <code>BossRespawn.lua</code> has <code>Enable = true</code>, the zone follows <em>that file</em> and ignores <code>BossRespawnManager.ini</code> completely. With <code>Enable = false</code> the Lua file is ignored and the INI behaves exactly like it always did. The two can never fight over the same boss.</div>
+
+  <h3 id="br-activate">How to activate it</h3>
+  <ol class="steps">
+    <li>
+      <strong>Turn the Lua schedule on (recommended).</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\BossRespawnManager\BossRespawn.lua</span> in Notepad and set <code>Enable = true</code> near the top:
+      <pre><code>BossRespawn = {
+
+  -- Master switch for this file. true = the zone follows BossRespawn.lua.
+  Enable = true,</code></pre>
+      Save the file. A running Zone server re-reads it a moment later &mdash; <strong>no restart needed</strong>.
+    </li>
+    <li>
+      <strong>Or use the classic INI instead.</strong> Leave <code>Enable = false</code> in the Lua file, then open <span class="path">Modules\BossRespawnManager\BossRespawnManager.ini</span> and set:
+      <pre><code>[General]
+Enable = 1
+MapNum = 1
+Map0 = Elan</code></pre>
+      Each <code>Map&lt;n&gt;</code> name points at a per-map file in the same folder (here <code>Elan.ini</code>) holding the old Odin-format schedule. This path is kept for servers already running on the INI.
+    </li>
+    <li>
+      <strong>Write your boss list.</strong> Add one block per pit boss under <code>Bosses =</code> &mdash; see <a href="#br-lua">Write the schedule</a>.
+    </li>
+    <li>
+      <strong>Check it in game.</strong> Press the <strong>BOSS</strong> button beside SHOP: the window lists every managed boss with its countdown. A boss whose slot just passed spawns within a second of the save, and the zone gets the announcement line when <code>Announce = true</code>.
+    </li>
+  </ol>
+  <div class="box warn"><b>Do not delete the files</b>The Zone server needs <code>BossRespawnManager.ini</code> and <code>BossRespawn.lua</code> at startup &mdash; deleting either stops the server from booting. To switch the feature off, set <code>Enable = false</code> in the Lua file <em>and</em> <code>Enable = 0</code> in the INI.</div>
+  <div class="box warn"><b>First turn-on spawns due bosses immediately</b>The rule is &ldquo;spawn when the most recent scheduled time is later than the last recorded spawn&rdquo;. On a brand-new file there is no last spawn, so the most recent past slot (for example yesterday's 19:00) is due at once and the boss comes up the moment you enable it. From then on it follows the schedule &mdash; plan the first enable accordingly.</div>
+
+  <h3 id="br-lua">How to write the schedule</h3>
+  <p>Everything is one list of boss blocks. Copy a block, change the map / code / times, add as many as you like:</p>
+  <pre><code>BossRespawn = {
+
+  Enable = true,          -- master switch: true = the zone follows THIS file
+  Announce = true,        -- tell the whole zone when a boss spawns / dies
+
+  Bosses = {
+
+    {
+      Map  = "Elan",      -- map name (the same name the old .ini used)
+      Code = "0AB07",     -- pit boss monster code from the monster table
+
+      Weekly = {          -- recurring weekly spawn times
+        { day = "Friday",    hour = 21, minute = 30 },
+        { day = "Saturday",  hour = 21, minute = 30 },
+      },
+    },
+
+    {
+      Map  = "Elan",
+      Code = "0AF07",
+      DeathMin = 120,     -- auto-kill 2 hours after spawn if nobody killed it
+
+      Weekly = {
+        { day = "Friday", hour = 21, minute = 30 },
+      },
+      Events = {          -- one-off exact-date spawns
+        "2026-12-25 20:00",   -- Christmas event
+        "2026-12-31 23:00",   -- New Year's Eve event
+      },
+    },
+  },
+}</code></pre>
+  <table>
+    <tr><th>Key</th><th>Where</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td>top</td><td><code>true</code> = the zone follows this file and ignores the INI; <code>false</code> = this file is ignored.</td></tr>
+    <tr><td><code>Announce</code></td><td>top</td><td><code>true</code> = broadcast a line to every player when a managed boss spawns and when it dies. The defeat line carries the killer's name and race.</td></tr>
+    <tr><td><code>AnnounceBlacklist</code></td><td>top</td><td>Boss codes that stay <em>silent on death only</em> (their spawn is still announced).</td></tr>
+    <tr><td><code>Map</code></td><td>per boss</td><td>Map name, exactly as the old per-map <code>.ini</code> named it (for example <code>Elan</code>).</td></tr>
+    <tr><td><code>Code</code></td><td>per boss</td><td>Monster record code of the pit boss (the same code the old <code>.ini</code> used).</td></tr>
+    <tr><td><code>DeathMin</code></td><td>per boss</td><td>Kill the boss this many minutes after spawn if nobody did. <code>0</code> or omitted = never auto-kill.</td></tr>
+    <tr><td><code>Weekly</code></td><td>per boss</td><td>List of <code>{ day, hour, minute }</code>. <code>day</code> = <code>"Sunday"</code>&hellip;<code>"Saturday"</code> (or a number 0&ndash;6, 0 = Sunday), <code>hour</code> 0&ndash;23, <code>minute</code> 0&ndash;59.</td></tr>
+    <tr><td><code>Events</code></td><td>per boss</td><td>List of one-off spawns as text <code>"YYYY-MM-DD HH:MM"</code>. Each fires once, then is remembered &mdash; restarting the server does not spawn it again.</td></tr>
+  </table>
+  <ul>
+    <li><strong>All times are the server PC's local time</strong>, 24-hour clock (<code>19</code> = 7 pm).</li>
+    <li><strong>Weekly only, Events only, or both</strong> &mdash; a boss spawns when the most recent slot or event time has passed since it last spawned.</li>
+    <li><strong>The server keeps its own memory.</strong> Last-spawn / killed state is written to a small per-map <code>.ini</code> beside the config so a restart never re-fires an event or doubles a spawn. Do not hand-edit those files while the server is running.</li>
+    <li><strong>Comments are your friend.</strong> Anything after <code>--</code> on a line is ignored &mdash; label your bosses freely.</li>
+  </ul>
+
+  <h3 id="br-ui">The in-game schedule window</h3>
+  <p>A <strong>BOSS</strong> button sits immediately right of SHOP on the bottom bar. Pressing it opens the Boss Respawn Schedule panel (the screenshot above); pressing it again, the <strong>X</strong>, or <code>Esc</code> closes it. The window is <strong>draggable</strong> by its title bar and remembers where you put it between opens.</p>
+  <table>
+    <tr><th>Column</th><th>What it shows</th></tr>
+    <tr><td><strong>Name</strong></td><td>The boss's display name from the monster table.</td></tr>
+    <tr><td><strong>Map</strong></td><td>The map the boss is managed on.</td></tr>
+    <tr><td><strong>Remain Time</strong></td><td>A live <code>DD:HH:MM:SS</code> countdown to the next scheduled spawn slot. It ticks every second on your screen and is re-synced from the server every ~30 seconds while the window is open.</td></tr>
+    <tr><td><strong>Status</strong></td><td><span class="badge on">Live</span> the boss is up right now &mdash; the countdown then shows the <em>next</em> scheduled slot, i.e. when it respawns if the current one dies. <span class="badge off">Down</span> the boss is waiting to respawn and the countdown is the respawn moment itself.</td></tr>
+  </table>
+  <div class="box info"><b>What the zone actually follows</b>The window is filled by the Zone server from whichever schedule source is active &mdash; <code>BossRespawn.lua</code> when its <code>Enable = true</code>, otherwise <code>BossRespawnManager.ini</code>. The UI can never disagree with the schedule the map really follows; with the module off the window simply says so.</div>
+  <ul>
+    <li><strong>Pagination.</strong> Ten bosses per page; the numbered tabs at the bottom left switch pages (up to 8).</li>
+    <li><strong>Row accents.</strong> A green tick on a row's left edge means Live, steel means Down &mdash; readable at a glance.</li>
+    <li><strong>&ldquo;Spawning...&rdquo;</strong> appears for the moment between a countdown reaching zero and the boss actually coming up.</li>
+  </ul>
+
+  <h3 id="br-mapnames">Friendly map names (<code>BossRespawnMap.lua</code>)</h3>
+  <p>By default the schedule window, the on-screen boss announcements and the <a href="discord.html">Discord</a> boss feed all print the map&rsquo;s <strong>internal code</strong> &mdash; <code>NeutralAS2</code>, <code>Elan</code>, <code>Platform01</code>&hellip; &mdash; because that is the only map identifier the server keeps. This is readable to you but not to players. <span class="path">BossRespawnMap.lua</span> lets you give each map a <strong>friendly display name</strong> once, and every one of those three places then shows it:</p>
+  <pre><code>Before:  King Crook      NeutralAS2      00:00:44:16   Live
+After:   King Crook      Neutral Zone A-2 00:00:44:16   Live</code></pre>
+  <p>It is a <strong>display-only</strong> file: it changes nothing about <em>when</em> or <em>where</em> a boss spawns &mdash; the schedule still comes from <code>BossRespawn.lua</code> (or the INI). It only renames the map for players.</p>
+  <ol class="steps">
+    <li><strong>Open the file.</strong> <span class="path">.Server\Zoneserver\RF_Bin\Modules\BossRespawnManager\BossRespawnMap.lua</span> in Notepad.</li>
+    <li><strong>Turn it on.</strong> Set <code>Enable = true</code> at the top of the table. With <code>false</code> (or <code>0</code>) the whole file is ignored and the raw map code is shown again.</li>
+    <li><strong>Rename your maps.</strong> Each line is <code>["MapCode"] = "Name you want shown"</code>. The key must be the exact map code you already use in <code>BossRespawn.lua</code>&rsquo;s <code>Map = "..."</code> (the old INI <code>Map#</code> name); the value is free text.</li>
+    <li><strong>Save &mdash; no restart.</strong> A running zone hot-reloads it; the next announcement and the next time the schedule window is opened show the new names.</li>
+  </ol>
+  <pre><code>BossRespawnMap = {
+  Enable = true,                       -- false / 0 = show the raw map code again
+
+  ["NeutralA"]       = "Neutral Zone A",
+  ["NeutralAS2"]     = "Neutral Zone A-2",
+  ["Elan"]           = "Elan",
+  ["Platform01"]     = "Platform 01",
+  ["Mountain_Beast"] = "Mountain Beast",
+}</code></pre>
+  <div class="box info"><b>Name lookup order</b>For each map the server uses the first name it finds: <strong>1)</strong> <code>BossRespawnMap.lua</code> (when its <code>Enable = true</code>), <strong>2)</strong> the <code>[MapNames]</code> section of <code>BossRespawnManager.ini</code>, <strong>3)</strong> the raw map code. So the Lua file <em>overrides</em> the INI, and any map you leave out simply falls back to its code &mdash; nothing breaks.</div>
+  <div class="box warn"><b>Optional file</b>Unlike the schedule files, <code>BossRespawnMap.lua</code> is <em>not</em> required at boot &mdash; delete it and the module keeps working on the INI <code>[MapNames]</code> / raw codes. Keys are matched case-sensitively against the map code, so <code>NeutralAS2</code> and <code>neutralas2</code> are different entries.</div>
+</section>
+
+<nav class="pn" style="display:flex;justify-content:space-between;gap:12px;margin:22px 0 4px;"><a class="nav-prev" href="battlepass.html">&larr; Previous: Battle Pass</a><a class="nav-next" href="box-stack.html">Next: Box Stack &rarr;</a></nav>
+  </main>
+</div>
+
+<footer>
+  RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
+</footer>
+<script>
+(function () {
+  var lb, lbImg, lbCap;
+  function build() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">&#10005;</button><img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lbImg = lb.querySelector('img');
+    lbCap = lb.querySelector('.lb-cap');
+    lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  function open(img) {
+    build();
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt || '';
+    var cap = img.parentNode ? img.parentNode.querySelector('figcaption') : null;
+    lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('figure.shot')) {
+      e.preventDefault();
+      open(t);
+    }
+  });
+})();
+</script>
+</body>
+</html>

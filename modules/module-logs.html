@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Module Logs &mdash; RF Online</title>
+<link rel="stylesheet" href="../assets/style.css?v=4">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="../index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="../index.html">Home</a>
+    <a href="../server-client.html">Server &amp; Client</a>
+    <a href="../modules-features.html" class="active">Modules / Features</a>
+    <a class="discord" href="https://discord.gg/czbhwUNPse" target="_blank" rel="noopener">&#128172; Discord</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Modules">
+    <a href="../modules-features.html#overview">How modules work</a>
+    <a href="additional-settings.html">Additional Settings (Auto-Target)</a>
+    <a href="animus.html">Animus (Summon Companion System)</a>
+    <a href="autoloot.html">Auto Loot</a>
+    <a href="battlepass.html">Battle Pass</a>
+    <a href="boss-respawn.html">Boss Respawn Schedule</a>
+    <a href="box-stack.html">Box Stack</a>
+    <a href="zoom-max.html">Camera Zoom Max</a>
+    <a href="chat-log.html">Chat Log</a>
+    <a href="chip-hp.html">Chip HP Bars</a>
+    <a href="chip-block.html">Chip No-Entry (Chip Block)</a>
+    <a href="chip-war.html">Chip War Control Panel</a>
+    <a href="discord.html">Discord Relay &amp; Feeds</a>
+    <a href="election-manager.html">Election Manager</a>
+    <a href="gm-command.html">GM Command Whitelist</a>
+    <a href="arrow-target.html">Group-Target Arrow</a>
+    <a href="item-stack.html">Item Stack Limit (1M)</a>
+    <a href="item-upgrade.html">Item Upgrade &amp; Jade</a>
+    <a href="megaphone.html">Megaphone</a>
+    <a class="active" href="module-logs.html">Module Logs</a>
+    <a href="npc-buffer.html">NPC Buffer</a>
+    <a href="potion-manager.html">Potion Effects</a>
+    <a href="potion-lua.html">Potion Lua Overrides</a>
+    <a href="killfeed.html">PvP Kill Feed</a>
+    <a href="quest-monster.html">Quest Monster Marks</a>
+    <a href="quest-system.html">Quest System (Classic &amp; Daily)</a>
+    <a href="race-leader-effect.html">Race Leader Effect</a>
+    <a href="share-pvp.html">Share PvP</a>
+    <a href="skill-desc.html">Skill Additional Description</a>
+    <a href="store-system.html">Store System (Shops, Goods &amp; Spawns)</a>
+    <a href="welcome-window.html">Welcome Window</a>
+    <span class="side-title">On this page</span>
+    <a class="sub" href="#ml-what">What it is</a>
+    <a class="sub" href="#ml-use">Reading the logs when something is wrong</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Module Logs</h1>
+    <p class="page-sub"><a href="../modules-features.html">&larr; All modules</a></p>
+
+<section id="module-logs">
+  <div class="doc-head">
+    <h2>Module Logs</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge on">Automatic</span>
+    </div>
+  </div>
+
+  <h3 id="ml-what">What it is</h3>
+  <p>Every feature module on this server keeps its own plain-language diary. When the Zone server starts, it creates a <span class="path">ModulesLog</span> folder and writes one small <code>.log</code> file per feature &mdash; for example <em>Race Leader Effect.log</em>, <em>Client Manager.log</em>, <em>Welcome Window.log</em> &mdash; recording whether the feature started, whether it is on or off, when your saved edits were applied, and any problem it hit. There is nothing to turn on and nothing to configure; it just works.</p>
+  <p>The logs live beside the server's other output, at:</p>
+  <pre><code>.Server\Zoneserver\ZoneServerLog\ModulesLog\</code></pre>
+
+  <h3 id="ml-use">Reading the logs when something is wrong</h3>
+  <ul>
+    <li><strong>Start with <em>_ALL PROBLEMS.log</em>.</strong> This one file collects every warning and error from <em>all</em> modules, so you can see at a glance whether anything is unhappy.</li>
+    <li><strong>Then open the matching feature file</strong> for the full story on that one module. The newest entry is at the bottom.</li>
+    <li><strong>Each line is tagged in plain English:</strong> <code>INFO</code> (just what happened), <code>CHECK</code> (something worth a look), and <code>PROBLEM</code> (something that failed and needs fixing).</li>
+  </ul>
+  <div class="box info"><b>No programming needed</b>The wording is written for a server owner, not a developer. If a feature is not behaving, open its log first &mdash; it will usually tell you exactly which setting or missing file is the cause.</div>
+  <div class="box warn"><b>Logs reset on each server start</b>These are per-session logs: each time the Zone server starts, the files are recreated fresh for that run. If you need history from an earlier session, copy the files out before restarting.</div>
+</section>
+
+<nav class="pn" style="display:flex;justify-content:space-between;gap:12px;margin:22px 0 4px;"><a class="nav-prev" href="megaphone.html">&larr; Previous: Megaphone</a><a class="nav-next" href="npc-buffer.html">Next: NPC Buffer &rarr;</a></nav>
+  </main>
+</div>
+
+<footer>
+  RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
+</footer>
+<script>
+(function () {
+  var lb, lbImg, lbCap;
+  function build() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">&#10005;</button><img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lbImg = lb.querySelector('img');
+    lbCap = lb.querySelector('.lb-cap');
+    lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  function open(img) {
+    build();
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt || '';
+    var cap = img.parentNode ? img.parentNode.querySelector('figcaption') : null;
+    lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('figure.shot')) {
+      e.preventDefault();
+      open(t);
+    }
+  });
+})();
+</script>
+</body>
+</html>

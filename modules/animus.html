@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Animus (Summon Companion System) &mdash; RF Online</title>
+<link rel="stylesheet" href="../assets/style.css?v=4">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="../index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="../index.html">Home</a>
+    <a href="../server-client.html">Server &amp; Client</a>
+    <a href="../modules-features.html" class="active">Modules / Features</a>
+    <a class="discord" href="https://discord.gg/czbhwUNPse" target="_blank" rel="noopener">&#128172; Discord</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Modules">
+    <a href="../modules-features.html#overview">How modules work</a>
+    <a href="additional-settings.html">Additional Settings (Auto-Target)</a>
+    <a class="active" href="animus.html">Animus (Summon Companion System)</a>
+    <a href="autoloot.html">Auto Loot</a>
+    <a href="battlepass.html">Battle Pass</a>
+    <a href="boss-respawn.html">Boss Respawn Schedule</a>
+    <a href="box-stack.html">Box Stack</a>
+    <a href="zoom-max.html">Camera Zoom Max</a>
+    <a href="chat-log.html">Chat Log</a>
+    <a href="chip-hp.html">Chip HP Bars</a>
+    <a href="chip-block.html">Chip No-Entry (Chip Block)</a>
+    <a href="chip-war.html">Chip War Control Panel</a>
+    <a href="discord.html">Discord Relay &amp; Feeds</a>
+    <a href="election-manager.html">Election Manager</a>
+    <a href="gm-command.html">GM Command Whitelist</a>
+    <a href="arrow-target.html">Group-Target Arrow</a>
+    <a href="item-stack.html">Item Stack Limit (1M)</a>
+    <a href="item-upgrade.html">Item Upgrade &amp; Jade</a>
+    <a href="megaphone.html">Megaphone</a>
+    <a href="module-logs.html">Module Logs</a>
+    <a href="npc-buffer.html">NPC Buffer</a>
+    <a href="potion-manager.html">Potion Effects</a>
+    <a href="potion-lua.html">Potion Lua Overrides</a>
+    <a href="killfeed.html">PvP Kill Feed</a>
+    <a href="quest-monster.html">Quest Monster Marks</a>
+    <a href="quest-system.html">Quest System (Classic &amp; Daily)</a>
+    <a href="race-leader-effect.html">Race Leader Effect</a>
+    <a href="share-pvp.html">Share PvP</a>
+    <a href="skill-desc.html">Skill Additional Description</a>
+    <a href="store-system.html">Store System (Shops, Goods &amp; Spawns)</a>
+    <a href="welcome-window.html">Welcome Window</a>
+    <span class="side-title">On this page</span>
+    <a class="sub" href="#an-what">What it does — and why you would use it</a>
+    <a class="sub" href="#an-files">The 10 config files</a>
+    <a class="sub" href="#an-activate">How to activate it</a>
+    <a class="sub" href="#an-server">Server behaviour knobs</a>
+    <a class="sub" href="#an-client">Client display knobs</a>
+    <a class="sub" href="#an-table">The stat-table override (DtableScript.lua)</a>
+    <a class="sub" href="#an-rules">Rules &amp; limits</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Animus (Summon Companion System)</h1>
+    <p class="page-sub"><a href="../modules-features.html">&larr; All modules</a></p>
+
+<section id="animus">
+  <div class="doc-head">
+    <h2>Animus (Summon Companion System)</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="an-what">What it does &mdash; and why you would use it</h3>
+  <p>An <strong>animus</strong> is a summonable companion creature that fights beside its owner &mdash; the four species <strong>Paimon</strong>, <strong>Hecate</strong>, <strong>Inanna</strong> and <strong>Isis</strong>, each also sold in a stronger <strong>sealed / _S</strong> form. They gain experience as you play, level up, and can be recalled to follow you, attack, target or heal. Everything about them &mdash; how much FP a summon costs, how fast they level, how far they wander, what stats each level has, and how they are shown on screen &mdash; is normally hard-coded inside the server and client binaries.</p>
+  <p>The <strong>Animus feature</strong> lifts all of that into a folder of plain-text <code>.lua</code> config files. Each file controls one area of the system and has its own <code>Enable</code> switch. While a file&rsquo;s <code>Enable = false</code> the game behaves <strong>exactly</strong> as stock (every shipped default in these files <em>is</em> the current game value, so switching a file on without editing anything changes nothing). Flip a file to <code>Enable = true</code> and the numbers you write take over &mdash; no recompiling, and the running Zone server notices a saved edit in about half a second.</p>
+  <div class="box info"><b>Server-side and client-side files</b>Eight of the ten files tune the <span class="badge server">Server</span> (gameplay maths and the stat table). Three of them also reach the <span class="badge client">Client</span> (the Summoning board display, packet handling and command hotkeys) &mdash; the game client runs no Lua of its own, so the server reads those files and pushes the resolved values to every player&rsquo;s client automatically. Client-side effects only appear for a game client that was <strong>rebuilt with Animus support</strong>; an unmodified client simply ignores the push and keeps its stock behaviour.</div>
+
+  <h3 id="an-files">The 10 config files</h3>
+  <p>All ten live together in <span class="path">.Server\Zoneserver\RF_Bin\Modules\Animus\</span>. They are independent &mdash; you can turn on any subset. Each is a single Lua table with an <code>Enable</code> line at the top and the knobs below it.</p>
+  <table>
+    <tr><th>File</th><th>Side</th><th>What it governs</th></tr>
+    <tr><td><code>DModStorage.lua</code></td><td><span class="badge server">Server</span></td><td>Documents the data model (where exp / HP / FP / level are stored) and the operator-facing capacity numbers. Mostly informational &mdash; the compiled field layout cannot be relocated from a config file.</td></tr>
+    <tr><td><code>DtableScript.lua</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>The <strong>full animus stat table</strong> &mdash; every level of every species (HP, FP, attack, defence, resistances, recovery&hellip;). When on it overrides both the server&rsquo;s in-memory stat structs and the client&rsquo;s <code>Character.edf</code> rows. This is the flagship file, detailed <a href="#an-table">below</a>.</td></tr>
+    <tr><td><code>NetProtocol.lua</code></td><td><span class="badge server">Server</span></td><td>The animus wire-protocol family id and per-message enable. Almost entirely informational &mdash; renumbering the wire requires a matching rebuilt client, so the id is force-kept at the stock value.</td></tr>
+    <tr><td><code>SRecallReturnCycle.lua</code></td><td><span class="badge server">Server</span></td><td>Summon / recall rules: FP cost, re-summon cooldown, the mastery gate, FP-drain interval, idle / max-distance / death auto-return timings.</td></tr>
+    <tr><td><code>SCombatAI.lua</code></td><td><span class="badge server">Server</span></td><td>Combat behaviour: the mode a fresh summon starts in, a forced target-acquisition radius, and whether attack / target / move commands are honoured.</td></tr>
+    <tr><td><code>SLvlExp.lua</code></td><td><span class="badge server">Server</span></td><td>Experience maths: the level-difference gate, the kill / hit exp divisors, heal and defence exp multipliers, a hard level cap, and a one-off reset of already-over-levelled animus.</td></tr>
+    <tr><td><code>SAcqPurchase.lua</code></td><td><span class="badge server">Server</span></td><td>New acquisition rules: force a purchased animus to arrive at level 1, and whether a player may register a second animus of a type they already own.</td></tr>
+    <tr><td><code>CBoardUi.lua</code></td><td><span class="badge client">Client</span></td><td>The Summoning / animus board on the client: show the level number, show the exp bar, and how the exp bar fills.</td></tr>
+    <tr><td><code>CPacketPros.lua</code></td><td><span class="badge client">Client</span></td><td>How the client resolves which animus a packet refers to &mdash; by the server storage serial (robust) or the legacy client datatable index.</td></tr>
+    <tr><td><code>CHotkey.lua</code></td><td><span class="badge client">Client</span></td><td>The three animus command keys (attack / target / move) as Windows virtual-key codes, overriding the client&rsquo;s <code>KeyMap.dat</code> bindings.</td></tr>
+  </table>
+
+  <h3 id="an-activate">How to activate it</h3>
+  <ol class="steps">
+    <li><strong>Open the folder.</strong> Go to <span class="path">.Server\Zoneserver\RF_Bin\Modules\Animus\</span> and open the file you want to tune in Notepad. Each file opens with a plain-English guide at the top.</li>
+    <li><strong>Flip that file&rsquo;s switch.</strong> Find the <code>Enable = false</code> line near the top of the table and change <code>false</code> to <code>true</code> (lowercase):
+      <pre><code>AnimusRecallReturn =
+{
+    Enable                = true,   -- was false
+    RecallFPCost          = 60,
+    ...
+}</code></pre>
+      Saving applies it live &mdash; a running Zone server picks it up in about half a second, no restart.</li>
+    <li><strong>Change only the numbers you care about.</strong> Every knob already sits at its stock value, so you edit just the ones you want to move. Omit / leave a line and it keeps that stock value.</li>
+    <li><strong>Client knobs need a rebuilt client.</strong> <code>CBoardUi</code>, <code>CPacketPros</code> and <code>CHotkey</code> only do something when players run a client that has the Animus push compiled in; a stock client ignores them.</li>
+    <li><strong>Revert any time.</strong> Set a file back to <code>Enable = false</code> and save &mdash; that area returns byte-for-byte to stock instantly.</li>
+  </ol>
+  <div class="box warn"><b>Do not delete these files, and one deploy note</b>Like every module, the Animus files are <strong>required when the Zone server starts</strong> &mdash; a missing file stops it booting. To turn the feature off, set <code>Enable = false</code>, never remove the file. Also, because this feature overrides the compiled stat table and pushes it to the client, it only fully works when you are running the <strong>current</strong> Zone server executable and a matching rebuilt <code>RF_Online.bin</code> client. With an older binary the config is read but the deep overrides / client push will not take effect.</div>
+
+  <h3 id="an-server">Server behaviour knobs</h3>
+  <p>These are the everyday gameplay tunables. Every value below is the shipped default (so <code>Enable = true</code> with no edits = stock). Ranges are enforced by the server: a typo or out-of-range number is clamped to the safe bound rather than corrupting anything.</p>
+
+  <h4><code>SRecallReturnCycle.lua</code> &mdash; summon / recall / auto-return</h4>
+  <table>
+    <tr><th>Key</th><th>Default</th><th>Range</th><th>Meaning</th></tr>
+    <tr><td><code>RecallFPCost</code></td><td>60</td><td>0 &ndash; 10000</td><td>FP the player pays to summon (recall) an animus.</td></tr>
+    <tr><td><code>RecallCooldownSec</code></td><td>30</td><td>0 &ndash; 3600</td><td>Seconds before the <em>same</em> animus can be re-summoned after an unfree recall.</td></tr>
+    <tr><td><code>RequireMasteryGate</code></td><td>true</td><td>&mdash;</td><td><code>false</code> removes the mastery / level checks that normally block summoning an animus the player has not mastered enough.</td></tr>
+    <tr><td><code>FpDrainIntervalMs</code></td><td>1000</td><td>100 &ndash; 600000</td><td>How often (ms) a summoned animus drains its master&rsquo;s FP. Bigger = drains less often.</td></tr>
+    <tr><td><code>ReturnOnMasterFpEmpty</code></td><td>true</td><td>&mdash;</td><td><code>false</code> stops the animus auto-returning the instant the master&rsquo;s FP hits 0.</td></tr>
+    <tr><td><code>IdleReturnSec</code></td><td>60</td><td>0 &ndash; 86400</td><td>Seconds of idling (no target / no move order) before the animus returns on its own. Bigger = stays out longer.</td></tr>
+    <tr><td><code>MaxDistanceUnits</code></td><td>300</td><td>10 &ndash; 5000</td><td>Distance (world units) beyond which the animus breaks off and returns.</td></tr>
+    <tr><td><code>DeathReturnSec</code></td><td>5</td><td>0 &ndash; 3600</td><td>Delay (seconds) after the master dies before the animus returns.</td></tr>
+  </table>
+
+  <h4><code>SCombatAI.lua</code> &mdash; combat mode / targeting</h4>
+  <table>
+    <tr><th>Key</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td><code>DefaultMode</code></td><td>1</td><td>Mode a freshly summoned animus starts in: <code>1</code> = follow master / passive (stock), <code>0</code> = aggressive (auto-acquire targets). Players can still change it in-game.</td></tr>
+    <tr><td><code>AutoTargetRange</code></td><td>0</td><td>Overrides the target-acquisition view radius (world units). <code>0</code> = keep each species&rsquo; own datatable value (stock); set <code>&gt; 0</code> to force one radius for every animus (clamped 0&ndash;1000).</td></tr>
+    <tr><td><code>CommandEnable</code></td><td>true</td><td><code>false</code> disables the attack / target / move command handling server-side.</td></tr>
+  </table>
+
+  <h4><code>SLvlExp.lua</code> &mdash; experience / level cap / reset</h4>
+  <p>Animus exp is earned from play and mapped to a level through the stat table. The <strong>lower a divisor, the faster an animus levels.</strong></p>
+  <table>
+    <tr><th>Key</th><th>Default</th><th>Range</th><th>Meaning</th></tr>
+    <tr><td><code>ExpLevelDiffGate</code></td><td>10</td><td>0 &ndash; 200</td><td>Max <code>|animusLevel - monsterLevel|</code> for an event to award <em>any</em> exp. Bigger lets an animus gain exp from mobs further from its level (fixes &ldquo;no exp from low mobs&rdquo;).</td></tr>
+    <tr><td><code>ExpKillDivisor</code></td><td>5000</td><td>1 &ndash; 1000000</td><td>Divisor for the master-kill exp path (smaller = more exp per kill).</td></tr>
+    <tr><td><code>ExpHitDivisor</code></td><td>500</td><td>1 &ndash; 1000000</td><td>Divisor for the animus-own-attack exp path.</td></tr>
+    <tr><td><code>HealExpMultiplier</code></td><td>2</td><td>0 &ndash; 1000</td><td>Inanna: exp = this &times; HP healed.</td></tr>
+    <tr><td><code>DefExpMultiplier</code></td><td>4</td><td>0 &ndash; 1000</td><td>On-hit defence exp = this &times; damage taken.</td></tr>
+    <tr><td><code>MaxAnimusLevel</code></td><td>0</td><td>&mdash;</td><td>Hard level ceiling. <code>0</code> = no cap (use the stat-table ceiling, stock). Set <code>&gt; 0</code> to stop any animus gaining levels past it.</td></tr>
+    <tr><td><code>ResetStoredAnimusToLvl1</code></td><td>false</td><td>&mdash;</td><td><strong>One-off fix</strong> for already-over-levelled animus (e.g. a bought Lv51 Hecate). While <code>true</code>, the next time each character logs in every registered animus is zeroed to Lv1 and saved to the DB. Workflow: set <code>true</code>, let players relog once, then set it back to <code>false</code>.</td></tr>
+  </table>
+
+  <h4><code>SAcqPurchase.lua</code> &mdash; how a new animus arrives</h4>
+  <table>
+    <tr><th>Key</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td><code>ForcePurchasedLvl1</code></td><td>true</td><td>An animus bought from any store arrives at <strong>level 1</strong> (exp forced to 0, HP/FP recomputed). Fixes a purchased animus booting up at a high level because the store&rsquo;s durability column is read as exp. <code>false</code> keeps the raw value.</td></tr>
+    <tr><td><code>AllowDuplicateAnimusTypes</code></td><td>false</td><td><code>false</code> rejects registering a second animus of a type the player already owns (stock). <code>true</code> lets them own several of the same type.</td></tr>
+  </table>
+
+  <h3 id="an-client">Client display knobs</h3>
+  <p>These three are read by the server and pushed to each client. They are only visible on a client <strong>rebuilt with Animus support</strong>, and take effect after the player reconnects (or on the next re-push).</p>
+  <h4><code>CBoardUi.lua</code> &mdash; the Summoning board</h4>
+  <table>
+    <tr><th>Key</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td><code>ShowLevel</code></td><td>true</td><td>Draw the current animus Lv number on the board.</td></tr>
+    <tr><td><code>ShowExpBar</code></td><td>true</td><td>Draw the exp bar on the board.</td></tr>
+    <tr><td><code>ExpBarFromExp</code></td><td>true</td><td>Exp-bar fill = <code>currentExp / expForThisLevel</code> (true) vs the legacy durability-style fill (false).</td></tr>
+  </table>
+  <h4><code>CPacketPros.lua</code> &mdash; packet handling</h4>
+  <table>
+    <tr><th>Key</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td><code>ResolveByServerSerial</code></td><td>true</td><td>When several animus messages reference an animus, resolve it by the <em>server&rsquo;s</em> storage serial (true, robust against client row drift) rather than the client datatable index (false, legacy).</td></tr>
+  </table>
+  <h4><code>CHotkey.lua</code> &mdash; command hotkeys</h4>
+  <p>Values are Windows <strong>virtual-key codes (decimal)</strong>. Handy ones: <code>A&ndash;Z = 65..90</code>, <code>0&ndash;9 = 48..57</code>, <code>F1..F12 = 112..123</code>, <code>SPACE = 32</code>, <code>TAB = 9</code>, <code>ENTER = 13</code>.</p>
+  <table>
+    <tr><th>Key</th><th>Default</th><th>Stock key</th></tr>
+    <tr><td><code>AttackVk</code></td><td>190</td><td><code>.</code> (period)</td></tr>
+    <tr><td><code>TargetVk</code></td><td>188</td><td><code>,</code> (comma)</td></tr>
+    <tr><td><code>MoveVk</code></td><td>191</td><td><code>/</code> (slash)</td></tr>
+  </table>
+
+  <h3 id="an-table">The stat-table override (<code>DtableScript.lua</code>)</h3>
+  <p>This is the big one. It is the complete animus stat table &mdash; one row for every <strong>(Type, Level)</strong> pair. While <code>Enable = true</code> it patches the server&rsquo;s in-memory stat structs <strong>and</strong> ships every row to each client to patch its <code>Character.edf</code> animus rows, so both sides stay in sync (which matters because the client derives the level, exp-bar and HP/FP denominators from its own copy).</p>
+  <p>It ships with <code>Enable = false</code> and a full, correct set of <strong>800 rows</strong> (all 16 types &times; levels 1&ndash;50) extracted from the real game data. With no edits and <code>Enable = true</code>, gameplay is unchanged &mdash; you then tune individual rows, save, and the zone hot-reloads and re-pushes the changed grid to every in-world client.</p>
+  <h4>The row format</h4>
+  <pre><code>Grid =
+{
+    { Type="Pai", Level=1, NeedExp=200, MaxHP=31, MaxFP=50, HPRecPoint=5, HPRecDelay=2000,
+      FPRecPoint=4, FPRecDelay=2000, AttackPower=0, DefencePower=15, ForcePower=16,
+      AttSklUnit=4, DefSklUnit=1, WeakPart=-1, Fire=0, Water=0, Soil=0, Wind=0,
+      AttackDelay=1, AttackRange=45, MoveSpeed=6, Width=20, Scale=100,
+      AttEffType=1, DefEffType=512 },
+    ...
+}</code></pre>
+  <ul>
+    <li><strong>Type</strong> &mdash; the animus species. Write it either as the numeric index <code>0..15</code> <em>or</em> as a <strong>quoted name</strong> (case-insensitive): e.g. <code>Type=0</code> and <code>Type="Pai"</code> mean the same row. It must be quoted &mdash; a bare <code>Type=Pai</code> is not valid Lua and that row is skipped.</li>
+    <li><strong>Level</strong> &mdash; <code>1..50</code>. The client block stride is 50, so levels 51&ndash;81 exist only in the server&rsquo;s <code>.dat</code> and are not shown here.</li>
+    <li><strong>NeedExp</strong> &mdash; the exp threshold for that level; must be <strong>strictly increasing</strong> within a species.</li>
+  </ul>
+  <h4>Type names and where each column applies</h4>
+  <table>
+    <tr><th>Type index</th><th>Name</th><th>Species</th><th>Applies</th></tr>
+    <tr><td>0 &ndash; 3</td><td><code>Pai</code> <code>Hec</code> <code>Ina</code> <code>Isi</code></td><td>Paimon, Hecate, Inanna, Isis</td><td>server class + client</td></tr>
+    <tr><td>4 &ndash; 7</td><td><code>SPai</code> <code>SHec</code> <code>SIna</code> <code>SIsi</code></td><td>The sealed / _S forms</td><td>server class + client</td></tr>
+    <tr><td>8 &ndash; 15</td><td><code>CPai</code> &hellip; <code>CSIsi</code></td><td>The &ldquo;C&rdquo; model variants</td><td><span class="badge client">Client</span> only &mdash; the server ignores these</td></tr>
+  </table>
+  <table>
+    <tr><th>Columns</th><th>Patched on</th></tr>
+    <tr><td><code>NeedExp, MaxHP, MaxFP, HPRecPoint, HPRecDelay, FPRecPoint, FPRecDelay, AttackPower, DefencePower, ForcePower, AttSklUnit, DefSklUnit, WeakPart, Fire, Water, Soil, Wind</code></td><td><span class="badge server">Server</span> and <span class="badge client">Client</span></td></tr>
+    <tr><td><code>AttackDelay, AttackRange, MoveSpeed, Width, Scale, AttEffType, DefEffType</code></td><td><span class="badge client">Client</span> display only (no matching server field &mdash; the server keeps its own <code>.dat</code> value)</td></tr>
+  </table>
+  <div class="box info"><b>WeakPart and omitted rows</b><code>WeakPart</code> is the source float <code>-1</code> meaning &ldquo;no weak part&rdquo;; it round-trips through the byte wire field as a signed char (<code>0xFF &harr; -1</code>), so leave it at <code>-1</code> unless an animus genuinely has a weak-part id. Any <strong>(Type, Level) row you omit keeps its stock value</strong> &mdash; but do <em>not</em> delete a <em>column</em> from a row, because an omitted column defaults to <code>0</code> and would corrupt a field that is read.</div>
+
+  <h3 id="an-rules">Rules &amp; limits</h3>
+  <ul>
+    <li><strong>Off = stock.</strong> Every shipped default reproduces the current game; with all ten files at <code>Enable = false</code> the deployed state is behaviourally identical to an untouched server. Turn on only the areas you intend to change.</li>
+    <li><strong>Ownership is four.</strong> A player can register <strong>four</strong> animus at once (a compiled DB / protocol limit &mdash; raising it needs a database + protocol migration, not a config edit). The Summoning window shows a <strong>ten-row type catalog</strong> (one socket per type, including sealed types); that catalog is separate from the four owned slots and <code>RegisteredCapacity</code> in <code>DModStorage.lua</code> is only informational here.</li>
+    <li><strong>Levels 1&ndash;50 on the client.</strong> The stat grid covers levels 1&ndash;50 because that is the client block size; the server <code>.dat</code> still holds 51&ndash;81, which stay as shipped unless you also add them.</li>
+    <li><strong>Some files are informational.</strong> <code>DModStorage.lua</code> (data model) and <code>NetProtocol.lua</code> (wire family id, force-kept at <code>22</code>) describe compiled behaviour that a config file cannot rewire &mdash; changing their numbers without a matching rebuilt client / DB migration will not move the wire or field layout.</li>
+    <li><strong>Keep exp thresholds monotonic.</strong> In <code>DtableScript.lua</code>, a species&rsquo; <code>NeedExp</code> must strictly increase with level, or the exp-to-level curve misbehaves.</li>
+    <li><strong>Current binaries required.</strong> The deep stat-table override and the client push only work on the current Zone server exe plus a matching rebuilt <code>RF_Online.bin</code>. On an older binary the config is read but those effects will not appear.</li>
+  </ul>
+</section>
+
+<nav class="pn" style="display:flex;justify-content:space-between;gap:12px;margin:22px 0 4px;"><a class="nav-prev" href="additional-settings.html">&larr; Previous: Additional Settings (Auto-Target)</a><a class="nav-next" href="autoloot.html">Next: Auto Loot &rarr;</a></nav>
+  </main>
+</div>
+
+<footer>
+  RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
+</footer>
+<script>
+(function () {
+  var lb, lbImg, lbCap;
+  function build() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">&#10005;</button><img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lbImg = lb.querySelector('img');
+    lbCap = lb.querySelector('.lb-cap');
+    lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  function open(img) {
+    build();
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt || '';
+    var cap = img.parentNode ? img.parentNode.querySelector('figcaption') : null;
+    lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('figure.shot')) {
+      e.preventDefault();
+      open(t);
+    }
+  });
+})();
+</script>
+</body>
+</html>

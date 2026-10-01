@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Camera Zoom Max &mdash; RF Online</title>
+<link rel="stylesheet" href="../assets/style.css?v=4">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="../index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="../index.html">Home</a>
+    <a href="../server-client.html">Server &amp; Client</a>
+    <a href="../modules-features.html" class="active">Modules / Features</a>
+    <a class="discord" href="https://discord.gg/czbhwUNPse" target="_blank" rel="noopener">&#128172; Discord</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Modules">
+    <a href="../modules-features.html#overview">How modules work</a>
+    <a href="additional-settings.html">Additional Settings (Auto-Target)</a>
+    <a href="animus.html">Animus (Summon Companion System)</a>
+    <a href="autoloot.html">Auto Loot</a>
+    <a href="battlepass.html">Battle Pass</a>
+    <a href="boss-respawn.html">Boss Respawn Schedule</a>
+    <a href="box-stack.html">Box Stack</a>
+    <a class="active" href="zoom-max.html">Camera Zoom Max</a>
+    <a href="chat-log.html">Chat Log</a>
+    <a href="chip-hp.html">Chip HP Bars</a>
+    <a href="chip-block.html">Chip No-Entry (Chip Block)</a>
+    <a href="chip-war.html">Chip War Control Panel</a>
+    <a href="discord.html">Discord Relay &amp; Feeds</a>
+    <a href="election-manager.html">Election Manager</a>
+    <a href="gm-command.html">GM Command Whitelist</a>
+    <a href="arrow-target.html">Group-Target Arrow</a>
+    <a href="item-stack.html">Item Stack Limit (1M)</a>
+    <a href="item-upgrade.html">Item Upgrade &amp; Jade</a>
+    <a href="megaphone.html">Megaphone</a>
+    <a href="module-logs.html">Module Logs</a>
+    <a href="npc-buffer.html">NPC Buffer</a>
+    <a href="potion-manager.html">Potion Effects</a>
+    <a href="potion-lua.html">Potion Lua Overrides</a>
+    <a href="killfeed.html">PvP Kill Feed</a>
+    <a href="quest-monster.html">Quest Monster Marks</a>
+    <a href="quest-system.html">Quest System (Classic &amp; Daily)</a>
+    <a href="race-leader-effect.html">Race Leader Effect</a>
+    <a href="share-pvp.html">Share PvP</a>
+    <a href="skill-desc.html">Skill Additional Description</a>
+    <a href="store-system.html">Store System (Shops, Goods &amp; Spawns)</a>
+    <a href="welcome-window.html">Welcome Window</a>
+    <span class="side-title">On this page</span>
+    <a class="sub" href="#zm-what">What it does — and why you would use it</a>
+    <a class="sub" href="#zm-activate">How to activate / extend it</a>
+    <a class="sub" href="#zm-config">The config file</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Camera Zoom Max</h1>
+    <p class="page-sub"><a href="../modules-features.html">&larr; All modules</a></p>
+
+<section id="zoom-max">
+  <div class="doc-head">
+    <h2>Camera Zoom Max</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="zm-what">What it does &mdash; and why you would use it</h3>
+  <p>The game caps how far each race&rsquo;s camera can pull <strong>back</strong> (zoom out) when a player scrolls the <strong>mouse wheel</strong> or holds <strong>Page Down</strong>. Those stock ceilings are <strong>250</strong> (Bellato), <strong>275</strong> (Cora) and <strong>290</strong> (Accretia) world units. This module lets you raise them so players get a wider, more top-down view &mdash; useful for spotting events, coordinating a war, or just surveying the map.</p>
+  <p>It is a <strong>server setting</strong>: the Zone server reads <span class="path">ZoomMax.ini</span> and pushes the per-race ceilings to every client on world entry and after each live edit, so a player cannot edit their own zoom limit. There is <strong>no client file</strong>.</p>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Server limits</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\ZoomMax\ZoomMax.ini</span></td><td>Master on/off plus a max zoom-out distance for each race.</td></tr>
+    <tr><td>Client half</td><td colspan="2">No client file. The server pushes the numbers and the client lifts its camera ceiling for both the mouse wheel and Page Up / Page Down. Both the Zone server and the game client must be the current build.</td></tr>
+  </table>
+  <div class="box info"><b>Only zoom-OUT is touched</b>This changes the <em>far</em> limit. How far you can zoom <em>in</em> (and the zoom <em>speed</em>) are unchanged. Zooming is symmetric otherwise: Page Up / wheel-up still zooms in, Page Down / wheel-down still zooms out &mdash; just, now farther.</div>
+
+  <h3 id="zm-activate">How to activate / extend it</h3>
+  <ol class="steps">
+    <li><strong>Open the file.</strong> <span class="path">.Server\Zoneserver\RF_Bin\Modules\ZoomMax\ZoomMax.ini</span> in Notepad.</li>
+    <li><strong>Turn it on.</strong> Set <code>[General] Enable = 1</code> to use your own ceilings (with <code>0</code> every player keeps the stock 250 / 275 / 290).</li>
+    <li><strong>Raise the numbers.</strong> Set <code>MaxZoomOutBellator</code> / <code>MaxZoomOutCora</code> / <code>MaxZoomOutAccretia</code> to the distance you want (whole world units, <code>10&ndash;5000</code>). For example <code>600</code> for a much wider view.</li>
+    <li><strong>Save &mdash; no restart.</strong> A running server hot-reloads and re-pushes to every online client; the new far limit applies to their next zoom.</li>
+    <li><strong>Test it.</strong> Log in and scroll the wheel down (or hold Page Down) &mdash; the camera now pulls back to your new ceiling instead of stopping at the stock one.</li>
+  </ol>
+  <div class="box warn"><b>Do not delete the file</b><code>ZoomMax.ini</code> is required when the Zone server starts &mdash; deleting it stops the server from booting. To go back to the stock camera limits, set <code>[General] Enable = 0</code> instead of removing the file.</div>
+
+  <h3 id="zm-config">The config file</h3>
+  <p>One file, one <code>[General]</code> section. Every value is in whole world units and is clamped to <code>10&ndash;5000</code> (a value out of range is reported in the <a href="module-logs.html">Module Logs</a> and the nearest allowed number is used).</p>
+  <table>
+    <tr><th>Key</th><th>Stock default</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td><code>1</code> (at stock values)</td><td><code>1</code> = use the three ceilings below; <code>0</code> = restore the normal stock limits for every race.</td></tr>
+    <tr><td><code>MaxZoomOutBellator</code></td><td><code>250</code></td><td>Far zoom-out distance for Bellato (both male and female).</td></tr>
+    <tr><td><code>MaxZoomOutCora</code></td><td><code>275</code></td><td>Far zoom-out distance for Cora (both male and female).</td></tr>
+    <tr><td><code>MaxZoomOutAccretia</code></td><td><code>290</code></td><td>Far zoom-out distance for Accretia.</td></tr>
+  </table>
+  <div class="box info"><b>Ships at stock</b>The file is delivered with <code>Enable = 1</code> but the ceilings set to the stock 250 / 275 / 290, so installing it changes nothing until you raise a number. Leave a key out or at its default to keep that race behaving exactly like stock.</div>
+  <p class="muted">A larger number lets the camera sit farther from the character (see more ground, smaller figures); push it too high and the world can look distant and the character tiny &mdash; pick what is comfortable for your server.</p>
+</section>
+
+<nav class="pn" style="display:flex;justify-content:space-between;gap:12px;margin:22px 0 4px;"><a class="nav-prev" href="box-stack.html">&larr; Previous: Box Stack</a><a class="nav-next" href="chat-log.html">Next: Chat Log &rarr;</a></nav>
+  </main>
+</div>
+
+<footer>
+  RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
+</footer>
+<script>
+(function () {
+  var lb, lbImg, lbCap;
+  function build() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">&#10005;</button><img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lbImg = lb.querySelector('img');
+    lbCap = lb.querySelector('.lb-cap');
+    lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  function open(img) {
+    build();
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt || '';
+    var cap = img.parentNode ? img.parentNode.querySelector('figcaption') : null;
+    lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('figure.shot')) {
+      e.preventDefault();
+      open(t);
+    }
+  });
+})();
+</script>
+</body>
+</html>

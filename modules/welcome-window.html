@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Welcome Window &mdash; RF Online</title>
+<link rel="stylesheet" href="../assets/style.css?v=4">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="../index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="../index.html">Home</a>
+    <a href="../server-client.html">Server &amp; Client</a>
+    <a href="../modules-features.html" class="active">Modules / Features</a>
+    <a class="discord" href="https://discord.gg/czbhwUNPse" target="_blank" rel="noopener">&#128172; Discord</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Modules">
+    <a href="../modules-features.html#overview">How modules work</a>
+    <a href="additional-settings.html">Additional Settings (Auto-Target)</a>
+    <a href="animus.html">Animus (Summon Companion System)</a>
+    <a href="autoloot.html">Auto Loot</a>
+    <a href="battlepass.html">Battle Pass</a>
+    <a href="boss-respawn.html">Boss Respawn Schedule</a>
+    <a href="box-stack.html">Box Stack</a>
+    <a href="zoom-max.html">Camera Zoom Max</a>
+    <a href="chat-log.html">Chat Log</a>
+    <a href="chip-hp.html">Chip HP Bars</a>
+    <a href="chip-block.html">Chip No-Entry (Chip Block)</a>
+    <a href="chip-war.html">Chip War Control Panel</a>
+    <a href="discord.html">Discord Relay &amp; Feeds</a>
+    <a href="election-manager.html">Election Manager</a>
+    <a href="gm-command.html">GM Command Whitelist</a>
+    <a href="arrow-target.html">Group-Target Arrow</a>
+    <a href="item-stack.html">Item Stack Limit (1M)</a>
+    <a href="item-upgrade.html">Item Upgrade &amp; Jade</a>
+    <a href="megaphone.html">Megaphone</a>
+    <a href="module-logs.html">Module Logs</a>
+    <a href="npc-buffer.html">NPC Buffer</a>
+    <a href="potion-manager.html">Potion Effects</a>
+    <a href="potion-lua.html">Potion Lua Overrides</a>
+    <a href="killfeed.html">PvP Kill Feed</a>
+    <a href="quest-monster.html">Quest Monster Marks</a>
+    <a href="quest-system.html">Quest System (Classic &amp; Daily)</a>
+    <a href="race-leader-effect.html">Race Leader Effect</a>
+    <a href="share-pvp.html">Share PvP</a>
+    <a href="skill-desc.html">Skill Additional Description</a>
+    <a href="store-system.html">Store System (Shops, Goods &amp; Spawns)</a>
+    <a class="active" href="welcome-window.html">Welcome Window</a>
+    <span class="side-title">On this page</span>
+    <a class="sub" href="#ww-what">What it does — and why you would use it</a>
+    <a class="sub" href="#ww-activate">How to activate it</a>
+    <a class="sub" href="#ww-content">How to write the content (client file)</a>
+    <a class="sub" href="#ww-artwork">Optional artwork</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Welcome Window</h1>
+    <p class="page-sub"><a href="../modules-features.html">&larr; All modules</a></p>
+
+<section id="welcome-window">
+  <div class="doc-head">
+    <h2>Welcome Window</h2>
+    <div class="badges">
+      <span class="badge client">Client-visible</span>
+      <span class="badge off">Ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <figure class="shot">
+    <img src="../assets/img/welcome-window.png" alt="The Welcome Window announcement panel shown in game over the RF Online interface">
+    <figcaption>The Welcome Window as players see it in game: the header, welcome intro, three paged announcement rows, the artwork panel on the right, the footer message and the website button.</figcaption>
+  </figure>
+
+  <h3 id="ww-what">What it does &mdash; and why you would use it</h3>
+  <p>The Welcome Window is an announcement panel that pops up <strong>once, when a player first enters the game world</strong>. Think of it as the "news board" every MMO shows on login: patch notes, event dates, server rules, a welcome message, and a button to your website.</p>
+  <p>Use it to:</p>
+  <ul>
+    <li>Greet players and set the tone for your server.</li>
+    <li>Announce the latest patch, event, or maintenance window without posting somewhere players will not look.</li>
+    <li>Point players at your website, Discord, or donation page with one click.</li>
+  </ul>
+  <p>The feature has <strong>two halves</strong> that work together:</p>
+  <table>
+    <tr><th>Half</th><th>File</th><th>Its job</th></tr>
+    <tr><td>Server switch</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\WelcomeWindow.ini</span></td><td>Decides <strong>whether</strong> the window opens at all. One <code>Enable</code> key.</td></tr>
+    <tr><td>Client content</td><td><span class="path">.Client\DataTable\&lt;language&gt;\WelcomeWindow.ini</span></td><td>Decides <strong>what is inside</strong> the window: the text, announcements, footer and website button.</td></tr>
+  </table>
+  <div class="box info"><b>The server holds no text</b>The Zone server only tells the client <em>whether</em> to open the window. All of the wording lives in the client file, so you can rewrite your announcements any time without touching the server.</div>
+  <p>The window appears <strong>once per play session</strong>. If you later flip the switch on the server, players already in the world are not interrupted with a second popup &mdash; they see it on their next entry.</p>
+
+  <h3 id="ww-activate">How to activate it</h3>
+  <ol class="steps">
+    <li>
+      <strong>Turn the feature on (server).</strong> Open <span class="path">.Server\Zoneserver\RF_Bin\Modules\WelcomeWindow.ini</span> in Notepad and change the <code>Enable</code> line under <code>[General]</code>:
+      <pre><code>[General]
+Enable = 1</code></pre>
+      Save the file. A running Zone server reloads it immediately and pushes the new state to clients; if the server is not running yet it simply starts with the feature on.
+    </li>
+    <li>
+      <strong>Write the message players will see (client).</strong> Open <span class="path">.Client\DataTable\en-ph\WelcomeWindow.ini</span> (the <code>en-ph</code> folder is the English language table) and edit the sections described below. Save it. See <a href="#ww-content">Write the content</a>.
+    </li>
+    <li>
+      <strong>(Optional) Add artwork.</strong> Drop a <code>welcome.spr</code> image into the client to show a banner beside the announcements. See <a href="#ww-artwork">Optional artwork</a>.
+    </li>
+    <li>
+      <strong>Test it.</strong> Start the servers, launch the client, log in and enter the world &mdash; the window appears. To see edits you made to the text, close and reopen the game client (it reads the file on entry).
+    </li>
+  </ol>
+  <div class="box warn"><b>Both halves are required</b>With <code>Enable = 0</code> the window never opens, no matter what the client file says. With <code>Enable = 1</code> but an untouched client file, the window opens showing the shipped sample text. Set the server switch <em>and</em> author the client file.</div>
+
+  <h3 id="ww-content">How to write the content (client file)</h3>
+  <p>Open <span class="path">.Client\DataTable\en-ph\WelcomeWindow.ini</span>. The client auto-detects <strong>two formats</strong> &mdash; use whichever suits you. You never need to touch the game's code.</p>
+
+  <h4>Format 1 &mdash; the redesigned announcement panel (recommended)</h4>
+  <p>This is used as soon as the file contains any of the modern keys below. It opens a purpose-built panel with a header, a welcome intro, up to <strong>8 announcements</strong> (3 visible at a time, with paging arrows), a footer line and an optional website button.</p>
+  <pre><code>[Header]
+Title = WELCOME TO RF ONLINE
+
+[Welcome]
+Title = WELCOME, WARRIOR.
+Description = Stay informed about the latest updates, patches, and events.
+
+[Announcement1]
+Title = Server Grand Opening
+Description = Join us this weekend for double EXP and boss spawns.
+Date = 2026-09-15
+Enabled = 1
+URL = https://example.com/news/1
+
+[Announcement2]
+Title = Patch 1.2 Notes
+Description = New dungeon, bug fixes and balance changes.
+Date = 2026-09-10
+Enabled = 1
+
+[Footer]
+Message = Thanks for playing on our server!
+
+[Website]
+Enabled = 1
+URL = https://example.com
+Label = VISIT WEBSITE</code></pre>
+  <p>Every key is optional and falls back to a safe default. Here is what each one controls:</p>
+  <table>
+    <tr><th>Section &amp; key</th><th>What it does</th></tr>
+    <tr><td><code>[Header] Title</code></td><td>The large heading across the top of the panel.</td></tr>
+    <tr><td><code>[Welcome] Title</code></td><td>The intro headline under the header.</td></tr>
+    <tr><td><code>[Welcome] Description</code></td><td>A one- or two-line intro sentence.</td></tr>
+    <tr><td><code>[Announcement1..8] Title</code></td><td>Announcement headline. An empty title skips that row.</td></tr>
+    <tr><td><code>[AnnouncementN] Description</code></td><td>The announcement body (first two lines are shown per row).</td></tr>
+    <tr><td><code>[AnnouncementN] Date</code></td><td>A short date/label shown on the row. Free text &mdash; type whatever you like.</td></tr>
+    <tr><td><code>[AnnouncementN] Enabled</code></td><td><code>1</code> shows the row, <code>0</code> hides it. Hidden rows are skipped and the rest renumber automatically.</td></tr>
+    <tr><td><code>[AnnouncementN] URL</code></td><td>Optional. Clicking the row opens this web address (<code>http://</code> or <code>https://</code> only). If omitted, the row uses the <code>[Website] URL</code> when that is enabled.</td></tr>
+    <tr><td><code>[Footer] Message</code></td><td>A small line along the bottom of the panel.</td></tr>
+    <tr><td><code>[Website] Enabled</code></td><td><code>1</code> shows the website button, <code>0</code> hides it.</td></tr>
+    <tr><td><code>[Website] URL</code></td><td>Where the button goes (<code>http://</code> or <code>https://</code> only; it opens in the player's normal browser).</td></tr>
+    <tr><td><code>[Website] Label</code></td><td>The text on the button, e.g. <code>VISIT WEBSITE</code>.</td></tr>
+  </table>
+
+  <h4>Format 2 &mdash; the legacy message box</h4>
+  <p>If none of the modern keys are present, the client falls back to the classic scrollable message box driven by a single <code>[General] Text</code> line. Handy for a quick one-paragraph notice.</p>
+  <pre><code>[General]
+Text = Welcome to RF Online.\n\nPatch notes and event announcements go here.</code></pre>
+
+  <h4>Authoring rules (both formats)</h4>
+  <ul>
+    <li><strong>One line per value.</strong> A real line break ends the value. To break a line <em>inside</em> the window, type the two characters <code>\n</code> (backslash-n); the window turns it into a line break.</li>
+    <li><strong>No <code>;</code> inside a value.</strong> A semicolon starts a comment in these files and will cut your text short.</li>
+    <li><strong>Keep it short.</strong> Titles are capped at 128 characters, descriptions and the footer at 256; longer text is truncated, and text wider than its panel is clipped with <code>...</code>.</li>
+    <li><strong>Web addresses</strong> must start with <code>http://</code> or <code>https://</code>. Anything else is ignored.</li>
+    <li>Lines starting with <code>;</code> are comments &mdash; the shipped file is full of helpful notes you can leave in place.</li>
+  </ul>
+  <div class="box ok"><b>Editing live content</b>The client reads this file when a player enters the world, so you can update your announcements at any time &mdash; players see the new text the next time they log in. No server change and no rebuild required.</div>
+
+  <h3 id="ww-artwork">Optional artwork</h3>
+  <p>You can show a banner image in a panel to the right of the announcements. It is completely optional &mdash; without it the announcement rows simply use the full width.</p>
+  <ul>
+    <li>The image is a sprite file named <code>welcome.spr</code>. The client looks for it first in <span class="path">.Client\SpriteImage\&lt;language&gt;\</span> (for example <code>en-ph</code>), then in <span class="path">.Client\SpriteImage\common\</span>.</li>
+    <li>You make it with <code>spr2png.exe</code> (in the <code>_tools\</code> folder), a tiny drag-and-drop converter that turns a normal PNG into a <code>.spr</code> &mdash; and back again. No commands, no Python, nothing to install.</li>
+  </ul>
+  <h4>Make new artwork</h4>
+  <ol class="steps">
+    <li>Save your banner as a PNG named <code>welcome.png</code>. A power-of-two size such as 256&times;256 works best.</li>
+    <li><strong>Drag <code>welcome.png</code> onto <code>spr2png.exe</code>.</strong> A black window flashes and writes <code>welcome.spr</code> in the same folder as your PNG.</li>
+    <li>Copy that <code>welcome.spr</code> into <span class="path">.Client\SpriteImage\common\</span> (or your <code>&lt;language&gt;</code> folder), then restart the game client to see it.</li>
+  </ol>
+  <h4>Edit artwork you already have</h4>
+  <ol class="steps">
+    <li>Drag the existing <code>welcome.spr</code> onto <code>spr2png.exe</code>. It writes an editable <code>welcome.png</code> beside it.</li>
+    <li>Open that PNG in any image editor, change it, save it.</li>
+    <li>Drag the edited PNG back onto <code>spr2png.exe</code>. It rewrites <code>welcome.spr</code> and keeps your old one as <code>welcome.spr.bak</code> in case you want to undo.</li>
+  </ol>
+  <pre><code>spr2png.exe &lt;file.spr|file.png&gt; ...
+  drop a .spr -&gt; &lt;name&gt;.png   (multi-frame: &lt;name&gt;_a#_f#.png per frame)
+  drop a .png -&gt; &lt;name&gt;.spr   (previous .spr kept as .spr.bak)</code></pre>
+  <ul>
+    <li>Use a power-of-two size (128, 256 or 512) for best results &mdash; the tool only prints a warning otherwise. Non-square art also works; the window scales it to fit.</li>
+    <li>No rebuild is needed: the image is loaded when the client starts, so just restart the game client after replacing it.</li>
+    <li>To remove the artwork, delete or rename <code>welcome.spr</code>; the window falls back to full-width rows.</li>
+  </ul>
+
+  <div class="box info"><b>Note for server owners (deploy)</b>The template ships from <span class="path">deploy\Client\DataTable\en-ph\WelcomeWindow.ini</span> and is copied into a fresh client by <code>assemble_deploy.bat</code> &mdash; but only if the client does not already have one. This is deliberate: re-deploying never overwrites a live host's own patch notes. Delete the file from the client's <code>DataTable</code> folder to re-copy the template.</div>
+</section>
+
+<nav class="pn" style="display:flex;justify-content:space-between;gap:12px;margin:22px 0 4px;"><a class="nav-prev" href="store-system.html">&larr; Previous: Store System (Shops, Goods &amp; Spawns)</a></nav>
+  </main>
+</div>
+
+<footer>
+  RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
+</footer>
+<script>
+(function () {
+  var lb, lbImg, lbCap;
+  function build() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">&#10005;</button><img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lbImg = lb.querySelector('img');
+    lbCap = lb.querySelector('.lb-cap');
+    lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  function open(img) {
+    build();
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt || '';
+    var cap = img.parentNode ? img.parentNode.querySelector('figcaption') : null;
+    lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('figure.shot')) {
+      e.preventDefault();
+      open(t);
+    }
+  });
+})();
+</script>
+</body>
+</html>

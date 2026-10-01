@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Item Stack Limit (1M) &mdash; RF Online</title>
+<link rel="stylesheet" href="../assets/style.css?v=4">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="../index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="../index.html">Home</a>
+    <a href="../server-client.html">Server &amp; Client</a>
+    <a href="../modules-features.html" class="active">Modules / Features</a>
+    <a class="discord" href="https://discord.gg/czbhwUNPse" target="_blank" rel="noopener">&#128172; Discord</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Modules">
+    <a href="../modules-features.html#overview">How modules work</a>
+    <a href="additional-settings.html">Additional Settings (Auto-Target)</a>
+    <a href="animus.html">Animus (Summon Companion System)</a>
+    <a href="autoloot.html">Auto Loot</a>
+    <a href="battlepass.html">Battle Pass</a>
+    <a href="boss-respawn.html">Boss Respawn Schedule</a>
+    <a href="box-stack.html">Box Stack</a>
+    <a href="zoom-max.html">Camera Zoom Max</a>
+    <a href="chat-log.html">Chat Log</a>
+    <a href="chip-hp.html">Chip HP Bars</a>
+    <a href="chip-block.html">Chip No-Entry (Chip Block)</a>
+    <a href="chip-war.html">Chip War Control Panel</a>
+    <a href="discord.html">Discord Relay &amp; Feeds</a>
+    <a href="election-manager.html">Election Manager</a>
+    <a href="gm-command.html">GM Command Whitelist</a>
+    <a href="arrow-target.html">Group-Target Arrow</a>
+    <a class="active" href="item-stack.html">Item Stack Limit (1M)</a>
+    <a href="item-upgrade.html">Item Upgrade &amp; Jade</a>
+    <a href="megaphone.html">Megaphone</a>
+    <a href="module-logs.html">Module Logs</a>
+    <a href="npc-buffer.html">NPC Buffer</a>
+    <a href="potion-manager.html">Potion Effects</a>
+    <a href="potion-lua.html">Potion Lua Overrides</a>
+    <a href="killfeed.html">PvP Kill Feed</a>
+    <a href="quest-monster.html">Quest Monster Marks</a>
+    <a href="quest-system.html">Quest System (Classic &amp; Daily)</a>
+    <a href="race-leader-effect.html">Race Leader Effect</a>
+    <a href="share-pvp.html">Share PvP</a>
+    <a href="skill-desc.html">Skill Additional Description</a>
+    <a href="store-system.html">Store System (Shops, Goods &amp; Spawns)</a>
+    <a href="welcome-window.html">Welcome Window</a>
+    <span class="side-title">On this page</span>
+    <a class="sub" href="#is-what">What it does — and why you would use it</a>
+    <a class="sub" href="#is-activate">How to use / restrict it</a>
+    <a class="sub" href="#is-config">The config files</a>
+    <a class="sub" href="#is-rules">Rules &amp; limits</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Item Stack Limit (1M)</h1>
+    <p class="page-sub"><a href="../modules-features.html">&larr; All modules</a></p>
+
+<section id="item-stack">
+  <div class="doc-head">
+    <h2>Item Stack Limit (1M Stacks)</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="is-what">What it does &mdash; and why you would use it</h3>
+  <p>Stock RF Online caps a stackable item (potions, ore, resources, boxes&hellip;) at <strong>99</strong> per slot. This feature raises that ceiling to <strong>1,000,000</strong> so a single slot can hold a huge stack. <span class="path">ItemStack.ini</span> / <span class="path">ItemStack.lua</span> are then a <strong>restriction gate</strong>: you do <em>not</em> list an item to make it stack big &mdash; that is already the default &mdash; you list it only to give a specific item a <em>smaller</em> cap (or <code>0</code> to force it non-stackable).</p>
+  <p>The big default is baked into both binaries, so it just works; the config is purely for pulling individual items back down. The server resolves each item&rsquo;s real cap, enforces it everywhere a stack can grow (merge, split, loot, buy / sell / trade, warehouse, and on login) and pushes the <em>exceptions</em> to each client &mdash; there is no client file.</p>
+  <table>
+    <tr><th>Part</th><th>Where it lives</th><th>Its job</th></tr>
+    <tr><td>Restriction table</td><td><span class="path">.Server\Zoneserver\RF_Bin\Modules\ItemStack\ItemStack.ini</span> (+ <span class="path">ItemStack.lua</span>)</td><td>Lists per-item caps <em>below</em> the 1M default. A Lua code wins over an .ini row.</td></tr>
+    <tr><td>Client half</td><td colspan="2">No client file. The server pushes each item&rsquo;s non-default cap so the client clamps split / combine / use identically. Both the Zone server and the client must be the current build.</td></tr>
+  </table>
+  <div class="box info"><b>The default IS 1,000,000</b>You do not have to list the 12 stackable item tables to make them big &mdash; every stackable item already stacks to 1M by default. Editing this file is only how you <em>restrict</em> an item. A row left at <code>1000000</code> (or absent) keeps the full ceiling.</div>
+
+  <h3 id="is-activate">How to use / restrict it</h3>
+  <ol class="steps">
+    <li><strong>Do nothing for the common case.</strong> With the current build, stackables already go to 1,000,000. The files ship <code>Enable = 1</code> but every value at the default, so the shipped behaviour is simply &ldquo;every stackable stacks to 1M unless you say otherwise.&rdquo;</li>
+    <li><strong>To cap one item lower</strong>, edit its row in <span class="path">ItemStack.ini</span> under <code>[ItemStack]</code> &mdash; the form is <code>tableCode.itemIndex = MAXSTACK</code>:
+      <pre><code>13.0  = 5000    ; cap this potion (table 13) at 5,000
+18.40 = 1000    ; cap this resource (table 18) at 1,000
+20.5  = 0       ; make this booty (table 20) non-stackable</code></pre>
+      Save &mdash; it hot-reloads and re-pushes the changed caps to clients.</li>
+    <li><strong>&hellip; or by item code in the Lua.</strong> In <span class="path">ItemStack.lua</span> add the code under <code>MaxStack</code>:
+      <pre><code>MaxStack = {
+  [ "iopy01" ] = 5000,
+}</code></pre>
+      A <code>MaxStack</code> code wins over the .ini row for that item.</li>
+    <li><strong>Test it.</strong> Pick up past 99 of a stackable (it merges into one slot up to 1M); split exactly 1,000,000 into an empty slot; for a restricted item, confirm it stops at the number you set while everything else keeps 1M.</li>
+  </ol>
+  <div class="box warn"><b>Do not delete the file</b><code>ItemStack.ini</code> is required when the Zone server starts &mdash; deleting it stops the server from booting. To stop using the restriction rows but keep 1M stacks, set <code>[Settings] Enable = 0</code> (the .ini is then ignored and only the Lua, if enabled, restricts).</div>
+
+  <h3 id="is-config">The config files</h3>
+  <p>Two files in <span class="path">Modules\ItemStack\</span>, each with its own <code>Enable</code> so you can drive the restriction from one, both or neither. Each is auto-generated to list every item explicitly at its stock category default, so the whole behaviour is visible and individually editable.</p>
+  <table>
+    <tr><th>Key / field</th><th>File</th><th>Meaning</th></tr>
+    <tr><td><code>Enable</code></td><td>.ini <code>[Settings]</code></td><td><code>1</code> = apply the <code>[ItemStack]</code> rows, <code>0</code> = ignore the whole .ini (default <code>1</code>).</td></tr>
+    <tr><td><code>tableCode.itemIndex = N</code></td><td>.ini <code>[ItemStack]</code></td><td>The cap for one item: <code>0</code> = non-stackable, <code>2..1000000</code> = that item&rsquo;s max (<code>1</code> is treated as non-stack; values above 1M clamp to 1M).</td></tr>
+    <tr><td><code>Enable</code></td><td>.lua</td><td><code>1</code> = apply the Lua, <code>0</code> = ignore it.</td></tr>
+    <tr><td><code>Stack</code> / <code>NoStack</code></td><td>.lua</td><td>Codes that stack at the 1M default / codes forced non-stackable.</td></tr>
+    <tr><td><code>MaxStack</code></td><td>.lua</td><td>Explicit per-item caps by exact code &mdash; the restriction gate; wins over the .ini and over Stack / NoStack.</td></tr>
+  </table>
+  <p>Resolution priority for an item: <strong>Lua <code>MaxStack</code></strong> &rarr; .ini row &rarr; Lua <code>Stack</code> / <code>NoStack</code> &rarr; stock category rule. Anything not explicitly restricted keeps its category default &mdash; the 12 stackable tables go to 1M, everything else is non-stackable.</p>
+
+  <h3 id="is-rules">Rules &amp; limits</h3>
+  <ul>
+    <li><strong>1M is the hard ceiling.</strong> <code>1,000,000</code> is both the default for stackables and the maximum; the packet widths and counters are sized for exactly this, so you cannot go above it by config.</li>
+    <li><strong>Some systems deliberately stay at 99.</strong> A few byte-only subsystems were left at the old cap so they are not corrupted &mdash; mining / auto-mine, ore cutting, the cash shop, the unmanned trader, guard-tower and talk-crystal combine. Those still max at 99.</li>
+    <li><strong>Login trims oversized stacks.</strong> If you lower an item&rsquo;s cap below what a player is already carrying, their stack is clamped down to the new cap when they log in.</li>
+    <li><strong>Lockstep build.</strong> Because the count fields were widened, the Zone server and the client must be the matching build; an old client will not understand the new push.</li>
+  </ul>
+  <p class="muted">Both files ship listing every item at its default (1M for stackables, 0 for the rest), so the out-of-box behaviour is simply &ldquo;every stackable item now stacks to 1,000,000.&rdquo;</p>
+</section>
+
+<nav class="pn" style="display:flex;justify-content:space-between;gap:12px;margin:22px 0 4px;"><a class="nav-prev" href="arrow-target.html">&larr; Previous: Group-Target Arrow</a><a class="nav-next" href="item-upgrade.html">Next: Item Upgrade &amp; Jade &rarr;</a></nav>
+  </main>
+</div>
+
+<footer>
+  RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
+</footer>
+<script>
+(function () {
+  var lb, lbImg, lbCap;
+  function build() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">&#10005;</button><img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lbImg = lb.querySelector('img');
+    lbCap = lb.querySelector('.lb-cap');
+    lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  function open(img) {
+    build();
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt || '';
+    var cap = img.parentNode ? img.parentNode.querySelector('figcaption') : null;
+    lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('figure.shot')) {
+      e.preventDefault();
+      open(t);
+    }
+  });
+})();
+</script>
+</body>
+</html>

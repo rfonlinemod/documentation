@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chip HP Bars &mdash; RF Online</title>
+<link rel="stylesheet" href="../assets/style.css?v=4">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="../index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="../index.html">Home</a>
+    <a href="../server-client.html">Server &amp; Client</a>
+    <a href="../modules-features.html" class="active">Modules / Features</a>
+    <a class="discord" href="https://discord.gg/czbhwUNPse" target="_blank" rel="noopener">&#128172; Discord</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Modules">
+    <a href="../modules-features.html#overview">How modules work</a>
+    <a href="additional-settings.html">Additional Settings (Auto-Target)</a>
+    <a href="animus.html">Animus (Summon Companion System)</a>
+    <a href="autoloot.html">Auto Loot</a>
+    <a href="battlepass.html">Battle Pass</a>
+    <a href="boss-respawn.html">Boss Respawn Schedule</a>
+    <a href="box-stack.html">Box Stack</a>
+    <a href="zoom-max.html">Camera Zoom Max</a>
+    <a href="chat-log.html">Chat Log</a>
+    <a class="active" href="chip-hp.html">Chip HP Bars</a>
+    <a href="chip-block.html">Chip No-Entry (Chip Block)</a>
+    <a href="chip-war.html">Chip War Control Panel</a>
+    <a href="discord.html">Discord Relay &amp; Feeds</a>
+    <a href="election-manager.html">Election Manager</a>
+    <a href="gm-command.html">GM Command Whitelist</a>
+    <a href="arrow-target.html">Group-Target Arrow</a>
+    <a href="item-stack.html">Item Stack Limit (1M)</a>
+    <a href="item-upgrade.html">Item Upgrade &amp; Jade</a>
+    <a href="megaphone.html">Megaphone</a>
+    <a href="module-logs.html">Module Logs</a>
+    <a href="npc-buffer.html">NPC Buffer</a>
+    <a href="potion-manager.html">Potion Effects</a>
+    <a href="potion-lua.html">Potion Lua Overrides</a>
+    <a href="killfeed.html">PvP Kill Feed</a>
+    <a href="quest-monster.html">Quest Monster Marks</a>
+    <a href="quest-system.html">Quest System (Classic &amp; Daily)</a>
+    <a href="race-leader-effect.html">Race Leader Effect</a>
+    <a href="share-pvp.html">Share PvP</a>
+    <a href="skill-desc.html">Skill Additional Description</a>
+    <a href="store-system.html">Store System (Shops, Goods &amp; Spawns)</a>
+    <a href="welcome-window.html">Welcome Window</a>
+    <span class="side-title">On this page</span>
+    <a class="sub" href="#ch-what">What it does — and why you would use it</a>
+    <a class="sub" href="#ch-activate">How to activate it</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Chip HP Bars</h1>
+    <p class="page-sub"><a href="../modules-features.html">&larr; All modules</a></p>
+
+<section id="chip-hp">
+  <div class="doc-head">
+    <h2>Chip HP Bars</h2>
+    <div class="badges">
+      <span class="badge client">Client-visible</span>
+      <span class="badge off">Hidden by default</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="ch-what">What it does &mdash; and why you would use it</h3>
+  <p>The <strong>Chip HP bars</strong> are the three small health gauges on the head-up display that show the current HP of each race's crystal / holystone &mdash; <strong>Belato</strong>, <strong>Cora</strong> and <strong>Accretia</strong> &mdash; each with a percentage. They sit just to the left of the round radar in the top-right corner of the screen. This switch shows or hides them with one line.</p>
+  <ul>
+    <li><strong>One toggle.</strong> <code>ChipHP = 1</code> shows the bars, <code>ChipHP = 0</code> hides them.</li>
+    <li><strong>Server-pushed and live.</strong> The Zone server tells every connected client the new state the moment you save the file &mdash; hiding them even closes the bars for anyone already looking.</li>
+    <li><strong>Who actually sees them.</strong> When enabled, the bars are shown to <em>every</em> character in the zone &mdash; GMs, ordinary players and race leaders / council alike &mdash; not just the race-boss group. The switch turns the whole feature on or off for everyone at once.</li>
+  </ul>
+
+  <h3 id="ch-activate">How to activate it</h3>
+  <ol class="steps">
+    <li><strong>Open the file.</strong> Edit <span class="path">.Server\Zoneserver\RF_Bin\Modules\ConfigurationManager\ClientManager.ini</span> in Notepad.</li>
+    <li>
+      <strong>Set the switch.</strong> Under <code>[General]</code>, change (or add) the <code>ChipHP</code> line:
+      <pre><code>[General]
+ChipHP=1</code></pre>
+      <code>1</code> = show the three race-crystal HP bars, <code>0</code> = hide them. Save the file &mdash; it takes effect within about half a second, no restart.
+    </li>
+  </ol>
+  <div class="box info"><b>Same file, different feature</b><code>ClientManager.ini</code> also holds the <strong>per-IP login limit</strong> (<code>Enable</code> and <code>MaxLoginPerIP</code>). Those are unrelated to the HP bars &mdash; leave them as they are unless you also want to change the login rule. A missing <code>ChipHP</code> line simply means the bars stay hidden.</div>
+</section>
+
+<nav class="pn" style="display:flex;justify-content:space-between;gap:12px;margin:22px 0 4px;"><a class="nav-prev" href="chat-log.html">&larr; Previous: Chat Log</a><a class="nav-next" href="chip-block.html">Next: Chip No-Entry (Chip Block) &rarr;</a></nav>
+  </main>
+</div>
+
+<footer>
+  RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
+</footer>
+<script>
+(function () {
+  var lb, lbImg, lbCap;
+  function build() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">&#10005;</button><img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lbImg = lb.querySelector('img');
+    lbCap = lb.querySelector('.lb-cap');
+    lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  function open(img) {
+    build();
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt || '';
+    var cap = img.parentNode ? img.parentNode.querySelector('figcaption') : null;
+    lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('figure.shot')) {
+      e.preventDefault();
+      open(t);
+    }
+  });
+})();
+</script>
+</body>
+</html>
