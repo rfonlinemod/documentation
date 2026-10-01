@@ -173,7 +173,7 @@ Q = { "KillMon", "00002", 15 }
 -- list of objectives, each with its own display text:
 Q = {
     { "KillMon", "00002", 10, Text = "Slay %target (%cur/%need)" },
-    { "CollectItem", "1001", 3 },
+    { "CollectItem", "ipgld01", 3 },
 }</code></pre>
   <p>The first item is a shortcut <em>name</em> from the <a href="#qs-acts">objective-type table</a> below (or a quoted raw act-code number). <code>target</code> is a number or quoted string (<code>-1</code> / omitted = match-any); <code>required</code> is a positive integer. The <code>Text</code> tokens <code>%target</code> <code>%cur</code> <code>%need</code> <code>%race</code> <code>%item</code> <code>%level</code> are substituted by the client at render time; omit <code>Text</code> to use the shortcut&rsquo;s default template.</p>
   <h4>Reset model, window and reward</h4>
