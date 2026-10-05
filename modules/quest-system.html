@@ -59,6 +59,7 @@
     <a class="sub" href="#qs-activate">How to activate it</a>
     <a class="sub" href="#qs-classic">Classic quests — the six sections of QuestScript.lua</a>
     <a class="sub" href="#qs-daily">Daily quests (DailyQuest.lua)</a>
+    <a class="sub" href="#qs-locate">Finding the target on the map (circle + hover)</a>
     <a class="sub" href="#qs-acts">Daily objective types (the shortcut table)</a>
     <a class="sub" href="#qs-rules">Rules &amp; limits</a>
   </nav>
@@ -173,7 +174,7 @@ Q = { "KillMon", "00002", 15 }
 -- list of objectives, each with its own display text:
 Q = {
     { "KillMon", "00002", 10, Text = "Slay %target (%cur/%need)" },
-    { "CollectItem", "ipgld01", 3 },
+    { "CollectItem", "1001", 3 },
 }</code></pre>
   <p>The first item is a shortcut <em>name</em> from the <a href="#qs-acts">objective-type table</a> below (or a quoted raw act-code number). <code>target</code> is a number or quoted string (<code>-1</code> / omitted = match-any); <code>required</code> is a positive integer. The <code>Text</code> tokens <code>%target</code> <code>%cur</code> <code>%need</code> <code>%race</code> <code>%item</code> <code>%level</code> are substituted by the client at render time; omit <code>Text</code> to use the shortcut&rsquo;s default template.</p>
   <h4>Reset model, window and reward</h4>
@@ -185,6 +186,23 @@ Q = {
     <tr><td><code>Reward</code></td><td>Server-authoritative, granted on turn-in: <code>{ Exp, Gold, PvPPoint, Contribution, Dalant, Items = { { Code="..", Count=n }, ... } }</code> &mdash; up to 6 items. <code>Code</code> must be the item&rsquo;s <strong>real in-game item-code string</strong> (the same 7-char code used in PotionLua / ItemStack / Battlepass, e.g. <code>"ipbhp01"</code>, <code>"irtal01"</code>, <code>"ipgld30"</code>), <strong>not</strong> a numeric DT index &mdash; the reward resolves through <code>GetItemTableCode()</code> off the code&rsquo;s letter prefix, so a bare number like <code>"1001"</code> matches no table and is silently not given.</td></tr>
   </table>
   <p>Persistence is automatic: each character&rsquo;s accepted state, progress, per-period count and cooldown live in their own <code>DF_tbl_DailyQuest</code> table (created on demand), so the board survives relog / restart with no manual schema change.</p>
+
+  <h3 id="qs-locate">Finding the target on the map (circle + hover)</h3>
+  <p>A daily can also carry a <strong>map location</strong>. When it does, the client draws a <strong>green circle</strong> over the spot where the target monster lives &mdash; on both the on-screen <strong>radar</strong> and the <strong>full-screen map</strong> (press <code>M</code>) &mdash; and floats a <strong>quest mark</strong> above every matching live monster out in the world (see <a href="quest-monster.html">Quest Monster Marks</a>). This is <strong>always-on</strong>: the circle and the mark show even <em>before</em> the player accepts, so they can scout the hunting ground first.</p>
+  <figure class="shot">
+    <img src="../assets/img/daily-quest-map-circle.png" alt="The RF Online full-screen map (Armory 213) ringed with green daily-quest location circles, with the target monsters marked out in the world and the daily-quest tracker on the right">
+    <figcaption>On the full-screen map (<code>M</code>) each daily&rsquo;s hunting spot is ringed in green. <strong>Hovering a circle pops the exact monster name(s)</strong> to kill there; the same targets carry a mark overhead out in the world, and the accepted dailies list on the right.</figcaption>
+  </figure>
+  <p>Location is authored with these optional per-quest fields:</p>
+  <table>
+    <tr><th>Field</th><th>Meaning</th></tr>
+    <tr><td><code>MapName</code></td><td>The in-game map display name (e.g. <code>"Accretia HQ"</code>). The client matches the circle to the map by this <strong>name</strong> (case-insensitive), not by id.</td></tr>
+    <tr><td><code>LocX</code> / <code>LocZ</code></td><td>The world centre of the circle. <code>LocZ</code> is the ground / radar vertical axis &mdash; there is <strong>no</strong> <code>LocY</code>.</td></tr>
+    <tr><td><code>LocR</code></td><td>The circle radius in world units.</td></tr>
+    <tr><td><code>MapId</code></td><td>Informational only &mdash; the client keys on <code>MapName</code>.</td></tr>
+  </table>
+  <div class="box info"><b>Auto-placement &mdash; just the monster code is enough</b>Leave <code>MapName</code>, <code>LocX</code> and <code>LocZ</code> blank (empty / <code>0</code>) and the server resolves the spot <strong>live</strong> from the spawn tables, centring the circle on that monster&rsquo;s spawn points on the daily&rsquo;s own race home map (Neutral A/B/C). Hand-authored / baked coordinates always win, because auto-placement only runs when all three fields are blank. If the monster does not spawn on the home map the location stays blank and no circle is drawn.</div>
+  <p>The name shown on hover, and the monster the overhead mark locks onto, are resolved from the objective&rsquo;s monster <strong>code</strong>, which the client reads as a <strong>hex</strong> MeshID &mdash; so always use the exact code string from the monster data (see the <a href="#qs-acts">objective-type table</a>).</p>
 
   <h3 id="qs-acts">Daily objective types (the shortcut table)</h3>
   <p>A daily objective names one of these shortcut strings; the zone maps it to the game event that already feeds quest progress. Codes 39 and 51 have no attributable event site in this build and are <strong>not</strong> accepted.</p>
