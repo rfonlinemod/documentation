@@ -142,6 +142,7 @@ a { color: var(--accent); }
   transition: background .15s, border-color .15s, color .15s;
 }
 .sidebar a:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.sidebar a.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
 .sidebar a.sub { margin-left: 12px; background: transparent; border-color: transparent; color: var(--muted); font-size: 13px; }
 .sidebar a.sub:hover { color: #fff; background: var(--accent); }
 
