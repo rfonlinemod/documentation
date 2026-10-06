@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skin Mod (Skins, Glows &amp;amp; Particle Effects) &mdash; RF Online</title>
+<link rel="stylesheet" href="../assets/style.css?v=4">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="../index.html">
+    <span class="logo">&#9876;</span>
+    <span class="name">RF Online<small>Server Docs</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="../index.html">Home</a>
+    <a href="../server-client.html">Server &amp; Client</a>
+    <a href="../modules-features.html" class="active">Modules / Features</a>
+    <a class="discord" href="https://discord.gg/czbhwUNPse" target="_blank" rel="noopener">&#128172; Discord</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Modules">
+    <a href="../modules-features.html#overview">How modules work</a>
+    <a href="additional-settings.html">Additional Settings (Auto-Target)</a>
+    <a href="animus.html">Animus (Summon Companion System)</a>
+    <a href="autoloot.html">Auto Loot</a>
+    <a href="battlepass.html">Battle Pass</a>
+    <a href="boss-respawn.html">Boss Respawn Schedule</a>
+    <a href="box-stack.html">Box Stack</a>
+    <a href="zoom-max.html">Camera Zoom Max</a>
+    <a href="chat-log.html">Chat Log</a>
+    <a href="chip-hp.html">Chip HP Bars</a>
+    <a href="chip-block.html">Chip No-Entry (Chip Block)</a>
+    <a href="chip-war.html">Chip War Control Panel</a>
+    <a href="discord.html">Discord Relay &amp; Feeds</a>
+    <a href="election-manager.html">Election Manager</a>
+    <a href="gm-command.html">GM Command Whitelist</a>
+    <a href="arrow-target.html">Group-Target Arrow</a>
+    <a href="item-stack.html">Item Stack Limit (1M)</a>
+    <a href="item-upgrade.html">Item Upgrade &amp; Jade</a>
+    <a href="megaphone.html">Megaphone</a>
+    <a href="module-logs.html">Module Logs</a>
+    <a href="npc-buffer.html">NPC Buffer</a>
+    <a href="potion-manager.html">Potion Effects</a>
+    <a href="potion-lua.html">Potion Lua Overrides</a>
+    <a href="killfeed.html">PvP Kill Feed</a>
+    <a href="quest-monster.html">Quest Monster Marks</a>
+    <a href="quest-system.html">Quest System (Classic &amp; Daily)</a>
+    <a href="race-leader-effect.html">Race Leader Effect</a>
+    <a href="share-pvp.html">Share PvP</a>
+    <a href="skill-desc.html">Skill Additional Description</a>
+    <a class="active" href="skinmod.html">Skin Mod (Skins, Glows &amp; Particles)</a>
+    <a href="store-system.html">Store System (Shops, Goods &amp; Spawns)</a>
+    <a href="welcome-window.html">Welcome Window</a>
+    <span class="side-title">On this page</span>
+    <a class="sub" href="#sm-what">What it does &mdash; and why you would use it</a>
+    <a class="sub" href="#sm-readfirst">READ FIRST: the three golden rules</a>
+    <a class="sub" href="#sm-files">The files</a>
+    <a class="sub" href="#sm-activate">How to activate it</a>
+    <a class="sub" href="#sm-particles">Changing a particle (colour, size, speed)</a>
+    <a class="sub" href="#sm-override">The <code>Override</code> grammar</a>
+    <a class="sub" href="#sm-skinfx">SkinFX: retarget an effect / field edits</a>
+    <a class="sub" href="#sm-workflow">Finding your item&rsquo;s indices &amp; the authoring loop</a>
+    <a class="sub" href="#sm-rules">Rules &amp; limits</a>
+  </nav>
+
+  <main class="content">
+    <h1 class="page-title">Skin Mod (Skins, Glows &amp;amp; Particle Effects)</h1>
+    <p class="page-sub"><a href="../modules-features.html">&larr; All modules</a></p>
+
+<section id="skinmod">
+  <div class="doc-head">
+    <h2>Skin Mod (Skins, Glows &amp; Particle Effects)</h2>
+    <div class="badges">
+      <span class="badge server">Server</span>
+      <span class="badge client">Client</span>
+      <span class="badge off">FX layer ships off</span>
+      <span class="badge on">Hot-reload</span>
+    </div>
+  </div>
+
+  <h3 id="sm-what">What it does &mdash; and why you would use it</h3>
+  <p><strong>Skin Mod</strong> is the live appearance editor for everything a player <em>sees</em> on a character, weapon or creature: the coloured glow that rides an upgraded weapon, a cloak&rsquo;s aura, a helmet&rsquo;s sparkle, a monster&rsquo;s particle puff &mdash; and the actual particle emitters behind them (their colour, size, lifetime, speed, gravity and spawn count). Normally all of that is baked into the shipped <code>.EFF</code> / <code>.spt</code> / <code>.r3e</code> binaries and the compiled client, so changing one glow meant editing binary art files and re-shipping the whole client.</p>
+  <p>This feature lifts the whole thing into plain-language <code>.lua</code> files on the <span class="badge server">Server</span>. You edit a value, save the file, and the running Zone server notices it within about a second, validates it, and pushes just that change to every player&rsquo;s <span class="badge client">Client</span> over the skin-mod message channel (system&nbsp;msg family&nbsp;1, index&nbsp;57). The change shows up <strong>in-game, live, with no restart and no rebuild</strong>. Set the value back (or delete the row) and save, and it reverts just as fast.</p>
+  <div class="box info"><b>The game client is your preview window</b>Because the change is pushed live, the intended workflow is: edit &rarr; save &rarr; look at your character in-game &rarr; tweak &rarr; save &rarr; when it looks right, copy the runtime file back to the source folder to commit it. You are authoring against the real renderer, not a guess.</div>
+
+  <h3 id="sm-readfirst">READ FIRST: the three golden rules</h3>
+  <p>Ninety percent of &ldquo;my edit did nothing&rdquo; reports come from breaking one of these three. Read them before touching anything.</p>
+  <ol class="steps">
+    <li><strong>Edit <code>Override</code>, never <code>Properties</code>.</strong> Inside every particle row of <code>SptIndex.lua</code> there is a big <code>Properties = { ... }</code> block. That block is <em>read-only reference data</em> &mdash; the server never ships it, so changing a number there is a permanent silent no-op. The only thing that takes effect is a sibling <code>Override = { ... }</code> table you add yourself. <em>(This is the single most common mistake.)</em></li>
+    <li><strong>Edit the RUNTIME copy, not the source tree.</strong> Hot-reload watches <span class="path">.Server\Zoneserver\RF_Bin\Modules\SkinMod\</span> only. The identically-named files under <span class="path">_server\WorldServer\Features\ini\SkinMod\</span> are the <em>source of truth for committing</em> &mdash; editing those has zero live effect until you deploy them.</li>
+    <li><strong>One glow &rarr; many indices; one index &rarr; many items.</strong> A weapon&rsquo;s glow is not one particle: it fans out across <em>several</em> particle indices across its upgrade levels, and each index is shared by many other items. To recolour a specific item you override <em>all</em> the indices that item uses (see <a href="#sm-workflow">Finding your item&rsquo;s indices</a>) &mdash; overriding one may not touch the emitter you can actually see. Conversely, editing a shared index changes every item that uses it.</li>
+  </ol>
+  <div class="box warn"><b>Colour is a tint over the sprite, not a paint</b>A particle&rsquo;s <code>StartColor</code> multiplies its texture. A white/gold spark tinted green goes olive, not lime. If a glow is a solid-coloured <code>.EFF</code> ribbon rather than a tinted particle, a particle <code>Override</code> will not reach it &mdash; that look is a <a href="#sm-skinfx">SkinFX</a> job (retarget the effect file, or edit its <code>TextureFactor</code>).</div>
+
+  <h3 id="sm-files">The files</h3>
+  <p>All live in <span class="path">.Server\Zoneserver\RF_Bin\Modules\SkinMod\</span>. There are three kinds: the effect-override engine (three files you edit), and the per-slot skin record files (auto-generated reference the server uses to match item codes to meshes / glows).</p>
+  <table>
+    <tr><th>File</th><th>Edit?</th><th>What it is</th></tr>
+    <tr><td><code>SkinFX.lua</code></td><td><span class="badge server">author here</span></td><td>The FX-override master switch and your workspace for <strong>retargeting</strong> one glow/aura to a different stock effect file, and for <strong>field edits</strong> on an effect (tint colour, scroll speed, attached particle id, material colour&hellip;). Ships <code>Enable = false</code>.</td></tr>
+    <tr><td><code>SkinPropRegistry.lua</code></td><td>Infra (keep on)</td><td>The <strong>property registry</strong> &mdash; every editable visual parameter, with the struct / offset / size / kind the client writes it to. Adding a new editable = adding one row here. The client refuses any row whose offset is outside a compiled allow-list, so a typo can never crash it.</td></tr>
+    <tr><td><code>SptIndex.lua</code></td><td><span class="badge server">author here</span></td><td>The parsed inventory of every shipped particle / entity index (a real whitelist the server uses to reject bad edits), plus the live <code>Override</code> blocks for <strong>particle</strong> colour / size / speed / gravity / lifetime / keyframes. The <code>Properties</code> sub-blocks are read-only reference; you add a sibling <code>Override</code>.</td></tr>
+    <tr><td><code>WeaponSkin.lua</code>, <code>UpperSkin.lua</code>, <code>LowerSkin.lua</code>, <code>ShoeSkin.lua</code>, <code>GauntletSkin.lua</code>, <code>HelmetSkin.lua</code>, <code>CloakSkin.lua</code>, <code>ShieldSkin.lua</code>, <code>MauSkin.lua</code>, <code>LauncherSkin.lua</code>, <code>MonsterSkin.lua</code>, <code>AnimusSkin.lua</code></td><td>Generated (read to look up)</td><td>One file per equipment slot: one record per item code with its mesh, its glow <code>Effect.Glow</code> entries and its <code>Attached.Particle</code> indices. You read these to discover <em>which particle indices / effect files</em> a given item uses. Editing an appearance goes through <code>SkinFX.lua</code> / <code>SptIndex.lua</code>, not these.</td></tr>
+  </table>
+
+  <h3 id="sm-activate">How to activate it</h3>
+  <ol class="steps">
+    <li><strong>Particle overrides &mdash; ready to use.</strong> <code>SptIndex.lua</code> runs with <code>Enable = true</code> already. You only add <code>Override</code> blocks to the indices you want to change (see <a href="#sm-particles">below</a>). No global switch to flip.</li>
+    <li><strong>FX overrides &mdash; flip the master switch.</strong> To retarget an effect or edit an effect field, open <code>SkinFX.lua</code> and change <code>Enable = false</code> to <code>Enable = true</code>, then add rows under <code>Retargets</code> / <code>Fields</code>.</li>
+    <li><strong>Save &amp; watch.</strong> Saving the runtime file applies it live in about a second &mdash; a running Zone server hot-reloads it, no restart. Look at your character in-game.</li>
+    <li><strong>Commit when happy.</strong> Copy the edited runtime file back to <span class="path">_server\WorldServer\Features\ini\SkinMod\</span> so the change survives a fresh deploy.</li>
+    <li><strong>Revert any time.</strong> Delete the <code>Override</code> / row, or set <code>SkinFX</code> back to <code>Enable = false</code>, and save &mdash; that appearance returns to stock and clients get a reset push.</li>
+  </ol>
+  <div class="box warn"><b>Do not delete these files, and expect an empty folder to break the boot</b>Like every module, the SkinMod files are <strong>required when the Zone server starts</strong> &mdash; an empty <span class="path">Modules\SkinMod\</span> folder makes the server abort (&ldquo;&hellip;could not be started&rdquo;). To turn a piece off, use its <code>Enable</code> switch or delete individual rows &mdash; never remove the files. Client-side effects only appear on a game client rebuilt with Skin-Mod support; a stock client ignores the push and keeps its shipped look.</div>
+
+  <h3 id="sm-particles">Changing a particle (colour, size, speed)</h3>
+  <p>Find the index you want in <code>SptIndex.lua</code> (each is <code>[INDEX] = { Spt = "...", Properties = { ... } }</code>) and add an <strong><code>Override</code></strong> table as a sibling of <code>Properties</code>. Only the keys you list are overwritten; everything you leave out stays at its stock value.</p>
+  <p>To tint a glow green, for example, you would write into that index:</p>
+  <pre><code>[362] = {
+    Spt = ".\\Chef\\...\\something.spt",
+    Override = {                       --  you add this block
+        StartColor = { R = 0, G = 255, B = 0 },
+    },
+    Properties = {                     --  read-only reference; editing this does NOTHING
+        StartColor = { R = 255, G = 200, B = 40 },
+        -- ...
+    },
+},</code></pre>
+  <div class="box info"><b>The <code>Override</code> block must sit next to <code>Properties</code>, not inside it.</b> It is a sibling key of the same row. Putting <code>StartColor</code> inside <code>Properties</code> is the no-op trap described in <a href="#sm-readfirst">READ FIRST</a>.</div>
+
+  <h3 id="sm-override">The <code>Override</code> grammar</h3>
+  <p>Every key is optional; supply only what you want to change. Colour and alpha values are <strong>0&ndash;255</strong>.</p>
+  <table>
+    <tr><th>Key</th><th>Format</th><th>Meaning</th></tr>
+    <tr><td><code>StartColor</code></td><td><code>{ R, G, B }</code> (0&ndash;255) &mdash; or <code>{ X, Y, Z }</code></td><td>The particle&rsquo;s base tint. Multiplies the sprite texture.</td></tr>
+    <tr><td><code>StartAlpha</code></td><td>number 0&ndash;255</td><td>Starting opacity.</td></tr>
+    <tr><td><code>Num</code></td><td>number</td><td>How many particles spawn per burst (density).</td></tr>
+    <tr><td><code>LiveTime</code></td><td>number</td><td>How long each particle lives.</td></tr>
+    <tr><td><code>TimeSpeed</code></td><td>number</td><td>Playback rate of the emitter / animation.</td></tr>
+    <tr><td><code>StartScale</code></td><td>number</td><td>Starting size of each particle.</td></tr>
+    <tr><td><code>Gravity</code></td><td><code>{ X, Y, Z }</code></td><td>Downward / directional pull on particles.</td></tr>
+    <tr><td><code>StartPower</code></td><td><code>{ X, Y, Z }</code></td><td>Initial velocity of each particle.</td></tr>
+    <tr><td><code>AlphaType</code></td><td>number</td><td>Blending mode selector (stock <code>alpha_type</code>).</td></tr>
+    <tr><td><code>ZFront</code></td><td>number</td><td>Depth offset &mdash; pushes the particles in front of / behind the mesh.</td></tr>
+    <tr><td><code>Keys</code></td><td><code>{ { Time=, Alpha=, Color={R,G,B}, Scale= }, ... }</code></td><td>Keyframe tracks over a particle&rsquo;s life. Each key <strong>must</strong> carry <code>Time</code>; <code>Alpha</code>, <code>Color</code>, <code>Scale</code> are optional. Maximum <strong>12</strong> keys.</td></tr>
+  </table>
+  <pre><code>Override = {
+    StartColor = { R = 0, G = 255, B = 0 },
+    StartAlpha = 255,
+    Num        = 6,
+    LiveTime   = 3,
+    StartScale = 1.2,
+    Gravity    = { X = 0, Y = -20, Z = 0 },
+    Keys = {
+        { Time = 0, Alpha = 255, Color = { R = 0, G = 255, B = 0 }, Scale = 1.4 },
+        { Time = 3, Alpha = 0,   Color = { R = 0, G = 80,  B = 0 }, Scale = 0.2 },
+    },
+},</code></pre>
+
+  <h3 id="sm-skinfx">SkinFX: retarget an effect / field edits</h3>
+  <p>Where <code>SptIndex</code> tunes the <em>particles</em>, <code>SkinFX.lua</code> tunes the <em>effect files</em> (the <code>.EFF</code> ribbons, auras and glows) that every client already loaded at login. It has three lists, all off until you set <code>SkinFX.Enable = true</code>.</p>
+  <h4><code>Retargets</code> &mdash; point one glow at a different stock effect</h4>
+  <p>Redirects an effect slot (by its <code>EffectID</code> in <code>EffectFileList.txt</code>, 1&hellip;2099) to <em>another</em> <code>.EFF</code> that every client already has on disk. This is how you swap a whole look without touching binaries.</p>
+  <pre><code>Retargets = {
+    { EffectID = 2, EffPath = ".\\Chef\\Eff\\Bb\\KNIFE\\KN_LV30.EFF", DryRun = false },
+},</code></pre>
+  <h4><code>Fields</code> &mdash; edit one property of an effect</h4>
+  <p>Addresses an effect by its exact (uppercase) <code>EffPath</code> and one <code>Prop</code> name from the registry. <code>Record = -1</code> hits every record in the file. The value goes in the field matching the property&rsquo;s kind: <code>Value</code> (float), <code>Color</code> (<code>0xAARRGGBB</code>), <code>Vals</code> (four floats), or <code>Text</code> (a short string).</p>
+  <pre><code>Fields = {
+    -- tint a weapon glow + crank its scroll speed
+    { EffPath = ".\\CHEF\\EFF\\BB\\SWORD\\SW_LV30.EFF", Record = -1, Prop = "TextureFactor",     Color = 0x80FF2020 },
+    { EffPath = ".\\CHEF\\EFF\\BB\\SWORD\\SW_LV30.EFF", Record = -1, Prop = "EffectScrollSpeed",  Value = 0.5 },
+    -- move an attached particle outward on Z
+    { EffPath = ".\\CHEF\\EFF\\BB\\SWORD\\SW_LV30.EFF", Record = -1, Prop = "Particle0Z",         Value = 0.35 },
+},</code></pre>
+  <h4>Some useful registry <code>Prop</code> names</h4>
+  <table>
+    <tr><th>Prop</th><th>Kind</th><th>On screen</th></tr>
+    <tr><td><code>TextureFactor</code></td><td>color</td><td>Glow tint + intensity (the alpha byte is overall strength).</td></tr>
+    <tr><td><code>EffectScrollSpeed</code></td><td>float</td><td>UV texture scroll speed &mdash; how fast the effect animates.</td></tr>
+    <tr><td><code>AlphaSpeed</code></td><td>float</td><td>Fade / transparency cycling speed.</td></tr>
+    <tr><td><code>Particle0ID</code> / <code>1</code> / <code>2</code></td><td>dword</td><td>Which particle index an effect attaches.</td></tr>
+    <tr><td><code>Particle0X/Y/Z</code></td><td>float</td><td>The attachment point of that particle on the mesh.</td></tr>
+    <tr><td><code>Texture1</code> / <code>Texture2</code> / <code>TexturePath</code></td><td>string</td><td>Re-point the texture file / folder an effect uses (&le; 20 chars).</td></tr>
+    <tr><td><code>DiffuseColor</code> / <code>AmbientColor</code> / <code>EmissiveColor</code> / <code>SpecularColor</code></td><td>float4</td><td>The character material colours (RGBA floats 0..1).</td></tr>
+    <tr><td><code>AlphaDensity</code></td><td>float</td><td>Whole-object opacity (0..1).</td></tr>
+    <tr><td><code>ParticlePoolScaleX/Y/Z</code>, <code>EntityPoolScale/Rot*</code></td><td>float / dword</td><td>Edit a shared particle / entity <em>pool slot</em> (addressed by <code>Index</code>) for every user of it at once.</td></tr>
+  </table>
+  <p class="muted">The full, authoritative list of editable properties &mdash; with each one&rsquo;s struct, kind and on-screen meaning &mdash; is the <code>Props</code> table in <code>SkinPropRegistry.lua</code>. Adding a new editable is a single new row there; nothing is hard-coded in the server or client.</p>
+
+  <h3 id="sm-workflow">Finding your item&rsquo;s indices &amp; the authoring loop</h3>
+  <ol class="steps">
+    <li><strong>Get the item code.</strong> Note the exact code of the item you can see in-game (e.g. a weapon <code>iwxzl55</code>).</li>
+    <li><strong>Look up its particles.</strong> Open the matching slot file (<code>WeaponSkin.lua</code>, <code>CloakSkin.lua</code>&hellip;) and find that code&rsquo;s record. Its <code>Effect.Glow</code> entries give the <code>.EFF</code> paths (for <a href="#sm-skinfx">SkinFX</a>) and its <code>Attached.Particle</code> entries give the <strong>particle indices</strong> (for <code>SptIndex.Override</code>). Write them all down &mdash; expect a handful per item.</li>
+    <li><strong>Add an <code>Override</code> to each index.</strong> In the <em>runtime</em> <code>SptIndex.lua</code>, add a sibling <code>Override = { StartColor = { R=.., G=.., B=.. } }</code> to every one of those indices.</li>
+    <li><strong>Save, look, adjust.</strong> The live push reaches your client in ~1&ndash;2&nbsp;s. If the sparkles moved, iterate; if <em>nothing</em> changed, you likely still edited <code>Properties</code>, hit the source file not the runtime one, or the visible emitter is a solid <code>.EFF</code> (a SkinFX job).</li>
+    <li><strong>Commit.</strong> Copy the runtime file back to the <span class="path">_server\...\ini\SkinMod\</span> source folder.</li>
+  </ol>
+  <div class="box info"><b>Debugging an edit that &ldquo;did nothing&rdquo;</b>Open <span class="path">.Server\Zoneserver\RF_Bin\ModulesLog\</span> and check the <code>WeaponSkin.lua.log</code> / <em>_ALL PROBLEMS</em> file. A successful reload logs a line like <code>particle prop writes N</code>. If <code>N</code> is 0, the server read no <code>Override</code> blocks (you edited <code>Properties</code>, or edited the wrong file). Malformed or unknown-index rows are logged and skipped &mdash; they never crash the server or client.</div>
+
+  <h3 id="sm-rules">Rules &amp; limits</h3>
+  <ul>
+    <li><strong>Override, don&rsquo;t edit, <code>Properties</code>.</strong> <code>Properties</code> and <code>Parsed</code> are read-only dumps; only <code>Override</code> (and SkinFX rows) are shipped. This is by design &mdash; the on-disk <code>.spt</code> / <code>.EFF</code> / <code>.r3e</code> art is never modified.</li>
+    <li><strong>Lua files only.</strong> No binary asset is written. A <code>Retarget</code> must name a stock effect file every client already has; brand-new art needs a client patch, not this feature.</li>
+    <li><strong>Colours are 0&ndash;255</strong> in a particle <code>Override</code> / <code>StartColor</code>; <code>SkinFX</code> colour props are <code>0xAARRGGBB</code>; material <code>float4</code> props are <code>0..1</code> floats.</li>
+    <li><strong>Keys cap at 12</strong> and every key needs a <code>Time</code>.</li>
+    <li><strong>Shared indices are global.</strong> A particle / entity pool slot change affects every item that uses it, and all changes apply to every player (per-player appearance is deliberately not offered). The particle / entity pool size is fixed for the session.</li>
+    <li><strong>Malformed rows are rejected, never crash.</strong> An unknown index or an out-of-allow-list offset is logged with a one-line warning and ignored; the client refuses to write it.</li>
+    <li><strong>Current binaries required.</strong> Live push only reaches a Zone server exe plus a matching rebuilt <code>RF_Online.bin</code> that carry Skin-Mod support; older binaries read the config but show nothing.</li>
+  </ul>
+</section>
+
+<nav class="pn" style="display:flex;justify-content:space-between;gap:12px;margin:22px 0 4px;"><a class="nav-prev" href="skill-desc.html">&larr; Previous: Skill Additional Description</a><a class="nav-next" href="store-system.html">Next: Store System (Shops, Goods &amp; Spawns) &rarr;</a></nav>
+  </main>
+</div>
+
+<footer>
+  RF Online private server documentation &mdash; Modules / Features. Switches live in <code>.Server\Zoneserver\RF_Bin\Modules\</code>; client content lives in <code>.Client\DataTable\&lt;language&gt;\</code>.
+</footer>
+<script>
+(function () {
+  var lb, lbImg, lbCap;
+  function build() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button class="lb-close" type="button" aria-label="Close">&#10005;</button><img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lbImg = lb.querySelector('img');
+    lbCap = lb.querySelector('.lb-cap');
+    lb.addEventListener('click', function (e) { if (e.target !== lbImg) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  function open(img) {
+    build();
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt || '';
+    var cap = img.parentNode ? img.parentNode.querySelector('figcaption') : null;
+    lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    if (!lb) return;
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('figure.shot')) {
+      e.preventDefault();
+      open(t);
+    }
+  });
+})();
+</script>
+</body>
+</html>

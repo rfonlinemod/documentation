@@ -51,6 +51,7 @@
     <a href="modules/race-leader-effect.html">Race Leader Effect</a>
     <a href="modules/share-pvp.html">Share PvP</a>
     <a href="modules/skill-desc.html">Skill Additional Description</a>
+    <a href="modules/skinmod.html">Skin Mod (Skins, Glows &amp; Particles)</a>
     <a href="modules/store-system.html">Store System (Shops, Goods &amp; Spawns)</a>
     <a href="modules/welcome-window.html">Welcome Window</a>
   </nav>
@@ -90,6 +91,7 @@
     <tr><td><a href="modules/race-leader-effect.html">Race Leader Effect</a></td><td><code>RaceLeaderEffect\RaceLeaderEffect.ini</code></td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>The glowing world aura a race leader / council member wears, plus the percent Attack / Defence / HP bonus they gain while in office &mdash; tuned per race and per rank</td></tr>
     <tr><td><a href="modules/share-pvp.html">Share PvP</a></td><td><code>PlayerManager\SharePvP.ini</code> (+ optional <code>SharePvP.lua</code>)</td><td><span class="badge server">Server</span></td><td>Choose how a PvP kill&rsquo;s CPT points and temporary cash are split between the killer and their nearby party, with per-role cash multipliers, flat cash amounts, and an auto-detected Lua override</td></tr>
     <tr><td><a href="modules/skill-desc.html">Skill Additional Description</a></td><td><code>SkillDescExtnd\SkillDescExtnd.ini</code> + <code>SkillDescExtnd.lua</code></td><td><span class="badge server">Server</span></td><td>Adds a real, per-level <strong>[Additional Description]</strong> under the stock text on every skill, class-skill and force tooltip, generated from the ability's actual effect numbers and editable in one auto-generated Lua file</td></tr>
+    <tr><td><a href="modules/skinmod.html">Skin Mod (Skins, Glows &amp; Particles)</a></td><td><code>SkinMod\SptIndex.lua</code> + <code>SkinFX.lua</code> (+ <code>SkinPropRegistry.lua</code>)</td><td><span class="badge server">Server</span> <span class="badge client">Client</span></td><td>Recolour and re-tune any item glow, aura or particle live from plain Lua &mdash; add an <code>Override</code> to a particle index (colour, size, speed, gravity, lifetime, keyframes) or point an effect at another file / edit one of its properties &mdash; hot-pushed to every client in about a second, no restart and no binary editing</td></tr>
     <tr><td><a href="modules/chip-hp.html">Chip HP Bars</a></td><td><code>ConfigurationManager\ClientManager.ini</code></td><td><span class="badge client">Client</span></td><td>Shows or hides the three race-crystal (Belato / Cora / Accretia) HP bars on the HUD beside the radar</td></tr>
     <tr><td><a href="modules/chip-war.html">Chip War Control Panel</a></td><td><code>ChipWar\ChipWar.lua</code></td><td><span class="badge server">Server</span></td><td>Re-tune the whole crystal / Holy Stone war from one plain-language Lua file &mdash; phase timings, crystal &amp; keeper strength, scanner points, ore amounts and the per-race loot lists &mdash; without recompiling</td></tr>
     <tr><td><a href="modules/autoloot.html">Auto Loot</a></td><td><code>LootManager\AutoLoot.ini</code> (+ <code>Autoloot.lua</code>)</td><td><span class="badge server">Server</span></td><td>Pulls qualifying mob drops straight into the loot owner&rsquo;s inventory (magnet loot) and can scatter boss drops around the corpse &mdash; drive it by item tables, or easier, by exact item codes in one Lua file</td></tr>
@@ -251,6 +253,11 @@
       <td><a href="modules/skill-desc.html">Skill Additional Description</a></td>
       <td><span class="badge server">Server</span></td>
       <td>Stock RF Online tooltips give you only the old [Description] — a single vague sentence like “Saps the target's strength, temporarily reducing attack power” that never tells&amp;hellip;</td>
+    </tr>
+    <tr>
+      <td><a href="modules/skinmod.html">Skin Mod (Skins, Glows &amp;amp; Particles)</a></td>
+      <td><span class="badge server">Server</span> <span class="badge client">Client</span></td>
+      <td>Skin Mod is the live appearance editor for glows, auras and particles. Instead of editing binary .EFF / .spt art and re-shipping the client, you add a plain-language Override to a particle index (colour, size, speed, gravity, lifetime, keyframes) or retarget / re-tune an effect file from Lua &mdash; the server hot-reloads it and pushes just that change to every player in about a second</td>
     </tr>
     <tr>
       <td><a href="modules/store-system.html">Store System (Shops, Goods &amp;amp; Spawns)</a></td>
