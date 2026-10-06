@@ -95,6 +95,10 @@
   </ol>
   <div class="box warn"><b>Colour is a tint over the sprite, not a paint</b>A particle&rsquo;s <code>StartColor</code> multiplies its texture. A white/gold spark tinted green goes olive, not lime. If a glow is a solid-coloured <code>.EFF</code> ribbon rather than a tinted particle, a particle <code>Override</code> will not reach it &mdash; that look is a <a href="#sm-skinfx">SkinFX</a> job (retarget the effect file, or edit its <code>TextureFactor</code>).</div>
 
+  <div class="box warn"><b>Setting only <code>StartColor</code> often looks like it &ldquo;did nothing&rdquo;</b>An emitter&rsquo;s birth colour is only the <em>start</em> of the story: its stock <code>.spt</code> carries <strong>life <code>Keys</code> colour tracks</strong> that interpolate every particle toward the original hue over its lifetime. So a <code>StartColor</code>-only <code>Override</code> flashes your colour for a frame and then snaps back to the shipped look &mdash; the glow still reads as its old colour. <strong>To recolour durably you must override the <code>Keys</code> too</strong>, setting <code>Color</code> on every keyframe (writing <code>Keys</code> replaces the whole track). See the worked <a href="#sm-particles">green-aura example</a> below.</div>
+
+  <div class="box info"><b>Need the complete item &rarr; particle INDEX reference?</b>Every shipped particle index, its <code>.spt</code> baseline values, and which item codes attach it are in the interactive <a href="skinmod-particle-guide.html">SptIndex Particle Authoring Guide</a> &mdash; search by item code or filter by equipment slot, then click an index to jump to its values.</div>
+
   <h3 id="sm-files">The files</h3>
   <p>All live in <span class="path">.Server\Zoneserver\RF_Bin\Modules\SkinMod\</span>. There are three kinds: the effect-override engine (three files you edit), and the per-slot skin record files (auto-generated reference the server uses to match item codes to meshes / glows).</p>
   <table>
@@ -117,17 +121,39 @@
 
   <h3 id="sm-particles">Changing a particle (colour, size, speed)</h3>
   <p>Find the index you want in <code>SptIndex.lua</code> (each is <code>[INDEX] = { Spt = "...", Properties = { ... } }</code>) and add an <strong><code>Override</code></strong> table as a sibling of <code>Properties</code>. Only the keys you list are overwritten; everything you leave out stays at its stock value.</p>
-  <p>To tint a glow green, for example, you would write into that index:</p>
-  <pre><code>[362] = {
-    Spt = ".\\Chef\\...\\something.spt",
-    Override = {                       --  you add this block
+  <p><strong>Worked example &mdash; turning the axe&rsquo;s aura green (the real override shipped in <code>SptIndex.lua</code>).</strong> The <code>55AXE</code> glow is built from two of its particle indices: <code>670</code> is the big rising <em>aura</em> (<code>.\Chef\55LV_WEAPON\55AXE\670p.spt</code>, <code>live_time 3</code>) and <code>669</code> is the 60 small sparks. The first attempt set only <code>StartColor</code> &mdash; the aura flashed green then snapped back to its stock colour within a second, because <code>670</code> carries life <code>Keys</code> colour tracks that dominate the birth colour:</p>
+  <pre><code>-- WRONG: StartColor alone is overridden by the emitter's stock Keys colour tracks
+Override = { StartColor = { R = 0, G = 255, B = 0 } },   -- still looks yellow</code></pre>
+  <p>The fix is to override the <code>Keys</code> as well, pinning <code>Color</code> green on every keyframe (and enlarging the subtle sparks so the change is unmistakable). This is the block now in the runtime <code>SptIndex.lua</code>:</p>
+  <pre><code>-- 670 = the rising aura. StartColor + every Keys frame green => colour sticks for the whole life
+[670] = {
+    Spt = ".\\Chef\\55LV_WEAPON\\55AXE\\670p.spt",
+    Override = {
         StartColor = { R = 0, G = 255, B = 0 },
+        StartAlpha = 255,
+        Keys = {
+            { Time = 1, Alpha = 255, Scale = 8,  Color = { R = 0, G = 255, B = 0 } },
+            { Time = 2, Alpha = 255, Scale = 10, Color = { R = 0, G = 255, B = 0 } },
+            { Time = 3, Alpha = 0,   Scale = 12, Color = { R = 0, G = 255, B = 0 } },
+        },
     },
-    Properties = {                     --  read-only reference; editing this does NOTHING
-        StartColor = { R = 255, G = 200, B = 40 },
-        -- ...
+    Properties = { ... },   -- read-only reference; never shipped
+},
+
+-- 669 = the sparks; tiny + short-lived, so LiveTime/StartScale/StartAlpha are bumped too
+[669] = {
+    Spt = ".\\Chef\\55LV_WEAPON\\55AXE\\669p.spt",
+    Override = {
+        StartColor = { R = 0, G = 255, B = 0 },
+        LiveTime   = 2,
+        StartScale = 3,
+        StartAlpha = 255,
+        Keys = {
+            { Time = 2, Alpha = 0, Scale = 5, Color = { R = 0, G = 255, B = 0 } },
+        },
     },
 },</code></pre>
+  <div class="box info"><b>Recipe for a durable particle recolour:</b> set <code>StartColor</code> <em>and</em> a <code>Color</code> on <u>every</u> <code>Keys</code> frame &mdash; writing <code>Keys</code> replaces the whole track. If the emitter is small or short-lived, also raise <code>LiveTime</code> / <code>StartScale</code> / <code>StartAlpha</code> so the change is actually visible. Then save the <strong>runtime</strong> file &mdash; it hot-reloads and re-pushes in about a second, and the particle updates on its next emit with <strong>no relog, no restart, no rebuild</strong>.</div>
   <div class="box info"><b>The <code>Override</code> block must sit next to <code>Properties</code>, not inside it.</b> It is a sibling key of the same row. Putting <code>StartColor</code> inside <code>Properties</code> is the no-op trap described in <a href="#sm-readfirst">READ FIRST</a>.</div>
 
   <h3 id="sm-override">The <code>Override</code> grammar</h3>
